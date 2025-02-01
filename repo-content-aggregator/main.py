@@ -303,7 +303,8 @@ def main():
     """Main function to run the repository content aggregator."""
     import sys
     import argparse
-    
+
+    # First parser to get the directory
     parser = argparse.ArgumentParser(
         description='Repository content aggregator for LLM ingestion with Git-like ignore rules'
     )
@@ -314,20 +315,24 @@ def main():
         help='Directory to analyze (defaults to current directory)'
     )
     parser.add_argument(
-        '--output',
-        '-o',
-        default='repo_content.txt',
-        help='Output file path (default: repo_content.txt)'
-    )
-    parser.add_argument(
         '--max-size',
         '-m',
         type=int,
         default=10,
         help='Maximum file size in MB (default: 10)'
     )
+    parser.add_argument(
+        '--output',
+        '-o',
+        help='Output file path (defaults to <directory_name>_content.txt)'
+    )
     
     args = parser.parse_args()
+    
+    # If no output specified, create default based on directory name
+    if not args.output:
+        directory = args.directory.rstrip('/\\')
+        args.output = Path(directory).name + '_content.txt'
     
     try:
         print(f"Processing repository: {args.directory}")
