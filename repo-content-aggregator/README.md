@@ -1,30 +1,26 @@
 # Repository Content Aggregator
 
-Aggregates repository content into a single markdown file while respecting .gitignore rules.
+Exports repository content into a single text file for LLM ingestion, respecting .gitignore rules.
 
-## Setup & Usage
+## Usage
 
-1. Create virtual environment:
-    ```sh
-    python -m venv venv
-    ```
+Run the script:
+```sh
+# Basic usage:
+python main.py <repo_path>
 
-2. Activate:
-- Windows: `.\venv\Scripts\activate`
-- Unix/macOS: `source venv/bin/activate`
+# Optional: Set maximum file size in MB
+python main.py <repo_path> -m 20
+```
 
-3. Install & Run:
-    ```sh
-    pip install -r requirements.txt
-    ```
-
-4. Run the script:
-    ```sh
-    python main.py <repo_path> [-o output.txt] [-m max_size_mb]
-    ```
+## Output
+- Creates `<directory_name>_content.txt` in current directory
+- Formats content with directory structure and file paths
+- Includes repository metadata
 
 ## Features
-- Full .gitignore support (all levels, all patterns)
+- Full .gitignore support (all Git pattern types)
+- Handles nested .gitignore files
 - Auto-skips binary and large files
-- Structured output with file/directory markers
-- Repository metadata included
+- Preserves directory structure
+- Git-like pattern matching
