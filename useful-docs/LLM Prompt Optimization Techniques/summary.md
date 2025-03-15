@@ -1,5 +1,12 @@
 # Optimizing LLM Prompts for Adherence & Clarity (Summary)
 
+## Additional Docs
+
+- [Automatic Prompt Optimization with “Gradient Descent”
+and Beam Search by MS Azure AI team](https://arxiv.org/pdf/2305.03495)
+
+- [Prompt engineering techniques - repo by NirDiamant](https://github.com/NirDiamant/Prompt_Engineering/tree/main/all_prompt_engineering_techniques)
+
 ## Structure for Clear Instructions
 - Start with clear, prioritized instructions upfront, using clear delimiters (`### Instructions`, `### Content`).
 - Define a clear role or persona for the model (e.g., *“You are an expert educational architect”*).
