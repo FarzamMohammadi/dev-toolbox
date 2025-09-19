@@ -1,0 +1,12 @@
+# Core dependencies for Excel to JSON conversion
+pandas==2.2.3
+openpyxl==3.1.5  # For reading/writing Excel files
+
+# Type hints and validation
+pydantic==2.10.4
+typing-extensions==4.12.2
+
+# CLI and logging
+click==8.1.8
+colorama==0.4.6  # For colored terminal output on Windows
+rich==13.9.4  # For beautiful terminal formatting
