@@ -12,3 +12,8 @@ Quickly nukes and resets your Docker environment, removing containers, images, v
 
 ## [Repository Content Aggregator](./repo-content-aggregator/README.md)
 Exports an entire repository into a single text file for LLM ingestion, while respecting .gitignore rules exactly like Git.
+
+## Conversion Tools
+
+### [XLSX to JSON](./conversion/xlsx-to-json/README.md)
+Convert Excel (.xlsx) files to JSON format using column headers as field names.
