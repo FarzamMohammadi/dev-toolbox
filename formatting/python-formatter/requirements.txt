@@ -1,0 +1,7 @@
+# Core dependencies for Python code formatting and analysis
+click==8.1.8  # CLI framework for robust argument parsing
+colorama==0.4.6  # Cross-platform colored terminal output
+rich==13.9.4  # Beautiful terminal formatting and progress bars
+
+# Development and code quality (only if needed for self-formatting)
+# NOTE: This formatter will be self-contained and not depend on external formatters
