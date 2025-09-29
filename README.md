@@ -14,6 +14,11 @@ Quickly nukes and resets your Docker environment, removing containers, images, v
 Exports an entire repository into a single text file for LLM ingestion, while respecting .gitignore rules exactly like Git.
 
 ## Conversion Tools
+Utilities for converting between different file formats and data structures.
 
 ### [XLSX to JSON](./conversion/xlsx-to-json/README.md)
-Convert Excel (.xlsx) files to JSON format using column headers as field names.
+
+## Prompts
+A collection of random useful prompts for various development tasks and AI interactions.
+
+### [LeetCode Tutor](./prompts/)
