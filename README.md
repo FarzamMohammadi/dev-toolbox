@@ -2,6 +2,8 @@
 
 A collection of utility scripts and tools that streamline my daily development workflow.
 
+> **Note:** Tools are listed alphabetically. Closely related tools are grouped by category.
+
 ---
 
 ## [Directory Tree Printer](./directory-tree-printer/README.md)
@@ -15,6 +17,8 @@ Exports an entire repository into a single text file for LLM ingestion, while re
 
 ## Conversion Tools
 Utilities for converting between different file formats and data structures.
+
+### [T-SQL Stored Procedure to Query](./conversion/tsql-sp-to-query/README.md)
 
 ### [XLSX to JSON](./conversion/xlsx-to-json/README.md)
 
