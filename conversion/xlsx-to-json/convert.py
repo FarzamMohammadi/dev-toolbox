@@ -6,9 +6,9 @@ Command-line interface for converting Excel (.xlsx) files to JSON format.
 Uses column headers as field names.
 
 Usage:
-    python main.py file1.xlsx [file2.xlsx ...]
-    python main.py --output-dir ./output file1.xlsx file2.xlsx
-    python main.py --sheet "Sheet1" data.xlsx
+    python convert.py file1.xlsx [file2.xlsx ...]
+    python convert.py --output-dir ./output file1.xlsx file2.xlsx
+    python convert.py --sheet "Sheet1" data.xlsx
 """
 
 import sys
@@ -74,13 +74,13 @@ def main(
     Examples:
 
         Single file:
-        $ python main.py data.xlsx
+        $ python convert.py data.xlsx
 
         Multiple files:
-        $ python main.py file1.xlsx file2.xlsx file3.xlsx
+        $ python convert.py file1.xlsx file2.xlsx file3.xlsx
 
         With options:
-        $ python main.py --output-dir ./json_output --indent 4 *.xlsx
+        $ python convert.py --output-dir ./json_output --indent 4 *.xlsx
     """
 
     # Configure logging

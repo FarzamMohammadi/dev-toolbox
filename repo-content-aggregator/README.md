@@ -7,10 +7,10 @@ Exports repository content into a single text file for LLM ingestion, respecting
 Run the script:
 ```sh
 # Basic usage:
-python main.py <repo_path>
+python aggregate.py <repo_path>
 
 # Optional: Set maximum file size in MB
-python main.py <repo_path> -m 20
+python aggregate.py <repo_path> -m 20
 ```
 
 ## Output

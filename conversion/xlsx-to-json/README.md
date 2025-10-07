@@ -19,16 +19,16 @@ pip install -r requirements.txt
 
 ```bash
 # Single file
-python main.py data.xlsx
+python convert.py data.xlsx
 
 # Multiple files
-python main.py file1.xlsx file2.xlsx file3.xlsx
+python convert.py file1.xlsx file2.xlsx file3.xlsx
 
 # With output directory
-python main.py --output-dir ./json_output data.xlsx
+python convert.py --output-dir ./json_output data.xlsx
 
 # Specific sheet
-python main.py --sheet "Sheet1" data.xlsx
+python convert.py --sheet "Sheet1" data.xlsx
 ```
 
 ## Parameters
@@ -46,14 +46,14 @@ python main.py --sheet "Sheet1" data.xlsx
 
 ```bash
 # Basic conversion
-python main.py data.xlsx
+python convert.py data.xlsx
 
 # Custom output directory and minified JSON
-python main.py --output-dir ./json_output --compact data.xlsx
+python convert.py --output-dir ./json_output --compact data.xlsx
 
 # Convert specific sheet with custom indentation
-python main.py --sheet "Sheet1" --indent 4 data.xlsx
+python convert.py --sheet "Sheet1" --indent 4 data.xlsx
 
 # Multiple files with options
-python main.py -o ./output -c file1.xlsx file2.xlsx file3.xlsx
+python convert.py -o ./output -c file1.xlsx file2.xlsx file3.xlsx
 ```
