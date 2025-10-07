@@ -19,8 +19,10 @@ class SPParser:
     """Parses SQL Server stored procedure definitions"""
 
     # Regex to match CREATE/ALTER PROCEDURE
+    # Handles: CREATE PROCEDURE, ALTER PROCEDURE, CREATE OR ALTER PROCEDURE
+    # With or without schema: [dbo].[name], dbo.name, or just name
     PROC_HEADER_PATTERN = re.compile(
-        r'^\s*CREATE\s+(?:OR\s+)?ALTER\s+PROCEDURE\s+(\[?[^\s\]]+\]?)\.?(\[?[^\s\]]+\]?)',
+        r'^\s*(?:CREATE\s+(?:OR\s+ALTER\s+)?|ALTER\s+)PROCEDURE\s+(?:(\[?[^\s\]]+\]?)\.)?(\[?[^\s\]]+\]?)',
         re.IGNORECASE | re.MULTILINE
     )
 
@@ -137,6 +139,7 @@ class SPParser:
         if not match:
             return "unknown_procedure"
 
+        # Group 1 is optional schema, Group 2 is procedure name
         # Return procedure name (second group), remove brackets if present
         proc_name = match.group(2).strip('[]')
         return proc_name
