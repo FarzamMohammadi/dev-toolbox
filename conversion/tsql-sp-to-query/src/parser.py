@@ -21,8 +21,9 @@ class SPParser:
     # Regex to match CREATE/ALTER PROCEDURE
     # Handles: CREATE PROCEDURE, ALTER PROCEDURE, CREATE OR ALTER PROCEDURE
     # With or without schema: [dbo].[name], dbo.name, or just name
+    # Captures procedure name, stopping before ( or @ or AS
     PROC_HEADER_PATTERN = re.compile(
-        r'^\s*(?:CREATE\s+(?:OR\s+ALTER\s+)?|ALTER\s+)PROCEDURE\s+(?:(\[?[^\s\]]+\]?)\.)?(\[?[^\s\]]+\]?)',
+        r'^\s*(?:CREATE\s+(?:OR\s+ALTER\s+)?|ALTER\s+)PROCEDURE\s+(?:(\[?[^\s\]]+\]?)\.)?(\[?[^\s\(\@\]]+\]?)',
         re.IGNORECASE | re.MULTILINE
     )
 
@@ -64,6 +65,9 @@ class SPParser:
     def _extract_parameters(cls, sql_content: str) -> List[SPParameter]:
         """
         Extract parameters from stored procedure
+        Handles both formats:
+        - Inline: CREATE PROCEDURE dbo.Name(@Param1 INT, @Param2 INT) AS
+        - Separate lines: CREATE PROCEDURE dbo.Name @Param1 INT, @Param2 INT AS
 
         Args:
             sql_content: SQL content
@@ -86,8 +90,15 @@ class SPParser:
         if not proc_match:
             return parameters
 
-        # Extract parameter section
+        # Extract parameter section (everything after procedure name, before AS)
         param_section = header_section[proc_match.end():]
+
+        # Check if parameters are in parentheses (inline format)
+        # Only match if there's a @ parameter inside the parentheses
+        paren_match = re.search(r'\(([^)]*@[^)]+)\)', param_section)
+        if paren_match:
+            # Use only content within parentheses
+            param_section = paren_match.group(1)
 
         # Parse individual parameters
         for match in cls.PARAM_PATTERN.finditer(param_section):

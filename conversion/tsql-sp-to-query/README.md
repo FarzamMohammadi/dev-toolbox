@@ -10,25 +10,38 @@ Converts T-SQL stored procedures to standalone executable queries for testing in
 ## Usage
 
 ```bash
+# Single file
 python convert.py <input-file.sql>
+
+# Multiple files
+python convert.py file1.sql file2.sql file3.sql
+
+# Batch convert with wildcards
+python convert.py *.sql
 ```
 
 ### Options
 
-- `-o, --output <file>` - Specify output file (default: `<input>_READONLY.sql`)
+- `-o, --output <file>` - Specify output file (single file only, default: `<input>_READONLY.sql`)
 - `-v, --verbose` - Enable verbose logging
 
 ### Examples
 
 ```bash
-# Basic conversion
-python convert.py ../my_sp.sql
+# Single file conversion
+python convert.py my_procedure.sql
 
-# Custom output file
+# Custom output file (single file only)
 python convert.py my_procedure.sql -o test_query.sql
 
+# Multiple files
+python convert.py sp1.sql sp2.sql sp3.sql
+
+# Batch convert all procedures
+python convert.py *.sql
+
 # Verbose mode
-python convert.py my_procedure.sql -v
+python convert.py *.sql -v
 ```
 
 ## Output
