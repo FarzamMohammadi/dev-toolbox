@@ -31,6 +31,29 @@ class FileReader:
         self.settings = settings
         self.format_detector = FormatDetector()
 
+    def _create_string_schema(self, filepath: Path, delimiter: str) -> dict:
+        """
+        Create schema with all columns as String type.
+        Used as fallback when type inference fails on mixed data.
+
+        Args:
+            filepath: Path to CSV file
+            delimiter: CSV delimiter
+
+        Returns:
+            Dictionary mapping column names to pl.String type
+        """
+        # Read just headers (no data, no type inference)
+        headers_df = pl.read_csv(
+            filepath,
+            separator=delimiter,
+            n_rows=0,
+            infer_schema_length=0
+        )
+
+        # Return all columns as String type
+        return {col: pl.String for col in headers_df.columns}
+
     def read_file(
         self,
         filepath: Path,
@@ -51,12 +74,25 @@ class FileReader:
 
         if file_format == FileFormat.CSV:
             delimiter = self.format_detector.detect_delimiter(filepath)
-            return pl.read_csv(
-                filepath,
-                separator=delimiter,
-                infer_schema_length=10000,
-                null_values=self.settings.null_equivalents
-            )
+
+            # Try with type inference first (fast path for clean data)
+            try:
+                return pl.read_csv(
+                    filepath,
+                    separator=delimiter,
+                    infer_schema_length=10000,
+                    null_values=self.settings.null_equivalents
+                )
+            except pl.exceptions.ComputeError:
+                # Fallback: Mixed types detected, read as strings
+                console.print("[yellow]Warning: Mixed data types detected, reading all columns as strings[/yellow]")
+                schema_overrides = self._create_string_schema(filepath, delimiter)
+                return pl.read_csv(
+                    filepath,
+                    separator=delimiter,
+                    null_values=self.settings.null_equivalents,
+                    schema_overrides=schema_overrides
+                )
         else:  # Excel
             return pl.read_excel(filepath)
 
@@ -98,17 +134,27 @@ class FileReader:
         """
         delimiter = self.format_detector.detect_delimiter(filepath)
 
-        # Polars CSV reader with lazy reading
+        # Try with type inference first (fast path for clean data)
         try:
-            # Use scan_csv for lazy reading (Polars lazy API)
             lazy_df = pl.scan_csv(
                 filepath,
                 separator=delimiter,
                 null_values=self.settings.null_equivalents,
                 infer_schema_length=10000
             )
+        except pl.exceptions.ComputeError:
+            # Fallback: Mixed types detected, read as strings
+            console.print("[yellow]Warning: Mixed data types detected, reading all columns as strings[/yellow]")
+            schema_overrides = self._create_string_schema(filepath, delimiter)
+            lazy_df = pl.scan_csv(
+                filepath,
+                separator=delimiter,
+                null_values=self.settings.null_equivalents,
+                schema_overrides=schema_overrides
+            )
 
-            # Process in chunks
+        # Process in chunks
+        try:
             offset = 0
             while True:
                 chunk = lazy_df.slice(offset, chunk_size).collect()
@@ -205,11 +251,26 @@ class FileReader:
 
         if file_format == FileFormat.CSV:
             delimiter = self.format_detector.detect_delimiter(filepath)
-            return pl.read_csv(
-                filepath,
-                separator=delimiter,
-                n_rows=n_rows,
-                null_values=self.settings.null_equivalents
-            )
+
+            # Try with type inference first (fast path for clean data)
+            try:
+                return pl.read_csv(
+                    filepath,
+                    separator=delimiter,
+                    n_rows=n_rows,
+                    null_values=self.settings.null_equivalents,
+                    infer_schema_length=10000
+                )
+            except pl.exceptions.ComputeError:
+                # Fallback: Mixed types detected, read as strings
+                console.print("[yellow]Warning: Mixed data types detected, reading all columns as strings[/yellow]")
+                schema_overrides = self._create_string_schema(filepath, delimiter)
+                return pl.read_csv(
+                    filepath,
+                    separator=delimiter,
+                    n_rows=n_rows,
+                    null_values=self.settings.null_equivalents,
+                    schema_overrides=schema_overrides
+                )
         else:  # Excel
             return pl.read_excel(filepath, read_options={"n_rows": n_rows})

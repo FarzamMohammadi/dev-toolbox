@@ -1,6 +1,6 @@
 # Spreadsheet Diff
 
-Compare CSV and Excel files with field-level difference reporting. Handles 10M+ rows efficiently.
+Compare CSV and Excel files with field-level difference reporting. Handles 10M rows.
 
 ## Setup
 
@@ -50,7 +50,7 @@ python compare.py file1.csv file2.csv --output-dir ./results
 python compare.py source.xlsx comparison.xlsx --key EmployeeID
 ```
 
-### Large Files (10M+ rows)
+### Large Files (10M rows)
 ```bash
 python compare.py large1.csv large2.csv \
   --key ID \
@@ -180,27 +180,27 @@ Typical on modern hardware:
 | 10M | 10-15 min | 4-6 GB |
 
 **Tips:**
-- Reduce `--chunk-size` if low memory
-- Use CSV format (faster than Excel)
-- Use `--no-html` for huge diffs
-- Increase chunk size if RAM available
+- Reduce `--chunk-size` value (e.g., 50000) when available system memory is limited to prevent out-of-memory errors
+- Use CSV format instead of Excel for faster processing and lower memory usage
+- Use `--no-html` flag to skip HTML report generation when dealing with large difference sets
+- Increase `--chunk-size` value (e.g., 200000) if system has sufficient RAM to improve processing speed
 
 ## FAQ
 
 **Files larger than 10M rows?**
-Yes, chunked architecture handles any size.
+Yes, the chunked architecture supports files of any size.
 
-**Different columns?**
-Compares common columns, warns about differences.
+**Different columns between files?**
+The tool compares only columns that exist in both files and displays warnings about columns present in only one file.
 
 **Multiple Excel sheets?**
-No. Reads first sheet only. Export to CSV for multi-sheet.
+No. The tool reads only the first sheet. Export additional sheets to CSV format for multi-sheet comparison.
 
 **Null/empty values?**
-Treats `""`, `NULL`, `None`, `N/A`, `nan` as equivalent.
+The tool treats `""`, `NULL`, `None`, `N/A`, and `nan` as equivalent empty values.
 
 **Exit codes?**
-0 = success, 1 = failure, 130 = cancelled.
+The tool exits with code 0 for success, 1 for failure, and 130 when cancelled by user.
 
 **Exclude columns that always differ?**
-Use `--exclude "Column1,Column2"` to skip volatile columns (timestamps, GUIDs, audit fields).
+Use `--exclude "Column1,Column2"` to skip volatile columns (timestamps, GUIDs, audit fields) from comparison.
