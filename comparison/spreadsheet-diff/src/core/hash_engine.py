@@ -163,8 +163,12 @@ class RowHashEngine:
             else:
                 return f"{value:.10f}"
         elif isinstance(value, str):
-            # Optionally strip whitespace
-            return value.strip()
+            # Strip whitespace
+            normalized = value.strip()
+            # Treat common null string representations as NULL
+            if not normalized or normalized in ("None", "NULL", "null", "N/A", "nan", "NaN"):
+                return "NULL"
+            return normalized
         else:
             return str(value)
 

@@ -172,8 +172,8 @@ class DifferenceTracker:
         if isinstance(value, str):
             # Strip whitespace
             normalized = value.strip()
-            # Empty string = None
-            if not normalized:
+            # Treat common null representations as None
+            if not normalized or normalized in ("None", "NULL", "null", "N/A", "nan", "NaN"):
                 return None
             return normalized
 
