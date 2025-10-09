@@ -6,25 +6,92 @@ Handles both CSV and Excel files with support for large datasets (10M+ rows).
 from typing import Optional, Literal
 from pathlib import Path
 from pydantic import BaseModel, Field, field_validator
+import multiprocessing
+
+
+class HardwareProfile:
+    """Hardware profile configurations for performance tuning."""
+
+    HIGH_END = "high-end"
+    STANDARD = "standard"
+    LOW_TIER = "low-tier"
+
+    PROFILES = {
+        HIGH_END: {
+            "chunk_size": 500000,
+            "max_memory_mb": 24576,  # 24GB
+            "parallel_workers": None,  # Use all CPUs
+            "skip_chunking_threshold": 100000,
+            "enable_polars_parallel": True,
+            "description": "24GB+ RAM, 8+ cores"
+        },
+        STANDARD: {
+            "chunk_size": 100000,
+            "max_memory_mb": 8192,  # 8GB
+            "parallel_workers": None,  # Use CPU count / 2
+            "skip_chunking_threshold": 50000,
+            "enable_polars_parallel": True,
+            "description": "8-16GB RAM, 4-8 cores"
+        },
+        LOW_TIER: {
+            "chunk_size": 25000,
+            "max_memory_mb": 4096,  # 4GB
+            "parallel_workers": 2,
+            "skip_chunking_threshold": 10000,
+            "enable_polars_parallel": False,
+            "description": "4-8GB RAM, 2-4 cores"
+        }
+    }
+
+    @classmethod
+    def get_profile(cls, profile_name: str) -> dict:
+        """Get hardware profile configuration."""
+        return cls.PROFILES.get(profile_name, cls.PROFILES[cls.HIGH_END])
+
+    @classmethod
+    def list_profiles(cls) -> list[str]:
+        """List available hardware profiles."""
+        return list(cls.PROFILES.keys())
 
 
 class ComparisonSettings(BaseModel):
     """Configuration settings for file comparison operations."""
 
+    # Hardware profile
+    hardware_profile: Literal["high-end", "standard", "low-tier"] = Field(
+        default="high-end",
+        description="Hardware profile for performance tuning"
+    )
+
     # Performance settings
     chunk_size: int = Field(
-        default=100000,
+        default=500000,
         description="Number of rows to process at once (tune based on available RAM)"
     )
 
     max_memory_mb: int = Field(
-        default=4096,
+        default=24576,
         description="Maximum memory usage in MB before switching to disk-based processing"
     )
 
     use_multithreading: bool = Field(
         default=True,
         description="Enable multi-threaded processing for faster comparisons"
+    )
+
+    parallel_workers: Optional[int] = Field(
+        default=None,
+        description="Number of parallel workers (None = auto-detect from CPU count)"
+    )
+
+    skip_chunking_threshold: int = Field(
+        default=100000,
+        description="Skip chunking and load entire file if row count below this threshold"
+    )
+
+    enable_polars_parallel: bool = Field(
+        default=True,
+        description="Enable Polars parallel processing (uses all CPU cores)"
     )
 
     # Comparison settings
@@ -171,6 +238,67 @@ class ComparisonSettings(BaseModel):
         if not self.exclude_columns:
             return []
         return [col.strip() for col in self.exclude_columns.split(',') if col.strip()]
+
+    def apply_hardware_profile(self, profile_name: str = None):
+        """
+        Apply hardware profile settings.
+
+        Args:
+            profile_name: Profile to apply (uses self.hardware_profile if None)
+        """
+        if profile_name is None:
+            profile_name = self.hardware_profile
+
+        profile = HardwareProfile.get_profile(profile_name)
+
+        self.chunk_size = profile["chunk_size"]
+        self.max_memory_mb = profile["max_memory_mb"]
+        self.skip_chunking_threshold = profile["skip_chunking_threshold"]
+        self.enable_polars_parallel = profile["enable_polars_parallel"]
+
+        # Set parallel workers
+        if profile["parallel_workers"] is None:
+            cpu_count = multiprocessing.cpu_count()
+            if profile_name == HardwareProfile.STANDARD:
+                self.parallel_workers = max(2, cpu_count // 2)
+            else:
+                self.parallel_workers = cpu_count
+        else:
+            self.parallel_workers = profile["parallel_workers"]
+
+    def get_effective_workers(self) -> int:
+        """Get effective number of parallel workers."""
+        if self.parallel_workers is None:
+            return multiprocessing.cpu_count()
+        return self.parallel_workers
+
+    @classmethod
+    def from_hardware_profile(cls, profile_name: str, **kwargs) -> "ComparisonSettings":
+        """
+        Create settings from hardware profile.
+
+        Args:
+            profile_name: Hardware profile name
+            **kwargs: Additional overrides
+        """
+        profile = HardwareProfile.get_profile(profile_name)
+
+        # Merge profile with kwargs
+        settings_dict = {
+            "hardware_profile": profile_name,
+            **profile,
+            **kwargs
+        }
+
+        # Apply parallel workers logic
+        if settings_dict.get("parallel_workers") is None:
+            cpu_count = multiprocessing.cpu_count()
+            if profile_name == HardwareProfile.STANDARD:
+                settings_dict["parallel_workers"] = max(2, cpu_count // 2)
+            else:
+                settings_dict["parallel_workers"] = cpu_count
+
+        return cls(**settings_dict)
 
     @classmethod
     def for_large_files(cls) -> "ComparisonSettings":

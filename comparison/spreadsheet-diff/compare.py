@@ -95,6 +95,12 @@ logger = setup_logger(__name__)
     default='INFO',
     help='Logging level (default: INFO)'
 )
+@click.option(
+    '--hardware',
+    type=click.Choice(['high-end', 'standard', 'low-tier'], case_sensitive=False),
+    default='high-end',
+    help='Hardware profile: high-end (24GB+ RAM, 8+ cores), standard (8-16GB, 4-8 cores), low-tier (4-8GB, 2-4 cores). Default: high-end'
+)
 def main(
     source_file: Path,
     comparison_file: Path,
@@ -107,7 +113,8 @@ def main(
     no_html: bool,
     case_insensitive: bool,
     ignore_whitespace: bool,
-    log_level: str
+    log_level: str,
+    hardware: str
 ):
     """
     Compare two files (CSV or Excel) and generate difference report.
@@ -145,22 +152,27 @@ def main(
         )
     )
 
-    # Configure settings
-    settings = ComparisonSettings(
+    # Configure settings from hardware profile
+    settings = ComparisonSettings.from_hardware_profile(
+        hardware.lower(),
         key_column=key,
         sort_columns=sort_by,
         exclude_columns=exclude,
         output_dir=output_dir,
         output_format=format.lower(),
-        chunk_size=chunk_size,
         generate_html_report=not no_html,
         case_sensitive=not case_insensitive,
         ignore_whitespace=ignore_whitespace,
         log_level=log_level.upper()
     )
 
+    # Allow chunk_size override if explicitly provided
+    if chunk_size != 100000:  # User specified custom chunk size
+        settings.chunk_size = chunk_size
+
     # Display configuration
     console.print("\n[bold]Configuration:[/bold]")
+    console.print(f"  Hardware profile: [cyan]{hardware}[/cyan] ({settings.get_effective_workers()} workers)")
     console.print(f"  Source file:      [blue]{source_file}[/blue]")
     console.print(f"  Comparison file:  [blue]{comparison_file}[/blue]")
     if key:
@@ -171,7 +183,7 @@ def main(
         console.print(f"  Excluding:        [yellow]{exclude}[/yellow]")
     console.print(f"  Output directory: [blue]{output_dir}[/blue]")
     console.print(f"  Output format:    {format}")
-    console.print(f"  Chunk size:       {chunk_size:,} rows")
+    console.print(f"  Chunk size:       {settings.chunk_size:,} rows")
     console.print(f"  HTML report:      {'No' if no_html else 'Yes'}")
 
     # Estimate file sizes

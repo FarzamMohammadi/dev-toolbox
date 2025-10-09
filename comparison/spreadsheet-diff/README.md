@@ -2,6 +2,8 @@
 
 Compare CSV and Excel files with field-level difference reporting. Handles 10M rows.
 
+**Default hardware assumption:** 24GB+ RAM, 8+ cores (configurable via `--hardware`)
+
 ## Setup
 
 ```bash
@@ -42,6 +44,7 @@ python compare.py file1.csv file2.csv --output-dir ./results
 | `--case-insensitive` | | Case-insensitive comparison | False |
 | `--ignore-whitespace` | | Ignore whitespace | False |
 | `--log-level` | | `DEBUG`, `INFO`, `WARNING`, `ERROR` | `INFO` |
+| `--hardware` | | Hardware profile: `high-end`, `standard`, `low-tier` | `high-end` |
 
 ## Examples
 
@@ -169,21 +172,35 @@ When same key appears multiple times:
 - xxhash (3.5.0)
 - pydantic (2.10.4)
 
+## Hardware Profiles
+
+| Profile | RAM | Cores | Performance (15k rows) |
+|---------|-----|-------|------------------------|
+| **high-end** (default) | 24GB+ | 8+ | <1s |
+| **standard** | 8-16GB | 4-8 | 1-2s |
+| **low-tier** | 4-8GB | 2-4 | 3-5s |
+
+Use `--hardware` flag to select profile (defaults to high-end).
+
 ## Performance
 
-Typical on modern hardware:
+Performance with **high-end** profile (24GB+ RAM, 8+ cores):
 
-| Rows | Time | Memory |
-|------|------|--------|
-| 500k | ~15s | 500 MB |
-| 5M | 2-3 min | 2 GB |
-| 10M | 10-15 min | 4-6 GB |
+| Rows | Time | Memory | Notes |
+|------|------|--------|-------|
+| 15k | <1s | 50 MB | Vectorized comparison |
+| 100k | 2-3s | 200 MB | Vectorized comparison |
+| 500k | ~10s | 800 MB | Chunked processing |
+| 5M | 1-2 min | 3 GB | Parallel chunked processing |
+| 10M | 8-12 min | 6 GB | Parallel chunked processing |
 
-**Tips:**
-- Reduce `--chunk-size` value (e.g., 50000) when available system memory is limited to prevent out-of-memory errors
+Performance scales with hardware profile. Use `--hardware standard` or `--hardware low-tier` for systems with less RAM.
+
+**Optimization Tips:**
+- The tool automatically selects vectorized comparison for small files (faster than chunking)
 - Use CSV format instead of Excel for faster processing and lower memory usage
 - Use `--no-html` flag to skip HTML report generation when dealing with large difference sets
-- Increase `--chunk-size` value (e.g., 200000) if system has sufficient RAM to improve processing speed
+- Manually adjust `--chunk-size` only if needed (tool auto-configures based on hardware profile)
 
 ## FAQ
 

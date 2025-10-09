@@ -27,10 +27,28 @@ class RowHashEngine:
             use_fast_hash: Use xxhash if available (faster than hashlib)
         """
         self.use_xxhash = use_fast_hash and HAS_XXHASH
+        self.hash_enabled = True  # Can be disabled for unique keys
+
+    def should_hash(self, keys_have_duplicates: bool) -> bool:
+        """
+        Determine if hashing is needed based on key uniqueness.
+
+        Args:
+            keys_have_duplicates: Whether keys have duplicate values
+
+        Returns:
+            True if hashing should be performed
+        """
+        return keys_have_duplicates
+
+    def set_hash_enabled(self, enabled: bool):
+        """Enable or disable hashing for performance optimization."""
+        self.hash_enabled = enabled
 
     def hash_value(self, value: Any) -> str:
         """
         Hash a single value.
+        Optimized to avoid creating Polars Series objects.
 
         Args:
             value: Value to hash
@@ -42,8 +60,9 @@ class RowHashEngine:
         if value is None:
             str_value = "NULL"
         elif isinstance(value, float):
-            # Handle NaN specially
-            if pl.Series([value]).is_nan()[0]:
+            # Handle NaN specially (avoid Polars overhead)
+            import math
+            if math.isnan(value):
                 str_value = "NULL"
             else:
                 # Format float to avoid floating point precision issues
@@ -127,6 +146,7 @@ class RowHashEngine:
     def _normalize_value(self, value: Any) -> str:
         """
         Normalize value to string for hashing.
+        Optimized to avoid creating Polars Series objects.
 
         Args:
             value: Value to normalize
@@ -137,7 +157,8 @@ class RowHashEngine:
         if value is None:
             return "NULL"
         elif isinstance(value, float):
-            if pl.Series([value]).is_nan()[0]:
+            import math
+            if math.isnan(value):
                 return "NULL"
             else:
                 return f"{value:.10f}"

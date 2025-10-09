@@ -156,6 +156,7 @@ class DifferenceTracker:
     def _normalize_for_comparison(self, value: Any) -> Any:
         """
         Normalize a value for comparison.
+        Optimized to avoid creating Polars Series objects.
 
         Args:
             value: Value to normalize
@@ -163,16 +164,9 @@ class DifferenceTracker:
         Returns:
             Normalized value
         """
-        # Handle None and NaN
+        # Handle None
         if value is None:
             return None
-
-        # Handle Polars null
-        try:
-            if pl.Series([value]).is_null()[0]:
-                return None
-        except Exception:
-            pass
 
         # Handle strings
         if isinstance(value, str):
@@ -183,13 +177,11 @@ class DifferenceTracker:
                 return None
             return normalized
 
-        # Handle float NaN
+        # Handle float NaN (avoid Polars overhead)
         if isinstance(value, float):
-            try:
-                if pl.Series([value]).is_nan()[0]:
-                    return None
-            except Exception:
-                pass
+            import math
+            if math.isnan(value):
+                return None
 
         return value
 

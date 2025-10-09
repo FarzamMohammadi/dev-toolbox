@@ -7,6 +7,8 @@ from pathlib import Path
 from typing import Optional, Dict, Any, List
 from rich.console import Console
 from rich.progress import Progress, TextColumn, BarColumn, TaskProgressColumn
+import polars as pl
+from concurrent.futures import ThreadPoolExecutor, as_completed
 
 from ..config.settings import ComparisonSettings
 from ..io.readers import FileReader
@@ -46,6 +48,183 @@ class FileComparer:
         self.key_column: Optional[str] = None
         self.diff_tracker: Optional[DifferenceTracker] = None
 
+    def _should_use_vectorized_path(self, source_file: Path, comparison_file: Path) -> bool:
+        """
+        Determine if vectorized comparison path should be used.
+
+        Args:
+            source_file: Path to source file
+            comparison_file: Path to comparison file
+
+        Returns:
+            True if vectorized path should be used
+        """
+        # Estimate total rows
+        source_rows = self.reader.estimate_rows(source_file)
+        comparison_rows = self.reader.estimate_rows(comparison_file)
+        total_rows = source_rows + comparison_rows
+
+        # Use vectorized path for files below chunking threshold
+        return total_rows < self.settings.skip_chunking_threshold
+
+    def _load_full_dataframe(self, filepath: Path) -> pl.DataFrame:
+        """Load entire file into DataFrame."""
+        # Enable Polars parallelism based on settings
+        if self.settings.enable_polars_parallel:
+            pl.Config.set_streaming_chunk_size(100000)
+
+        return self.reader.read_file(filepath)
+
+    def _compare_vectorized(
+        self,
+        source_file: Path,
+        comparison_file: Path
+    ) -> bool:
+        """
+        Vectorized comparison for small-to-medium files.
+        Loads both files entirely and uses Polars joins for comparison.
+
+        Args:
+            source_file: Path to source file
+            comparison_file: Path to comparison file
+
+        Returns:
+            True if comparison completed successfully
+        """
+        console.print("[cyan]Using fast vectorized comparison[/cyan]")
+
+        key_columns = self.settings.get_key_columns()
+        if not key_columns:
+            key_columns = [self.key_column]
+        exclude_columns = self.settings.get_exclude_columns()
+
+        # Load both files in parallel
+        console.print("[yellow]Loading files...[/yellow]")
+        with ThreadPoolExecutor(max_workers=2) as executor:
+            future_source = executor.submit(self._load_full_dataframe, source_file)
+            future_comparison = executor.submit(self._load_full_dataframe, comparison_file)
+
+            source_df = future_source.result()
+            comparison_df = future_comparison.result()
+
+        console.print(f"[green]Loaded {len(source_df):,} source rows, {len(comparison_df):,} comparison rows[/green]")
+
+        # Update summary
+        self.diff_tracker.summary.total_source_rows = len(source_df)
+        self.diff_tracker.summary.total_comparison_rows = len(comparison_df)
+
+        # Check for duplicate keys
+        source_key_counts = source_df.select(key_columns).n_unique()
+        has_duplicates = source_key_counts < len(source_df)
+
+        if has_duplicates:
+            console.print("[yellow]Duplicate keys detected, using row-by-row comparison[/yellow]")
+            # Fall back to index-based comparison for duplicates
+            return self._compare_with_index_method(source_file, comparison_file)
+
+        # For unique keys, use optimized join-based comparison
+        console.print("[green]Keys are unique, using optimized join comparison[/green]")
+
+        # Perform join on key columns
+        join_keys = key_columns if len(key_columns) > 1 else key_columns[0]
+
+        merged = source_df.join(
+            comparison_df,
+            on=join_keys,
+            how="outer",
+            suffix="_comparison"
+        )
+
+        # Find rows only in source or comparison
+        only_in_source = merged.filter(pl.col(source_df.columns[0] if source_df.columns[0] != join_keys else source_df.columns[1]).is_null())
+        only_in_comparison = merged.filter(pl.col(f"{source_df.columns[0]}_comparison" if source_df.columns[0] != join_keys else f"{source_df.columns[1]}_comparison").is_null())
+
+        self.diff_tracker.summary.only_in_source = len(only_in_source)
+        self.diff_tracker.summary.only_in_comparison = len(only_in_comparison)
+
+        # Compare field values for matching keys
+        console.print("[yellow]Comparing field values...[/yellow]")
+        self._compare_rows_vectorized(merged, key_columns, exclude_columns)
+
+        console.print(f"[green]Found {len(self.diff_tracker.differences):,} differences[/green]")
+
+        return True
+
+    def _compare_rows_vectorized(
+        self,
+        merged_df: pl.DataFrame,
+        key_columns: List[str],
+        exclude_columns: List[str]
+    ):
+        """
+        Compare rows using vectorized operations.
+
+        Args:
+            merged_df: Merged DataFrame with both source and comparison data
+            key_columns: List of key column names
+            exclude_columns: Columns to exclude from comparison
+        """
+        # Get all column names from source (without _comparison suffix)
+        source_columns = [col for col in merged_df.columns if not col.endswith("_comparison") and col not in key_columns]
+
+        exclude_set = set(exclude_columns)
+
+        # Iterate through rows and find differences
+        for row_dict in merged_df.iter_rows(named=True):
+            key_value = tuple(row_dict[col] for col in key_columns) if len(key_columns) > 1 else row_dict[key_columns[0]]
+
+            has_differences = False
+            for col in source_columns:
+                if col in exclude_set:
+                    continue
+
+                source_val = row_dict.get(col)
+                comparison_val = row_dict.get(f"{col}_comparison")
+
+                # Normalize for comparison
+                source_norm = self.diff_tracker._normalize_for_comparison(source_val)
+                comparison_norm = self.diff_tracker._normalize_for_comparison(comparison_val)
+
+                if source_norm != comparison_norm:
+                    self.diff_tracker.add_field_difference(
+                        key_value=key_value,
+                        field_name=col,
+                        source_value=source_val,
+                        comparison_value=comparison_val,
+                        diff_type="modified"
+                    )
+                    has_differences = True
+
+            if has_differences:
+                self.diff_tracker.summary.modified_rows += 1
+            else:
+                self.diff_tracker.summary.exact_matches += 1
+
+    def _compare_with_index_method(
+        self,
+        source_file: Path,
+        comparison_file: Path
+    ) -> bool:
+        """
+        Use original index-based method for files with duplicate keys.
+
+        Args:
+            source_file: Path to source file
+            comparison_file: Path to comparison file
+
+        Returns:
+            True if successful
+        """
+        # Build source index
+        console.print("\n[bold cyan]Building source file index...[/bold cyan]")
+        source_index = self._build_file_index(source_file, "Source")
+
+        # Compare with comparison file
+        console.print("\n[bold cyan]Comparing files...[/bold cyan]")
+        self._compare_against_index(comparison_file, source_index)
+
+        return True
+
     def compare_files(
         self,
         source_file: Path,
@@ -83,15 +262,27 @@ class FileComparer:
             # Initialize diff tracker
             self.diff_tracker = DifferenceTracker(self.key_column)
 
-            # Step 3: Build source index
-            console.print("\n[bold cyan]Step 3: Building source file index...[/bold cyan]")
-            source_index = self._build_file_index(source_file, "Source")
-            monitor.update_rows(len(source_index))
+            # Step 3: Choose comparison strategy
+            console.print("\n[bold cyan]Step 3: Analyzing file size and choosing strategy...[/bold cyan]")
+            use_vectorized = self._should_use_vectorized_path(source_file, comparison_file)
 
-            # Step 4: Compare with comparison file
-            console.print("\n[bold cyan]Step 4: Comparing files...[/bold cyan]")
-            self._compare_against_index(comparison_file, source_index)
-            monitor.update_rows(self.diff_tracker.summary.total_comparison_rows)
+            if use_vectorized:
+                # Fast path: vectorized comparison for small-to-medium files
+                console.print("[cyan]Files are small enough for vectorized comparison[/cyan]")
+                self._compare_vectorized(source_file, comparison_file)
+            else:
+                # Chunked path: index-based comparison for large files
+                console.print("[cyan]Using chunked comparison for large files[/cyan]")
+
+                # Build source index
+                console.print("\n[bold cyan]Step 3a: Building source file index...[/bold cyan]")
+                source_index = self._build_file_index(source_file, "Source")
+                monitor.update_rows(len(source_index))
+
+                # Compare with comparison file
+                console.print("\n[bold cyan]Step 3b: Comparing files...[/bold cyan]")
+                self._compare_against_index(comparison_file, source_index)
+                monitor.update_rows(self.diff_tracker.summary.total_comparison_rows)
 
             # Step 5: Generate reports
             console.print("\n[bold cyan]Step 5: Generating reports...[/bold cyan]")
