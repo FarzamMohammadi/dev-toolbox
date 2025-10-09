@@ -52,6 +52,11 @@ logger = setup_logger(__name__)
     help='Optional: Sort columns for duplicate key matching (comma-separated: "Date,Time")'
 )
 @click.option(
+    '--exclude',
+    type=str,
+    help='Columns to exclude from comparison (comma-separated: "LastModified,UpdatedAt")'
+)
+@click.option(
     '--output-dir', '-o',
     type=click.Path(path_type=Path),
     default='results',
@@ -95,6 +100,7 @@ def main(
     comparison_file: Path,
     key: Optional[str],
     sort_by: Optional[str],
+    exclude: Optional[str],
     output_dir: Path,
     format: str,
     chunk_size: int,
@@ -143,6 +149,7 @@ def main(
     settings = ComparisonSettings(
         key_column=key,
         sort_columns=sort_by,
+        exclude_columns=exclude,
         output_dir=output_dir,
         output_format=format.lower(),
         chunk_size=chunk_size,
@@ -160,6 +167,8 @@ def main(
         console.print(f"  Key column:       [green]{key}[/green]")
     else:
         console.print(f"  Key column:       [yellow]Auto-detect[/yellow]")
+    if exclude:
+        console.print(f"  Excluding:        [yellow]{exclude}[/yellow]")
     console.print(f"  Output directory: [blue]{output_dir}[/blue]")
     console.print(f"  Output format:    {format}")
     console.print(f"  Chunk size:       {chunk_size:,} rows")

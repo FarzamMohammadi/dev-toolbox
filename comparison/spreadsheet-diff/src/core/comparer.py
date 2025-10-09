@@ -75,6 +75,11 @@ class FileComparer:
             self.key_column = self._determine_key_column(source_file, key_column)
             console.print(f"Using key column: [green]{self.key_column}[/green]")
 
+            # Display excluded columns if any
+            exclude_columns = self.settings.get_exclude_columns()
+            if exclude_columns:
+                console.print(f"Excluding columns: [yellow]{', '.join(exclude_columns)}[/yellow]")
+
             # Initialize diff tracker
             self.diff_tracker = DifferenceTracker(self.key_column)
 
@@ -262,6 +267,7 @@ class FileComparer:
         comparison_keys = set()
         exact_matches = 0
         sort_columns = self.settings.get_sort_columns()
+        exclude_columns = self.settings.get_exclude_columns()
 
         # Build comparison index first (needed for sorting duplicates)
         console.print("[yellow]Building comparison index for duplicate handling...[/yellow]")
@@ -306,7 +312,8 @@ class FileComparer:
                                 diff_count = self.diff_tracker.compare_rows(
                                     key_value,
                                     source_data,
-                                    comparison_data
+                                    comparison_data,
+                                    ignore_columns=exclude_columns
                                 )
                                 if diff_count > 0:
                                     self.diff_tracker.summary.modified_rows += 1

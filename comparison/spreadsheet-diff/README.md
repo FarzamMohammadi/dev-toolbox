@@ -34,6 +34,7 @@ python compare.py file1.csv file2.csv --output-dir ./results
 |-----------|-------|-------------|---------|
 | `--key` | `-k` | Key column(s) for row matching (comma-separated for composite) | Auto-detect |
 | `--sort-by` | | Sort columns for duplicate key matching (comma-separated) | None |
+| `--exclude` | | Columns to exclude from comparison (comma-separated) | None |
 | `--output-dir` | `-o` | Output directory | `results` |
 | `--format` | `-f` | Output format: `csv`, `excel`, `both` | `excel` |
 | `--chunk-size` | `-c` | Rows per chunk | `100000` |
@@ -89,6 +90,19 @@ python compare.py data1.csv data2.csv \
   --key OrderID \
   --format both \
   --output-dir ./reports
+```
+
+### Exclude Columns
+```bash
+# Exclude timestamp and audit columns
+python compare.py data1.csv data2.csv \
+  --key ID \
+  --exclude "LastModified,UpdatedAt,CreatedBy"
+
+# Exclude generated IDs
+python compare.py file1.xlsx file2.xlsx \
+  --key CustomerID \
+  --exclude "RecordGUID,SessionID,Version"
 ```
 
 ## Output Files
@@ -187,3 +201,6 @@ Treats `""`, `NULL`, `None`, `N/A`, `nan` as equivalent.
 
 **Exit codes?**
 0 = success, 1 = failure, 130 = cancelled.
+
+**Exclude columns that always differ?**
+Use `--exclude "Column1,Column2"` to skip volatile columns (timestamps, GUIDs, audit fields).

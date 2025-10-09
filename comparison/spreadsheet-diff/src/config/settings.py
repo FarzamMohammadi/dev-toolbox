@@ -38,6 +38,11 @@ class ComparisonSettings(BaseModel):
         description="Optional columns to sort by within duplicate key groups (comma-separated)"
     )
 
+    exclude_columns: Optional[str] = Field(
+        default=None,
+        description="Columns to exclude from comparison (comma-separated)"
+    )
+
     case_sensitive: bool = Field(
         default=True,
         description="Case-sensitive string comparison"
@@ -155,6 +160,17 @@ class ComparisonSettings(BaseModel):
         if not self.sort_columns:
             return []
         return [col.strip() for col in self.sort_columns.split(',') if col.strip()]
+
+    def get_exclude_columns(self) -> list[str]:
+        """
+        Parse exclude_columns into list of column names.
+
+        Returns:
+            List of columns to exclude from comparison
+        """
+        if not self.exclude_columns:
+            return []
+        return [col.strip() for col in self.exclude_columns.split(',') if col.strip()]
 
     @classmethod
     def for_large_files(cls) -> "ComparisonSettings":
