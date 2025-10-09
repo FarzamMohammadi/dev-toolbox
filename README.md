@@ -15,6 +15,12 @@ Quickly nukes and resets your Docker environment, removing containers, images, v
 ## [Repository Content Aggregator](./repo-content-aggregator/README.md)
 Exports an entire repository into a single text file for LLM ingestion, while respecting .gitignore rules exactly like Git.
 
+## Comparison Tools
+Utilities for comparing and diffing files.
+
+### [Spreadsheet Diff](./comparison/spreadsheet-diff/README.md)
+Compare CSV and Excel files with field-level difference reporting. Handles 10M+ rows, supports composite keys, duplicate handling, and multiple output formats.
+
 ## Conversion Tools
 Utilities for converting between different file formats and data structures.
 

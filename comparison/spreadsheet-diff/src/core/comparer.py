@@ -1,0 +1,421 @@
+"""
+Main file comparison engine.
+Handles large-scale comparisons (10M+ rows) using chunked processing.
+"""
+
+from pathlib import Path
+from typing import Optional, Dict, Any, List
+from rich.console import Console
+from rich.progress import Progress, TextColumn, BarColumn, TaskProgressColumn
+
+from ..config.settings import ComparisonSettings
+from ..io.readers import FileReader
+from ..io.writers import ResultWriter
+from ..io.format_detector import FormatDetector
+from ..utils.validators import FileValidator
+from ..utils.performance import PerformanceMonitor
+from ..utils.logger import get_logger
+from .hash_engine import RowHashEngine
+from .diff_tracker import DifferenceTracker
+
+
+console = Console()
+logger = get_logger(__name__)
+
+
+class FileComparer:
+    """
+    Main comparison engine for large files.
+    Uses streaming and chunked processing for memory efficiency.
+    """
+
+    def __init__(self, settings: Optional[ComparisonSettings] = None):
+        """
+        Initialize file comparer.
+
+        Args:
+            settings: Comparison settings (uses defaults if None)
+        """
+        self.settings = settings or ComparisonSettings()
+        self.reader = FileReader(self.settings)
+        self.writer = ResultWriter(self.settings)
+        self.format_detector = FormatDetector()
+        self.validator = FileValidator()
+        self.hash_engine = RowHashEngine(self.settings.use_fast_hash)
+
+        self.key_column: Optional[str] = None
+        self.diff_tracker: Optional[DifferenceTracker] = None
+
+    def compare_files(
+        self,
+        source_file: Path,
+        comparison_file: Path,
+        key_column: Optional[str] = None
+    ) -> bool:
+        """
+        Compare two files and generate difference report.
+
+        Args:
+            source_file: Path to source (reference) file
+            comparison_file: Path to comparison file
+            key_column: Optional key column name (auto-detect if None)
+
+        Returns:
+            True if comparison completed successfully
+        """
+        monitor = PerformanceMonitor("File Comparison")
+
+        try:
+            # Step 1: Validate files
+            console.print("\n[bold cyan]Step 1: Validating files...[/bold cyan]")
+            self._validate_files(source_file, comparison_file)
+
+            # Step 2: Determine key column
+            console.print("\n[bold cyan]Step 2: Determining key column...[/bold cyan]")
+            self.key_column = self._determine_key_column(source_file, key_column)
+            console.print(f"Using key column: [green]{self.key_column}[/green]")
+
+            # Initialize diff tracker
+            self.diff_tracker = DifferenceTracker(self.key_column)
+
+            # Step 3: Build source index
+            console.print("\n[bold cyan]Step 3: Building source file index...[/bold cyan]")
+            source_index = self._build_file_index(source_file, "Source")
+            monitor.update_rows(len(source_index))
+
+            # Step 4: Compare with comparison file
+            console.print("\n[bold cyan]Step 4: Comparing files...[/bold cyan]")
+            self._compare_against_index(comparison_file, source_index)
+            monitor.update_rows(self.diff_tracker.summary.total_comparison_rows)
+
+            # Step 5: Generate reports
+            console.print("\n[bold cyan]Step 5: Generating reports...[/bold cyan]")
+            self._generate_reports(source_file, comparison_file)
+
+            # Complete
+            monitor.complete()
+            monitor.print_summary()
+
+            # Print final summary
+            self.diff_tracker.print_summary()
+
+            if not self.diff_tracker.has_differences():
+                console.print("\n[bold green]No differences found! Files are identical.[/bold green]")
+            else:
+                console.print(f"\n[bold yellow]Found {len(self.diff_tracker.differences):,} differences.[/bold yellow]")
+
+            return True
+
+        except Exception as e:
+            console.print(f"\n[bold red]Comparison failed: {e}[/bold red]")
+            logger.exception("Comparison error")
+            return False
+
+    def _validate_files(self, source_file: Path, comparison_file: Path):
+        """Validate input files."""
+        # Check source file
+        is_valid, error = self.validator.validate_file_exists(source_file)
+        if not is_valid:
+            raise ValueError(error)
+
+        is_valid, error = self.validator.validate_file_format(source_file)
+        if not is_valid:
+            raise ValueError(error)
+
+        # Check comparison file
+        is_valid, error = self.validator.validate_file_exists(comparison_file)
+        if not is_valid:
+            raise ValueError(error)
+
+        is_valid, error = self.validator.validate_file_format(comparison_file)
+        if not is_valid:
+            raise ValueError(error)
+
+        console.print("[green]OK: Files validated successfully[/green]")
+
+    def _determine_key_column(self, filepath: Path, key_column: Optional[str]) -> str:
+        """
+        Determine which column to use as key.
+
+        Args:
+            filepath: Path to file (to read columns from)
+            key_column: Optional explicit key column
+
+        Returns:
+            Name of key column to use
+
+        Raises:
+            ValueError: If key column cannot be determined
+        """
+        if key_column:
+            # Validate that key column exists
+            sample_df = self.reader.read_sample(filepath, n_rows=1)
+            is_valid, error = self.validator.validate_key_column(
+                sample_df, key_column, filepath.name
+            )
+            if not is_valid:
+                raise ValueError(error)
+            return key_column
+
+        # Try to auto-detect
+        console.print("[yellow]No key column specified, attempting auto-detection...[/yellow]")
+        sample_df = self.reader.read_sample(filepath, n_rows=1000)
+        detected_key = self.validator.auto_detect_key_column(sample_df)
+
+        if detected_key:
+            console.print(f"[green]Auto-detected key column: {detected_key}[/green]")
+            return detected_key
+
+        # Fall back to using first column
+        first_col = sample_df.columns[0]
+        console.print(
+            f"[yellow]Could not auto-detect key column. "
+            f"Using first column: {first_col}[/yellow]"
+        )
+        return first_col
+
+    def _build_file_index(self, filepath: Path, label: str) -> Dict[Any, List[Dict[str, Any]]]:
+        """
+        Build an index of file contents (key -> list of rows).
+        Supports multiple rows per key (duplicates).
+
+        Args:
+            filepath: Path to file
+            label: Label for progress display
+
+        Returns:
+            Dictionary mapping key values to list of row data (supports duplicates)
+        """
+        index = {}
+        total_rows = 0
+        sort_columns = self.settings.get_sort_columns()
+
+        with Progress(
+            TextColumn("[progress.description]{task.description}"),
+            BarColumn(),
+            TaskProgressColumn(),
+            console=console,
+            transient=False
+        ) as progress:
+
+            task = progress.add_task(f"Reading {label} file...", total=None)
+
+            for chunk in self.reader.read_chunked(filepath):
+                for row_dict in chunk.iter_rows(named=True):
+                    key_value = self._get_composite_key(row_dict)
+
+                    if key_value is not None:
+                        # Store row with its hash in a list (supports duplicates)
+                        row_hash = self.hash_engine.hash_row(row_dict)
+                        row_entry = {
+                            "hash": row_hash,
+                            "data": row_dict
+                        }
+
+                        if key_value not in index:
+                            index[key_value] = []
+                        index[key_value].append(row_entry)
+
+                    total_rows += 1
+
+                progress.update(task, advance=len(chunk))
+
+            progress.update(task, completed=True, description=f"{label} file indexed")
+
+        # Sort rows within each key group if sort columns specified
+        if sort_columns:
+            console.print(f"[yellow]Sorting duplicate keys by: {', '.join(sort_columns)}[/yellow]")
+            for key_value in index:
+                if len(index[key_value]) > 1:
+                    index[key_value] = self._sort_rows(index[key_value], sort_columns)
+
+        console.print(f"[green]OK: Indexed {total_rows:,} rows from {label} file[/green]")
+
+        # Report duplicate key statistics
+        duplicate_keys = sum(1 for rows in index.values() if len(rows) > 1)
+        if duplicate_keys > 0:
+            console.print(f"[yellow]Found {duplicate_keys:,} keys with multiple rows[/yellow]")
+
+        # Update summary
+        if label == "Source":
+            self.diff_tracker.summary.total_source_rows = total_rows
+        else:
+            self.diff_tracker.summary.total_comparison_rows = total_rows
+
+        return index
+
+    def _compare_against_index(
+        self,
+        filepath: Path,
+        source_index: Dict[Any, List[Dict[str, Any]]]
+    ):
+        """
+        Compare file against source index.
+        Handles duplicate keys by matching rows by position.
+
+        Args:
+            filepath: Path to comparison file
+            source_index: Index built from source file (key -> list of rows)
+        """
+        # Track which comparison rows we've seen for each key
+        comparison_key_counts = {}
+        comparison_keys = set()
+        exact_matches = 0
+        sort_columns = self.settings.get_sort_columns()
+
+        # Build comparison index first (needed for sorting duplicates)
+        console.print("[yellow]Building comparison index for duplicate handling...[/yellow]")
+        comparison_index = self._build_file_index(filepath, "Comparison")
+
+        # Now compare row-by-row with position matching
+        with Progress(
+            TextColumn("[progress.description]{task.description}"),
+            BarColumn(),
+            TaskProgressColumn(),
+            console=console,
+            transient=False
+        ) as progress:
+
+            task = progress.add_task("Comparing files...", total=len(comparison_index))
+
+            for key_value, comparison_rows in comparison_index.items():
+                comparison_keys.add(key_value)
+
+                if key_value in source_index:
+                    source_rows = source_index[key_value]
+
+                    # Match rows by position within key group
+                    max_rows = max(len(source_rows), len(comparison_rows))
+
+                    for i in range(max_rows):
+                        if i < len(source_rows) and i < len(comparison_rows):
+                            # Both files have this position - compare them
+                            source_row = source_rows[i]
+                            comparison_row = comparison_rows[i]
+
+                            source_hash = source_row["hash"]
+                            comparison_hash = comparison_row["hash"]
+
+                            if source_hash == comparison_hash:
+                                # Exact match
+                                exact_matches += 1
+                            else:
+                                # Row modified - find field-level differences
+                                source_data = source_row["data"]
+                                comparison_data = comparison_row["data"]
+                                diff_count = self.diff_tracker.compare_rows(
+                                    key_value,
+                                    source_data,
+                                    comparison_data
+                                )
+                                if diff_count > 0:
+                                    self.diff_tracker.summary.modified_rows += 1
+
+                        elif i < len(source_rows):
+                            # Only in source (extra row in source)
+                            self.diff_tracker.summary.only_in_source += 1
+
+                        elif i < len(comparison_rows):
+                            # Only in comparison (extra row in comparison)
+                            self.diff_tracker.summary.only_in_comparison += 1
+
+                else:
+                    # Key only in comparison file
+                    self.diff_tracker.summary.only_in_comparison += len(comparison_rows)
+
+                progress.update(task, advance=1)
+
+            progress.update(task, completed=True, description="Comparison complete")
+
+        # Find keys only in source
+        source_keys = set(source_index.keys())
+        only_in_source_keys = source_keys - comparison_keys
+        for key in only_in_source_keys:
+            self.diff_tracker.summary.only_in_source += len(source_index[key])
+
+        self.diff_tracker.summary.exact_matches = exact_matches
+
+        console.print(f"[green]OK: Comparison complete[/green]")
+        console.print(f"  Exact matches: {exact_matches:,}")
+        console.print(f"  Differences found: {len(self.diff_tracker.differences):,}")
+
+    def _get_composite_key(self, row_dict: Dict[str, Any]) -> Optional[Any]:
+        """
+        Get composite key value from row.
+        Supports both single and multiple key columns.
+
+        Args:
+            row_dict: Row data
+
+        Returns:
+            Key value (single value or tuple for composite keys)
+        """
+        key_columns = self.settings.get_key_columns()
+
+        if not key_columns:
+            # Use single key column
+            return row_dict.get(self.key_column)
+
+        # Build composite key as tuple
+        key_parts = []
+        for col in key_columns:
+            val = row_dict.get(col)
+            if val is None:
+                return None  # If any part of composite key is None, whole key is invalid
+            key_parts.append(val)
+
+        return tuple(key_parts) if len(key_parts) > 1 else key_parts[0]
+
+    def _sort_rows(
+        self,
+        rows: List[Dict[str, Any]],
+        sort_columns: List[str]
+    ) -> List[Dict[str, Any]]:
+        """
+        Sort rows by specified columns.
+
+        Args:
+            rows: List of row entries (with 'hash' and 'data' keys)
+            sort_columns: Columns to sort by
+
+        Returns:
+            Sorted list of rows
+        """
+        def sort_key(row_entry):
+            row_data = row_entry["data"]
+            # Create tuple of sort column values
+            return tuple(row_data.get(col) for col in sort_columns)
+
+        try:
+            return sorted(rows, key=sort_key)
+        except Exception as e:
+            logger.warning(f"Failed to sort rows: {e}. Using original order.")
+            return rows
+
+    def _generate_reports(self, source_file: Path, comparison_file: Path):
+        """Generate output reports."""
+        if not self.diff_tracker.has_differences():
+            console.print("[green]No differences to report[/green]")
+            return
+
+        # Get differences as DataFrame
+        diff_df = self.diff_tracker.get_differences_dataframe()
+
+        # Get summary stats
+        summary_stats = {
+            "total_differences": len(self.diff_tracker.differences),
+            "unique_keys": len(set(diff.key_value for diff in self.diff_tracker.differences)),
+            "exact_matches": self.diff_tracker.summary.exact_matches
+        }
+
+        # Write outputs
+        output_files = self.writer.write_differences(
+            diff_df,
+            source_file.name,
+            comparison_file.name,
+            summary_stats
+        )
+
+        console.print(f"\n[bold green]Reports generated successfully![/bold green]")
+        for file in output_files:
+            console.print(f"  [blue]{file}[/blue]")
