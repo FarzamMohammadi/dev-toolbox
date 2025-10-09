@@ -293,18 +293,29 @@ class ResultWriter:
         .dataTables_wrapper {{
             padding: 20px 0;
         }}
+        .dataTables_filter {{
+            margin-bottom: 20px;
+        }}
+        .dataTables_length {{
+            margin-bottom: 20px;
+        }}
     </style>
 </head>
 <body>
     <div class="container">
         <h1>File Comparison Report</h1>
         <div class="info">
-            <strong>Source:</strong> {source_file}<br>
-            <strong>Comparison:</strong> {comparison_file}<br>
-            <strong>Generated:</strong> {datetime.now().strftime("%Y-%m-%d %H:%M:%S")}
+            <strong>Source File:</strong> {source_file}<br>
+            <strong>Compared to:</strong> {comparison_file}<br>
+            <strong>Generated at:</strong> {datetime.now().strftime("%Y-%m-%d %H:%M:%S")}
         </div>
 
         {stats_html}
+
+        <div class="info" style="margin-top: 15px;">
+            <em>💡 Tip: Hold Shift and click column headers to sort by multiple columns</em>
+        </div>
+
         {truncation_warning}
 
         <table id="diffTable" class="display">
@@ -321,7 +332,7 @@ class ResultWriter:
         $(document).ready(function() {{
             $('#diffTable').DataTable({{
                 pageLength: 50,
-                order: [[0, 'asc']],
+                order: [[0, 'asc'], [1, 'asc']],
                 responsive: true
             }});
         }});
