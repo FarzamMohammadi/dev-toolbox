@@ -1,6 +1,6 @@
 # Spreadsheet Diff
 
-Compare CSV and Excel files with field-level difference reporting. Handles 10M rows.
+Compare CSV and Excel files with field-level difference reporting, filtering, and sorting. Handles 10M rows.
 
 **Default hardware assumption:** 24GB+ RAM, 8+ cores (configurable via `--hardware`)
 
@@ -41,6 +41,8 @@ python compare.py file1.csv file2.csv --output-dir ./results
 | `--format` | `-f` | Output format: `csv`, `excel`, `both` | `excel` |
 | `--chunk-size` | `-c` | Rows per chunk | `100000` |
 | `--no-html` | | Skip HTML report | False |
+| `--enable-search-panes` / `--no-search-panes` | | Enable/disable column filtering in HTML | True |
+| `--filter-columns` | | Columns to show filters for (comma-separated) | Auto-detect |
 | `--case-insensitive` | | Case-insensitive comparison | False |
 | `--ignore-whitespace` | | Ignore whitespace | False |
 | `--log-level` | | `DEBUG`, `INFO`, `WARNING`, `ERROR` | `INFO` |
@@ -108,6 +110,22 @@ python compare.py file1.xlsx file2.xlsx \
   --exclude "RecordGUID,SessionID,Version"
 ```
 
+### Interactive Column Filtering
+```bash
+# Default: Auto-detect filter columns (key, field, type)
+python compare.py data1.csv data2.csv --key ID
+
+# Custom filter columns
+python compare.py data1.csv data2.csv \
+  --key ID \
+  --filter-columns "field,type"
+
+# Disable column filtering
+python compare.py data1.csv data2.csv \
+  --key ID \
+  --no-search-panes
+```
+
 ## Output Files
 
 Generated in output directory (default: `results/`):
@@ -121,7 +139,8 @@ Generated in output directory (default: `results/`):
    - Limit: 1,048,576 rows
 
 3. **HTML** - `differences_report_YYYYMMDD_HHMMSS.html`
-   - Interactive table with search/sort
+   - Interactive table with column filtering, search, and multi-column sort
+   - Click filter values to narrow results (auto-detects key, field, and type columns)
    - Best for <50k differences
 
 ### Output Columns

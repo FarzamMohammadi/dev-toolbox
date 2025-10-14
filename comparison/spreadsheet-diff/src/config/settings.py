@@ -141,6 +141,32 @@ class ComparisonSettings(BaseModel):
         description="Generate interactive HTML report"
     )
 
+    # HTML Report - SearchPanes (Column Filtering)
+    enable_search_panes: bool = Field(
+        default=True,
+        description="Enable interactive column filtering in HTML reports (using DataTables SearchPanes)"
+    )
+
+    search_panes_columns: Optional[str] = Field(
+        default=None,
+        description="Columns to show filters for (comma-separated). None = auto-detect sensible defaults (key, field, type)"
+    )
+
+    search_panes_cascading: bool = Field(
+        default=True,
+        description="Enable cascading filters (filter selections affect other filter options)"
+    )
+
+    search_panes_view_total: bool = Field(
+        default=True,
+        description="Show total counts for each filter value"
+    )
+
+    search_panes_threshold: float = Field(
+        default=0.8,
+        description="Auto-collapse filters if unique values exceed this ratio (0.8 = 80%)"
+    )
+
     # Data handling
     handle_missing_columns: Literal["error", "warn", "ignore"] = Field(
         default="warn",
@@ -196,6 +222,14 @@ class ComparisonSettings(BaseModel):
             return Path(v)
         return v
 
+    @field_validator('search_panes_threshold')
+    @classmethod
+    def validate_search_panes_threshold(cls, v):
+        """Validate SearchPanes threshold is between 0 and 1."""
+        if not 0 < v <= 1:
+            raise ValueError("SearchPanes threshold must be between 0 and 1 (e.g., 0.8 for 80%)")
+        return v
+
     def to_dict(self) -> dict:
         """Convert settings to dictionary."""
         return self.model_dump()
@@ -238,6 +272,17 @@ class ComparisonSettings(BaseModel):
         if not self.exclude_columns:
             return []
         return [col.strip() for col in self.exclude_columns.split(',') if col.strip()]
+
+    def get_search_panes_filter_columns(self) -> Optional[list[str]]:
+        """
+        Parse search_panes_columns into list of column names.
+
+        Returns:
+            List of column names to show filters for, or None for auto-detect
+        """
+        if not self.search_panes_columns:
+            return None
+        return [col.strip() for col in self.search_panes_columns.split(',') if col.strip()]
 
     def apply_hardware_profile(self, profile_name: str = None):
         """

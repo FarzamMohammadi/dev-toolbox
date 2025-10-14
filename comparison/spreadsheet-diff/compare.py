@@ -80,6 +80,16 @@ logger = setup_logger(__name__)
     help='Skip HTML report generation'
 )
 @click.option(
+    '--enable-search-panes/--no-search-panes',
+    default=True,
+    help='Enable/disable interactive column filtering in HTML reports (default: enabled)'
+)
+@click.option(
+    '--filter-columns',
+    type=str,
+    help='Columns to show filters for in HTML report (comma-separated, e.g., "field,type"). Auto-detects if not specified.'
+)
+@click.option(
     '--case-insensitive',
     is_flag=True,
     help='Perform case-insensitive comparison'
@@ -111,6 +121,8 @@ def main(
     format: str,
     chunk_size: int,
     no_html: bool,
+    enable_search_panes: bool,
+    filter_columns: Optional[str],
     case_insensitive: bool,
     ignore_whitespace: bool,
     log_level: str,
@@ -161,6 +173,8 @@ def main(
         output_dir=output_dir,
         output_format=format.lower(),
         generate_html_report=not no_html,
+        enable_search_panes=enable_search_panes,
+        search_panes_columns=filter_columns,
         case_sensitive=not case_insensitive,
         ignore_whitespace=ignore_whitespace,
         log_level=log_level.upper()

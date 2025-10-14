@@ -6,6 +6,7 @@ Supports CSV, Excel, and HTML formats.
 from pathlib import Path
 from datetime import datetime
 from typing import Optional, List
+from dataclasses import dataclass
 import polars as pl
 from rich.console import Console
 
@@ -13,6 +14,161 @@ from ..config.settings import ComparisonSettings, FileFormat
 
 
 console = Console()
+
+
+@dataclass
+class SearchPanesConfig:
+    """
+    Configuration for DataTables SearchPanes extension.
+    Enables interactive column filtering in HTML reports.
+    """
+
+    enabled: bool
+    columns: List[int]  # Column indices to show filters for
+    cascading: bool     # Enable cascading filters
+    view_total: bool    # Show total counts
+    threshold: float    # Auto-collapse threshold
+
+    @classmethod
+    def from_settings(
+        cls,
+        settings: ComparisonSettings,
+        column_names: List[str],
+        key_column_name: str
+    ) -> "SearchPanesConfig":
+        """
+        Create SearchPanesConfig from ComparisonSettings.
+
+        Args:
+            settings: Comparison settings
+            column_names: List of all column names in the output
+            key_column_name: Name of the key column
+
+        Returns:
+            SearchPanesConfig instance
+        """
+        if not settings.enable_search_panes:
+            return cls(
+                enabled=False,
+                columns=[],
+                cascading=False,
+                view_total=False,
+                threshold=1.0
+            )
+
+        # Determine which columns to show filters for
+        filter_column_names = settings.get_search_panes_filter_columns()
+
+        if filter_column_names is None:
+            # Auto-detect: key column, "field", and "type" columns
+            # Skip "source_value" and "comparison_value" (usually too many unique values)
+            filter_column_names = []
+            if key_column_name in column_names:
+                filter_column_names.append(key_column_name)
+            if "field" in column_names:
+                filter_column_names.append("field")
+            if "type" in column_names:
+                filter_column_names.append("type")
+
+        # Convert column names to indices
+        column_indices = []
+        for col_name in filter_column_names:
+            if col_name in column_names:
+                column_indices.append(column_names.index(col_name))
+
+        return cls(
+            enabled=True,
+            columns=column_indices,
+            cascading=settings.search_panes_cascading,
+            view_total=settings.search_panes_view_total,
+            threshold=settings.search_panes_threshold
+        )
+
+    def to_js_config(self) -> str:
+        """
+        Generate JavaScript configuration object for DataTables SearchPanes.
+
+        Returns:
+            JavaScript object string
+        """
+        if not self.enabled or not self.columns:
+            return ""
+
+        # Format: columns: [0, 1, 4]
+        columns_js = f"[{', '.join(map(str, self.columns))}]"
+
+        config = f"""
+        searchPanes: {{
+            cascadePanes: {'true' if self.cascading else 'false'},
+            viewTotal: {'true' if self.view_total else 'false'},
+            threshold: {self.threshold},
+            columns: {columns_js},
+            layout: 'columns-3',
+            clear: true,
+            initCollapsed: false,
+            dtOpts: {{
+                searching: true,
+                paging: true,
+                pagingType: 'numbers',
+                pageLength: 10,
+                dom: 'tp'
+            }}
+        }},
+        columnDefs: [{{
+            searchPanes: {{
+                show: true,
+                orthogonal: 'filter'
+            }},
+            targets: {columns_js}
+        }}],
+        language: {{
+            searchPanes: {{
+                title: {{
+                    _: 'Filters Active - %d',
+                    0: 'No Filters Active',
+                    1: 'Filter Active - 1'
+                }},
+                clearMessage: 'Clear All',
+                collapse: {{
+                    0: 'Search Filters',
+                    _: 'Search Filters (%d)'
+                }}
+            }}
+        }}"""
+
+        return config
+
+    def get_cdn_links(self) -> dict:
+        """
+        Get CDN links for SearchPanes extension.
+
+        Returns:
+            Dictionary with 'css' and 'js' keys containing CDN URLs
+        """
+        if not self.enabled:
+            return {"css": [], "js": []}
+
+        return {
+            "css": [
+                "https://cdn.datatables.net/select/1.7.0/css/select.dataTables.min.css",
+                "https://cdn.datatables.net/searchpanes/2.2.0/css/searchPanes.dataTables.min.css"
+            ],
+            "js": [
+                "https://cdn.datatables.net/select/1.7.0/js/dataTables.select.min.js",
+                "https://cdn.datatables.net/searchpanes/2.2.0/js/dataTables.searchPanes.min.js"
+            ]
+        }
+
+    def get_dom_layout(self) -> str:
+        """
+        Get DataTables DOM layout string.
+
+        Returns:
+            DOM layout string ('Pfrtip' with SearchPanes, 'frtip' without)
+        """
+        if self.enabled and self.columns:
+            return "Pfrtip"  # P = SearchPanes, f = filter, r = processing, t = table, i = info, p = pagination
+        return "frtip"  # Standard layout without SearchPanes
 
 
 class ResultWriter:
@@ -153,7 +309,7 @@ class ResultWriter:
         timestamp: str,
         summary_stats: Optional[dict] = None
     ) -> Path:
-        """Generate interactive HTML report with DataTables."""
+        """Generate interactive HTML report with DataTables and SearchPanes filtering."""
         output_file = self.output_dir / f"differences_report_{timestamp}.html"
 
         # Limit rows for HTML (performance)
@@ -166,6 +322,17 @@ class ResultWriter:
             )
             df = df.head(max_html_rows)
             is_truncated = True
+
+        # Configure SearchPanes for column filtering
+        key_column = df.columns[0]  # First column is always the key
+        search_panes_config = SearchPanesConfig.from_settings(
+            self.settings,
+            list(df.columns),
+            key_column
+        )
+
+        # Get CDN links
+        cdn_links = search_panes_config.get_cdn_links()
 
         # Generate table rows
         table_rows = ""
@@ -213,15 +380,23 @@ class ResultWriter:
             </div>
             """
 
+        # Build CDN links HTML
+        css_links = '<link rel="stylesheet" href="https://cdn.datatables.net/1.13.6/css/jquery.dataTables.min.css">'
+        for css_url in cdn_links.get("css", []):
+            css_links += f'\n    <link rel="stylesheet" href="{css_url}">'
+
+        js_scripts = '<script src="https://code.jquery.com/jquery-3.7.0.min.js"></script>\n    <script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>'
+        for js_url in cdn_links.get("js", []):
+            js_scripts += f'\n    <script src="{js_url}"></script>'
+
         html = f"""
 <!DOCTYPE html>
 <html>
 <head>
     <meta charset="UTF-8">
     <title>File Comparison Report</title>
-    <link rel="stylesheet" href="https://cdn.datatables.net/1.13.6/css/jquery.dataTables.min.css">
-    <script src="https://code.jquery.com/jquery-3.7.0.min.js"></script>
-    <script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
+    {css_links}
+    {js_scripts}
     <style>
         body {{
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
@@ -299,6 +474,96 @@ class ResultWriter:
         .dataTables_length {{
             margin-bottom: 20px;
         }}
+
+        /* SearchPanes styling */
+        .dtsp-searchPanes {{
+            margin-bottom: 20px;
+        }}
+        .dtsp-searchPane {{
+            background: white;
+            border: 1px solid #e0e0e0;
+            border-radius: 4px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+        }}
+        .dtsp-title {{
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 8px 12px;
+            font-weight: 600;
+            border-radius: 4px 4px 0 0;
+        }}
+        .dtsp-topRow {{
+            background: #f8f9fa;
+            padding: 8px;
+            border-bottom: 1px solid #e0e0e0;
+        }}
+        .dtsp-searchCont input {{
+            border: 1px solid #ced4da;
+            border-radius: 4px;
+            padding: 8px 12px;
+            width: 100%;
+            font-size: 13px;
+            transition: all 0.2s ease;
+            background: white;
+        }}
+        .dtsp-searchCont input:focus {{
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }}
+        .dtsp-searchCont input::placeholder {{
+            color: #a0a0a0;
+            font-style: italic;
+            opacity: 0.8;
+        }}
+        .dtsp-selected {{
+            background: #e3f2fd !important;
+            border-left: 3px solid #667eea !important;
+        }}
+
+        /* Filters Active Counter */
+        .dtsp-panesContainer {{
+            margin-bottom: 25px;
+        }}
+        div.dtsp-panesContainer div.dtsp-title {{
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 10px 16px;
+            font-size: 15px;
+            font-weight: 600;
+            border-radius: 6px;
+            box-shadow: 0 2px 4px rgba(102, 126, 234, 0.2);
+            margin-bottom: 15px;
+            display: inline-block;
+            min-width: 180px;
+            text-align: center;
+        }}
+        div.dtsp-panesContainer button.dtsp-clearAll {{
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 4px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            box-shadow: 0 2px 4px rgba(245, 87, 108, 0.2);
+        }}
+        div.dtsp-panesContainer button.dtsp-clearAll:hover {{
+            transform: translateY(-1px);
+            box-shadow: 0 4px 8px rgba(245, 87, 108, 0.3);
+        }}
+        div.dtsp-panesContainer button.dtsp-clearAll:active {{
+            transform: translateY(0);
+        }}
+        .help-text {{
+            background: #f0f7ff;
+            border-left: 4px solid #667eea;
+            padding: 12px 15px;
+            margin-bottom: 20px;
+            color: #1a1a1a;
+            border-radius: 4px;
+        }}
     </style>
 </head>
 <body>
@@ -312,8 +577,11 @@ class ResultWriter:
 
         {stats_html}
 
-        <div class="info" style="margin-top: 15px;">
-            <em>💡 Tip: Hold Shift and click column headers to sort by multiple columns</em>
+        <div class="help-text">
+            <strong>💡 Interactive Features:</strong><br>
+            • <strong>Column Filters:</strong> {"Use the filter panels above to narrow down results by specific values" if search_panes_config.enabled else "Enable with --enable-search-panes flag"}<br>
+            • <strong>Multi-Column Sort:</strong> Hold Shift and click column headers to sort by multiple columns<br>
+            • <strong>Search:</strong> Use the search box to find specific text across all columns
         </div>
 
         {truncation_warning}
@@ -330,11 +598,24 @@ class ResultWriter:
 
     <script>
         $(document).ready(function() {{
-            $('#diffTable').DataTable({{
+            var table = $('#diffTable').DataTable({{
                 pageLength: 50,
                 order: [[0, 'asc'], [1, 'asc']],
-                responsive: true
+                responsive: true,
+                dom: '{search_panes_config.get_dom_layout()}',{search_panes_config.to_js_config()}
             }});
+
+            // Add placeholders to SearchPanes filter inputs
+            setTimeout(function() {{
+                $('.dtsp-searchPane').each(function() {{
+                    var paneTitle = $(this).find('.dtsp-title').text().trim();
+                    var searchInput = $(this).find('.dtsp-searchCont input[type="search"]');
+                    if (searchInput.length) {{
+                        searchInput.attr('placeholder', 'Search ' + paneTitle.toLowerCase() + '...');
+                        searchInput.val('');  // Clear any default value
+                    }}
+                }});
+            }}, 100);
         }});
     </script>
 </body>
