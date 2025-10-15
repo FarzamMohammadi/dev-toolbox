@@ -175,6 +175,9 @@ class DifferenceTracker:
             # Treat common null representations as None
             if not normalized or normalized in ("None", "NULL", "null", "N/A", "nan", "NaN"):
                 return None
+            # Decode HTML entities (e.g., &gt; -> >, &lt; -> <, &amp; -> &)
+            import html
+            normalized = html.unescape(normalized)
             return normalized
 
         # Handle float NaN (avoid Polars overhead)
