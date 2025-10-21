@@ -153,38 +153,122 @@ class DifferenceTracker:
 
         return differences_found
 
+    def _try_parse_numeric(self, value: str) -> Any:
+        """
+        Try to parse a string as a numeric value.
+
+        Args:
+            value: String to parse
+
+        Returns:
+            Numeric value (int or float) or original string if parsing fails
+        """
+        try:
+            # Try int first (handles large numbers without precision loss)
+            if '.' not in value and 'e' not in value.lower():
+                return int(value)
+            # Try float (handles scientific notation like 2.20E+09)
+            return float(value)
+        except (ValueError, AttributeError):
+            return value
+
+    def _try_parse_datetime(self, value: str):
+        """
+        Try to parse a string as a datetime.
+
+        Args:
+            value: String to parse
+
+        Returns:
+            datetime object or original string if parsing fails
+        """
+        from datetime import datetime
+
+        # Common date/datetime formats
+        formats = [
+            '%Y-%m-%d %H:%M:%S',
+            '%Y-%m-%d %H:%M:%S.%f',
+            '%Y-%m-%d',
+            '%d/%m/%Y',
+            '%m/%d/%Y',
+            '%Y/%m/%d',
+            '%d-%m-%Y',
+            '%m-%d-%Y'
+        ]
+
+        for fmt in formats:
+            try:
+                return datetime.strptime(value, fmt)
+            except (ValueError, AttributeError):
+                continue
+
+        return value
+
     def _normalize_for_comparison(self, value: Any) -> Any:
         """
-        Normalize a value for comparison.
-        Optimized to avoid creating Polars Series objects.
+        Normalize a value for comparison with intelligent type handling.
 
         Args:
             value: Value to normalize
 
         Returns:
-            Normalized value
+            Normalized value (handles type mismatches, numeric precision, dates)
         """
+        from datetime import datetime, date
+        import math
+        import html
+
         # Handle None
         if value is None:
             return None
 
+        # Handle float NaN
+        if isinstance(value, float) and math.isnan(value):
+            return None
+
         # Handle strings
         if isinstance(value, str):
-            # Strip whitespace
             normalized = value.strip()
+
             # Treat common null representations as None
             if not normalized or normalized in ("None", "NULL", "null", "N/A", "nan", "NaN"):
                 return None
-            # Decode HTML entities (e.g., &gt; -> >, &lt; -> <, &amp; -> &)
-            import html
+
+            # Decode HTML entities
             normalized = html.unescape(normalized)
+
+            # Try parsing as numeric (handles scientific notation, large numbers)
+            numeric_val = self._try_parse_numeric(normalized)
+            if numeric_val != normalized:
+                return numeric_val
+
+            # Try parsing as datetime
+            datetime_val = self._try_parse_datetime(normalized)
+            if datetime_val != normalized:
+                # Truncate to date only if no time component
+                if isinstance(datetime_val, datetime) and datetime_val.time().replace(microsecond=0) == datetime_val.time().min:
+                    return datetime_val.date()
+                return datetime_val
+
             return normalized
 
-        # Handle float NaN (avoid Polars overhead)
-        if isinstance(value, float):
-            import math
-            if math.isnan(value):
-                return None
+        # Handle datetime objects - truncate to date if time is midnight
+        if isinstance(value, datetime):
+            if value.time().replace(microsecond=0) == value.time().min:
+                return value.date()
+            return value
+
+        # Handle date objects
+        if isinstance(value, date):
+            return value
+
+        # Handle numeric types - normalize to comparable form
+        if isinstance(value, (int, float)):
+            # Very large integers might be stored as floats in one file and ints in another
+            # Normalize floats that are actually integers
+            if isinstance(value, float) and value.is_integer() and abs(value) < 2**53:
+                return int(value)
+            return value
 
         return value
 
