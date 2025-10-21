@@ -598,6 +598,10 @@ class ResultWriter:
 
     <script>
         $(document).ready(function() {{
+            var panePaginationState = {{}};
+            var paneScrollState = {{}};
+            var isRestoring = false;
+
             var table = $('#diffTable').DataTable({{
                 pageLength: 50,
                 order: [[0, 'asc'], [1, 'asc']],
@@ -605,17 +609,102 @@ class ResultWriter:
                 dom: '{search_panes_config.get_dom_layout()}',{search_panes_config.to_js_config()}
             }});
 
-            // Add placeholders to SearchPanes filter inputs
+            // Save state frequently (but not during restore)
+            setInterval(function() {{
+                if (!isRestoring) {{
+                    savePaneStates();
+                }}
+            }}, 50);
+
+            // Restore state after table redraws
+            table.on('draw.dt', function() {{
+                isRestoring = true;
+                setTimeout(function() {{
+                    restorePaneStates();
+                    setTimeout(function() {{
+                        isRestoring = false;
+                    }}, 200);
+                }}, 100);
+            }});
+
+            // Track Clear All and X buttons - only allow reset for these
+            $(document).on('click', '.dtsp-clearAll', function() {{
+                panePaginationState = {{}};
+                paneScrollState = {{}};
+            }});
+
+            $(document).on('click', '.clearButton', function() {{
+                var $pane = $(this).closest('.dtsp-searchPane');
+                var paneId = $pane.find('.dtsp-paneInputButton').attr('placeholder');
+                if (paneId) {{
+                    delete panePaginationState[paneId];
+                    delete paneScrollState[paneId];
+                }}
+            }});
+
+            // Initial setup
             setTimeout(function() {{
+                savePaneStates();
+            }}, 200);
+
+            function savePaneStates() {{
                 $('.dtsp-searchPane').each(function() {{
-                    var paneTitle = $(this).find('.dtsp-title').text().trim();
-                    var searchInput = $(this).find('.dtsp-searchCont input[type="search"]');
-                    if (searchInput.length) {{
-                        searchInput.attr('placeholder', 'Search ' + paneTitle.toLowerCase() + '...');
-                        searchInput.val('');  // Clear any default value
+                    var $pane = $(this);
+                    var paneId = $pane.find('.dtsp-paneInputButton').attr('placeholder');
+                    if (!paneId) return;
+
+                    // Save current page number
+                    var $paneTable = $pane.find('table');
+                    if ($.fn.DataTable.isDataTable($paneTable)) {{
+                        try {{
+                            var paneTableApi = $paneTable.DataTable();
+                            var currentPage = paneTableApi.page();
+                            if (currentPage !== undefined && currentPage >= 0) {{
+                                panePaginationState[paneId] = currentPage;
+                            }}
+                        }} catch (e) {{}}
+                    }}
+
+                    // Save scroll position
+                    var $scrollBody = $pane.find('.dataTables_scrollBody');
+                    if ($scrollBody.length) {{
+                        var scrollTop = $scrollBody.scrollTop();
+                        if (scrollTop >= 0) {{
+                            paneScrollState[paneId] = scrollTop;
+                        }}
                     }}
                 }});
-            }}, 100);
+            }}
+
+            function restorePaneStates() {{
+                $('.dtsp-searchPane').each(function() {{
+                    var $pane = $(this);
+                    var paneId = $pane.find('.dtsp-paneInputButton').attr('placeholder');
+                    if (!paneId) return;
+
+                    // Always restore to saved page (never reset except Clear All)
+                    if (panePaginationState[paneId] !== undefined) {{
+                        var $paneTable = $pane.find('table');
+                        if ($.fn.DataTable.isDataTable($paneTable)) {{
+                            try {{
+                                var paneTableApi = $paneTable.DataTable();
+                                var savedPage = panePaginationState[paneId];
+                                if (paneTableApi.page() !== savedPage) {{
+                                    paneTableApi.page(savedPage).draw(false);
+                                }}
+                            }} catch (e) {{}}
+                        }}
+                    }}
+
+                    // Always restore scroll position
+                    if (paneScrollState[paneId] !== undefined) {{
+                        var $scrollBody = $pane.find('.dataTables_scrollBody');
+                        if ($scrollBody.length) {{
+                            $scrollBody.scrollTop(paneScrollState[paneId]);
+                        }}
+                    }}
+                }});
+            }}
         }});
     </script>
 </body>
