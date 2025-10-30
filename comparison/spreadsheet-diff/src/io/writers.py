@@ -342,6 +342,8 @@ class ResultWriter:
                 # Sanitize HTML
                 str_value = str(value) if value is not None else ""
                 str_value = str_value.replace("<", "&lt;").replace(">", "&gt;")
+                # Convert newlines to <br> for better HTML rendering
+                str_value = str_value.replace("\n", "<br>")
                 row_html += f"<td>{str_value}</td>"
             row_html += "</tr>"
             table_rows += row_html
@@ -563,6 +565,27 @@ class ResultWriter:
             margin-bottom: 20px;
             color: #1a1a1a;
             border-radius: 4px;
+        }}
+
+        /* Pagination styling - add moderate spacing to prevent wrapping */
+        .dataTables_paginate {{
+            padding-right: 15px !important;
+            padding-left: 10px !important;
+            margin-top: 20px !important;
+        }}
+        .dataTables_paginate .paginate_button {{
+            margin: 0 5px !important;
+            padding: 8px 12px !important;
+        }}
+        .dataTables_paginate .paginate_button.current {{
+            margin: 0 5px !important;
+        }}
+        .dataTables_paginate .paginate_button.previous,
+        .dataTables_paginate .paginate_button.next {{
+            margin: 0 8px !important;
+        }}
+        .dataTables_info {{
+            padding-left: 10px !important;
         }}
     </style>
 </head>

@@ -31,6 +31,13 @@ class FileComparer:
     Uses streaming and chunked processing for memory efficiency.
     """
 
+    # Constants for row difference formatting
+    ALL_FIELDS_INDICATOR = "ALL_FIELDS"
+    FIELD_SEPARATOR = "\n"
+    NULL_DISPLAY = "(null)"
+    EMPTY_DISPLAY = "(empty)"
+    MAX_CELL_LENGTH = 32000  # Excel limit is 32,767, leaving some buffer
+
     def __init__(self, settings: Optional[ComparisonSettings] = None):
         """
         Initialize file comparer.
@@ -147,10 +154,14 @@ class FileComparer:
 
         # Add rows only in source to detailed output
         for row_dict in only_in_source.iter_rows(named=True):
-            key_value = tuple(row_dict[col] for col in key_columns) if len(key_columns) > 1 else row_dict[key_columns[0]]
+            key_value = self._extract_key_value(row_dict, key_columns)
 
             # Extract source columns (without _comparison suffix)
-            source_row_dict = {col: row_dict[col] for col in row_dict.keys() if not col.endswith("_comparison")}
+            source_row_dict = {
+                col: row_dict[col]
+                for col in row_dict.keys()
+                if not col.endswith("_comparison")
+            }
 
             self._add_row_difference(
                 row_dict=source_row_dict,
@@ -162,15 +173,17 @@ class FileComparer:
 
         # Add rows only in comparison to detailed output
         for row_dict in only_in_comparison.iter_rows(named=True):
-            key_value = tuple(row_dict[col] for col in key_columns) if len(key_columns) > 1 else row_dict[key_columns[0]]
+            key_value = self._extract_key_value(row_dict, key_columns)
 
             # Extract comparison columns and remove _comparison suffix
-            comparison_row_dict = {}
-            for col in row_dict.keys():
-                if col.endswith("_comparison"):
-                    original_col = col[:-11]  # Remove "_comparison"
-                    comparison_row_dict[original_col] = row_dict[col]
-                elif col in key_columns:
+            comparison_row_dict = {
+                col[:-11]: row_dict[col]  # Remove "_comparison" suffix
+                for col in row_dict.keys()
+                if col.endswith("_comparison")
+            }
+            # Add key columns
+            for col in key_columns:
+                if col in row_dict:
                     comparison_row_dict[col] = row_dict[col]
 
             self._add_row_difference(
@@ -239,6 +252,21 @@ class FileComparer:
             else:
                 self.diff_tracker.summary.exact_matches += 1
 
+    def _extract_key_value(self, row_dict: Dict[str, Any], key_columns: List[str]) -> Any:
+        """
+        Extract key value from a row dictionary.
+
+        Args:
+            row_dict: Row data dictionary
+            key_columns: List of key column names
+
+        Returns:
+            Single key value or tuple for composite keys
+        """
+        if len(key_columns) == 1:
+            return row_dict[key_columns[0]]
+        return tuple(row_dict[col] for col in key_columns)
+
     def _add_row_difference(
         self,
         row_dict: Dict[str, Any],
@@ -249,7 +277,7 @@ class FileComparer:
     ):
         """
         Add a single consolidated row difference for rows that only exist in one file.
-        All field values are concatenated into a single "Field: Value" string.
+        All field values are formatted as multi-line "Field: Value" pairs for readability.
 
         Args:
             row_dict: Row data dictionary
@@ -257,40 +285,78 @@ class FileComparer:
             key_value: The key value for this row
             exclude_columns: Columns to exclude from comparison
             diff_type: "added" (only in comparison) or "removed" (only in source)
+
+        Example output format:
+            Applicant_FirstName: John
+            Applicant_LastName: Doe
+            Applicant_Email: john@example.com
+            ...
         """
+        # Validate diff_type
+        if diff_type not in ("added", "removed"):
+            logger.warning(f"Invalid diff_type '{diff_type}' for key {key_value}. Skipping.")
+            return
+
+        # Handle empty row_dict
+        if not row_dict:
+            logger.warning(f"Empty row_dict for key {key_value} with type {diff_type}. Skipping.")
+            return
+
         exclude_set = set(exclude_columns) | set(key_columns)
         field_value_pairs = []
 
-        for field_name, field_value in row_dict.items():
-            # Skip key columns and excluded columns
-            if field_name in exclude_set:
-                continue
+        # Collect and sort field names for consistent ordering
+        field_names = sorted([
+            field_name for field_name in row_dict.keys()
+            if field_name not in exclude_set and not field_name.endswith("_comparison")
+        ])
 
-            # Skip columns with _comparison suffix (from merged data)
-            if field_name.endswith("_comparison"):
-                continue
+        for field_name in field_names:
+            field_value = row_dict[field_name]
 
-            # Format as "FieldName: Value"
-            value_str = str(field_value) if field_value is not None else ""
+            # Format value with proper null/empty handling
+            if field_value is None:
+                value_str = self.NULL_DISPLAY
+            elif isinstance(field_value, str) and field_value.strip() == "":
+                value_str = self.EMPTY_DISPLAY
+            else:
+                value_str = str(field_value)
+
             field_value_pairs.append(f"{field_name}: {value_str}")
 
-        # Concatenate all field:value pairs
-        concatenated_values = ", ".join(field_value_pairs)
+        # Handle case where all fields were excluded
+        if not field_value_pairs:
+            logger.warning(
+                f"No fields to display for key {key_value} (all excluded). "
+                f"Type: {diff_type}"
+            )
+            return
+
+        # Concatenate with newlines for readability
+        concatenated_values = self.FIELD_SEPARATOR.join(field_value_pairs)
+
+        # Check for Excel cell length limit and truncate if needed
+        if len(concatenated_values) > self.MAX_CELL_LENGTH:
+            truncated_values = concatenated_values[:self.MAX_CELL_LENGTH]
+            num_hidden_fields = len(field_value_pairs) - concatenated_values[:self.MAX_CELL_LENGTH].count(self.FIELD_SEPARATOR)
+            concatenated_values = f"{truncated_values}\n... ({num_hidden_fields} more fields truncated)"
+            logger.warning(
+                f"Concatenated value for key {key_value} exceeds Excel limit. "
+                f"Truncated {num_hidden_fields} fields."
+            )
 
         # Set source and comparison values based on diff type
         if diff_type == "removed":
             source_value = concatenated_values
             comparison_value = None
-        elif diff_type == "added":
+        else:  # diff_type == "added"
             source_value = None
             comparison_value = concatenated_values
-        else:
-            return  # Invalid diff type
 
         # Add single consolidated difference record
         self.diff_tracker.add_field_difference(
             key_value=key_value,
-            field_name="ALL_FIELDS",
+            field_name=self.ALL_FIELDS_INDICATOR,
             source_value=source_value,
             comparison_value=comparison_value,
             diff_type=diff_type
