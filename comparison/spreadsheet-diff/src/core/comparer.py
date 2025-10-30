@@ -136,11 +136,50 @@ class FileComparer:
         )
 
         # Find rows only in source or comparison
-        only_in_source = merged.filter(pl.col(source_df.columns[0] if source_df.columns[0] != join_keys else source_df.columns[1]).is_null())
-        only_in_comparison = merged.filter(pl.col(f"{source_df.columns[0]}_comparison" if source_df.columns[0] != join_keys else f"{source_df.columns[1]}_comparison").is_null())
+        # For rows only in source: comparison columns will be null
+        # For rows only in comparison: source columns will be null
+        first_non_key_col = source_df.columns[0] if source_df.columns[0] != join_keys else source_df.columns[1]
+        only_in_source = merged.filter(pl.col(f"{first_non_key_col}_comparison").is_null())
+        only_in_comparison = merged.filter(pl.col(first_non_key_col).is_null())
 
         self.diff_tracker.summary.only_in_source = len(only_in_source)
         self.diff_tracker.summary.only_in_comparison = len(only_in_comparison)
+
+        # Add rows only in source to detailed output
+        for row_dict in only_in_source.iter_rows(named=True):
+            key_value = tuple(row_dict[col] for col in key_columns) if len(key_columns) > 1 else row_dict[key_columns[0]]
+
+            # Extract source columns (without _comparison suffix)
+            source_row_dict = {col: row_dict[col] for col in row_dict.keys() if not col.endswith("_comparison")}
+
+            self._add_row_difference(
+                row_dict=source_row_dict,
+                key_columns=key_columns,
+                key_value=key_value,
+                exclude_columns=exclude_columns,
+                diff_type="removed"
+            )
+
+        # Add rows only in comparison to detailed output
+        for row_dict in only_in_comparison.iter_rows(named=True):
+            key_value = tuple(row_dict[col] for col in key_columns) if len(key_columns) > 1 else row_dict[key_columns[0]]
+
+            # Extract comparison columns and remove _comparison suffix
+            comparison_row_dict = {}
+            for col in row_dict.keys():
+                if col.endswith("_comparison"):
+                    original_col = col[:-11]  # Remove "_comparison"
+                    comparison_row_dict[original_col] = row_dict[col]
+                elif col in key_columns:
+                    comparison_row_dict[col] = row_dict[col]
+
+            self._add_row_difference(
+                row_dict=comparison_row_dict,
+                key_columns=key_columns,
+                key_value=key_value,
+                exclude_columns=exclude_columns,
+                diff_type="added"
+            )
 
         # Compare field values for matching keys
         console.print("[yellow]Comparing field values...[/yellow]")
@@ -199,6 +238,63 @@ class FileComparer:
                 self.diff_tracker.summary.modified_rows += 1
             else:
                 self.diff_tracker.summary.exact_matches += 1
+
+    def _add_row_difference(
+        self,
+        row_dict: Dict[str, Any],
+        key_columns: List[str],
+        key_value: Any,
+        exclude_columns: List[str],
+        diff_type: str
+    ):
+        """
+        Add a single consolidated row difference for rows that only exist in one file.
+        All field values are concatenated into a single "Field: Value" string.
+
+        Args:
+            row_dict: Row data dictionary
+            key_columns: List of key column names to exclude
+            key_value: The key value for this row
+            exclude_columns: Columns to exclude from comparison
+            diff_type: "added" (only in comparison) or "removed" (only in source)
+        """
+        exclude_set = set(exclude_columns) | set(key_columns)
+        field_value_pairs = []
+
+        for field_name, field_value in row_dict.items():
+            # Skip key columns and excluded columns
+            if field_name in exclude_set:
+                continue
+
+            # Skip columns with _comparison suffix (from merged data)
+            if field_name.endswith("_comparison"):
+                continue
+
+            # Format as "FieldName: Value"
+            value_str = str(field_value) if field_value is not None else ""
+            field_value_pairs.append(f"{field_name}: {value_str}")
+
+        # Concatenate all field:value pairs
+        concatenated_values = ", ".join(field_value_pairs)
+
+        # Set source and comparison values based on diff type
+        if diff_type == "removed":
+            source_value = concatenated_values
+            comparison_value = None
+        elif diff_type == "added":
+            source_value = None
+            comparison_value = concatenated_values
+        else:
+            return  # Invalid diff type
+
+        # Add single consolidated difference record
+        self.diff_tracker.add_field_difference(
+            key_value=key_value,
+            field_name="ALL_FIELDS",
+            source_value=source_value,
+            comparison_value=comparison_value,
+            diff_type=diff_type
+        )
 
     def _compare_with_index_method(
         self,
@@ -459,6 +555,7 @@ class FileComparer:
         exact_matches = 0
         sort_columns = self.settings.get_sort_columns()
         exclude_columns = self.settings.get_exclude_columns()
+        key_columns = self.settings.get_key_columns() or [self.key_column]
 
         # Build comparison index first (needed for sorting duplicates)
         console.print("[yellow]Building comparison index for duplicate handling...[/yellow]")
@@ -513,13 +610,43 @@ class FileComparer:
                             # Only in source (extra row in source)
                             self.diff_tracker.summary.only_in_source += 1
 
+                            # Add to detailed output
+                            source_row = source_rows[i]
+                            self._add_row_difference(
+                                row_dict=source_row["data"],
+                                key_columns=key_columns,
+                                key_value=key_value,
+                                exclude_columns=exclude_columns,
+                                diff_type="removed"
+                            )
+
                         elif i < len(comparison_rows):
                             # Only in comparison (extra row in comparison)
                             self.diff_tracker.summary.only_in_comparison += 1
 
+                            # Add to detailed output
+                            comparison_row = comparison_rows[i]
+                            self._add_row_difference(
+                                row_dict=comparison_row["data"],
+                                key_columns=key_columns,
+                                key_value=key_value,
+                                exclude_columns=exclude_columns,
+                                diff_type="added"
+                            )
+
                 else:
                     # Key only in comparison file
                     self.diff_tracker.summary.only_in_comparison += len(comparison_rows)
+
+                    # Add all rows for this key to detailed output
+                    for comparison_row in comparison_rows:
+                        self._add_row_difference(
+                            row_dict=comparison_row["data"],
+                            key_columns=key_columns,
+                            key_value=key_value,
+                            exclude_columns=exclude_columns,
+                            diff_type="added"
+                        )
 
                 progress.update(task, advance=1)
 
@@ -530,6 +657,16 @@ class FileComparer:
         only_in_source_keys = source_keys - comparison_keys
         for key in only_in_source_keys:
             self.diff_tracker.summary.only_in_source += len(source_index[key])
+
+            # Add all rows for this key to detailed output
+            for source_row in source_index[key]:
+                self._add_row_difference(
+                    row_dict=source_row["data"],
+                    key_columns=key_columns,
+                    key_value=key,
+                    exclude_columns=exclude_columns,
+                    diff_type="removed"
+                )
 
         self.diff_tracker.summary.exact_matches = exact_matches
 
