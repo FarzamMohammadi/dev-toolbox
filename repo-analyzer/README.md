@@ -59,7 +59,7 @@ MAX_DEPTH=4                   # Tree depth
 EXCLUDE_DIRS=".git node_modules .venv ..."
 
 # Visualization
-GOURCE_RESOLUTION="800x600"
+GOURCE_RESOLUTION="960x720"
 GOURCE_SECONDS_PER_DAY="0.5"  # Lower = faster
 GOURCE_VIDEO_DURATION=60      # -1 for full history
 

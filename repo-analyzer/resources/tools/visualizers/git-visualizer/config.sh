@@ -10,7 +10,7 @@ PROJECT_NAME="AI Knowledge Service"
 # Gource configuration
 GOURCE_TITLE="${PROJECT_NAME} Evolution"
 # Window resolution (use small fixed size to avoid Retina scaling issues)
-GOURCE_RESOLUTION="800x600"
+GOURCE_RESOLUTION="960x720"
 GOURCE_SECONDS_PER_DAY="0.5"
 
 # Output video duration (in seconds, -1 for auto)

@@ -69,8 +69,8 @@ echo ""
 if [ -z "$PROJECT_NAME" ]; then
     PROJECT_NAME="$(basename "$TARGET_REPO")"
 fi
-GOURCE_TITLE="${PROJECT_NAME} Evolution - DON'T CLOSE WINDOW - VIDEO IS GENERATING"
-GOURCE_RESOLUTION="${GOURCE_RESOLUTION:-800x600}"
+GOURCE_TITLE="${PROJECT_NAME} Evolution (Interactive) - DON'T CLOSE WINDOW - VIDEO IS GENERATING"
+GOURCE_RESOLUTION="${GOURCE_RESOLUTION:-960x720}"
 GOURCE_SECONDS_PER_DAY="${GOURCE_SECONDS_PER_DAY:-0.5}"
 GOURCE_VIDEO_DURATION="${GOURCE_VIDEO_DURATION:-60}"
 GOURCE_LIVE_PREVIEW="${GOURCE_LIVE_PREVIEW:-false}"
@@ -208,8 +208,9 @@ else
 
     # In interactive mode, warn about window
     if [ "$INTERACTIVE" = true ]; then
-        echo -e "${YELLOW}NOTE:${NC} A window will open to render the video."
-        echo "      Do not close it - it will close automatically when complete."
+        echo -e "${YELLOW}NOTE:${NC} An interactive window will open to render the video."
+        echo "      Navigate while recording: Space (pause), +/- (speed), arrows (pan), mouse (drag/zoom)"
+        echo "      Do not close it early - it will close automatically when complete."
         echo ""
         echo "      If the video doesn't capture full git history, edit config.sh:"
         echo "        GOURCE_VIDEO_DURATION=120   # Increase duration (seconds)"

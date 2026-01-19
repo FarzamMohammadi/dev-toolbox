@@ -42,7 +42,7 @@ Edit `config.sh`:
 |--------|---------|-------------|
 | `PROJECT_NAME` | - | Project name for titles |
 | `GOURCE_TITLE` | `${PROJECT_NAME} Evolution - DON'T CLOSE...` | Title in visualization window |
-| `GOURCE_RESOLUTION` | `"800x600"` | Window size (WxH) |
+| `GOURCE_RESOLUTION` | `"960x720"` | Window size (WxH) |
 | `GOURCE_SECONDS_PER_DAY` | `"0.5"` | Playback speed (lower = faster) |
 | `GOURCE_VIDEO_DURATION` | `60` | Video length in seconds. Use `-1` for full history |
 

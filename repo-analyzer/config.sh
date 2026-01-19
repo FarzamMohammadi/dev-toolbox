@@ -29,7 +29,7 @@ EXCLUDE_DIRS=".git node_modules .venv venv __pycache__ dist build .next .cache c
 # =============================================================================
 
 # Video resolution (WxH)
-GOURCE_RESOLUTION="800x600"
+GOURCE_RESOLUTION="960x720"
 
 # Animation speed (seconds per day of history - lower = faster)
 GOURCE_SECONDS_PER_DAY="0.5"
