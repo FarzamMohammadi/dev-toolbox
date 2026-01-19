@@ -1,0 +1,14 @@
+# Virtual environment
+.venv/
+venv/
+
+# Output directory
+output/
+
+# Python cache
+__pycache__/
+*.pyc
+*.pyo
+
+# OS files
+.DS_Store
