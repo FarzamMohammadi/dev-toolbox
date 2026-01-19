@@ -1,6 +1,6 @@
 #!/bin/bash
 # =============================================================================
-# Architecture Mapper - Full Analysis Suite
+# Repo Analyzer - Full Analysis Suite
 # =============================================================================
 # Runs all available analyzers on a target repository and generates
 # comprehensive architecture documentation.
@@ -73,7 +73,7 @@ OUTPUT_DIR="$(cd "$OUTPUT_DIR" && pwd)"
 
 echo ""
 echo -e "${BOLD}╔════════════════════════════════════════════════════════════╗${NC}"
-echo -e "${BOLD}║          Architecture Mapper - Full Analysis Suite         ║${NC}"
+echo -e "${BOLD}║             Repo Analyzer - Full Analysis Suite            ║${NC}"
 echo -e "${BOLD}╚════════════════════════════════════════════════════════════╝${NC}"
 echo ""
 echo -e "${BLUE}Target:${NC} $TARGET_REPO"

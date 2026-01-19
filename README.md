@@ -12,6 +12,9 @@ Generates a visual tree of your directory structure that respects .gitignore rul
 ## [Docker Cleanser](./docker-cleanser/README.md)
 Quickly nukes and resets your Docker environment, removing containers, images, volumes, and networks for a clean slate.
 
+## [Repository Analyzer](./repo-analyzer/README.md)
+Tools for understanding and documenting project architecture. Runs code statistics, git history analysis, and generates architecture documentation.
+
 ## [Repository Content Aggregator](./repo-content-aggregator/README.md)
 Exports an entire repository into a single text file for LLM ingestion, while respecting .gitignore rules exactly like Git.
 

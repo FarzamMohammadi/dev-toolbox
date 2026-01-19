@@ -1,4 +1,4 @@
-# Architecture Mapper
+# Repo Analyzer
 
 Tools for understanding and documenting project architecture.
 

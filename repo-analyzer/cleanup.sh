@@ -1,6 +1,6 @@
 #!/bin/bash
 # =============================================================================
-# Architecture Mapper - Cleanup Script
+# Repo Analyzer - Cleanup Script
 # =============================================================================
 # Removes all dependencies installed by setup.sh.
 # Offers interactive prompts before removing each component.
@@ -19,7 +19,7 @@ NC='\033[0m'
 
 echo ""
 echo -e "${BOLD}╔════════════════════════════════════════════════════════════╗${NC}"
-echo -e "${BOLD}║          Architecture Mapper - Cleanup                      ║${NC}"
+echo -e "${BOLD}║                Repo Analyzer - Cleanup                      ║${NC}"
 echo -e "${BOLD}╚════════════════════════════════════════════════════════════╝${NC}"
 echo ""
 

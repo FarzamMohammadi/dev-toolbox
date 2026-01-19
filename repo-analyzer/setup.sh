@@ -1,8 +1,8 @@
 #!/bin/bash
 # =============================================================================
-# Architecture Mapper - Setup Script
+# Repo Analyzer - Setup Script
 # =============================================================================
-# Installs all dependencies for the architecture mapper toolset.
+# Installs all dependencies for the repo analyzer toolset.
 # Uses uv for Python dependencies (in a virtual environment).
 #
 # Usage: ./setup.sh
@@ -21,7 +21,7 @@ NC='\033[0m'
 
 echo ""
 echo -e "${BOLD}╔════════════════════════════════════════════════════════════╗${NC}"
-echo -e "${BOLD}║          Architecture Mapper - Setup                        ║${NC}"
+echo -e "${BOLD}║                 Repo Analyzer - Setup                       ║${NC}"
 echo -e "${BOLD}╚════════════════════════════════════════════════════════════╝${NC}"
 echo ""
 

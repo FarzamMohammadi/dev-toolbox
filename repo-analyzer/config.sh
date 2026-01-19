@@ -1,6 +1,6 @@
 #!/bin/bash
 # =============================================================================
-# Architecture Mapper - Configuration
+# Repo Analyzer - Configuration
 # =============================================================================
 # Single configuration file for all tools.
 # Edit this file to customize behavior, then run ./run-all.sh

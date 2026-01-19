@@ -1,4 +1,4 @@
-# Architecture Mapper Philosophy
+# Repo Analyzer Philosophy
 
 ## Core Belief
 
