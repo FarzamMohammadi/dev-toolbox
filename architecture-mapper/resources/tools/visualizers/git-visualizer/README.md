@@ -45,22 +45,27 @@ Edit `config.sh`:
 | `GOURCE_RESOLUTION` | `"800x600"` | Window size (WxH) |
 | `GOURCE_SECONDS_PER_DAY` | `"0.5"` | Playback speed (lower = faster) |
 | `GOURCE_VIDEO_DURATION` | `60` | Video length in seconds. Use `-1` for full history |
-| `GOURCE_LIVE_PREVIEW` | `"true"` | `"true"` = interactive window, `"false"` = export video |
 
 **Note:** If video doesn't capture full git history, increase `GOURCE_VIDEO_DURATION` in config.sh.
 
-## Controls (Live Preview Mode)
+## Interactive Window
 
-Navigate the visualization with keyboard and mouse:
-- **Space** - Pause/resume
+The visualization window is **fully interactive while recording**. Navigate in real-time:
+
+- **Space** - Pause/resume the timeline
 - **+/-** - Speed up/slow down
-- **Arrow keys** - Move camera
-- **Mouse** - Click and drag to pan
+- **Arrow keys** - Pan the camera
+- **Mouse drag** - Move around
+- **Scroll** - Zoom in/out
+
+Everything you do is captured in the final video. When complete, the recording saves automatically.
+
+**Do not close the window early** - let it finish to capture the full history.
 
 ## Output Files
 
-When `GOURCE_LIVE_PREVIEW=false`, check `output/repo-evolution/`:
-- `history.mp4` - Exported repository history video
+After the window closes, check `output/repo-evolution/`:
+- `history.mp4` - Recorded repository history video
 
 ## Portability
 
@@ -76,10 +81,9 @@ To use on another project:
 - Install gource: `brew install gource`
 - Or let the script install it for you
 
-### Want to export a video instead of live preview?
+### Video not generating?
 - Install ffmpeg: `brew install ffmpeg`
-- Set `GOURCE_LIVE_PREVIEW="false"` in config.sh
 
-### Video generation window appears
-- This is expected! Gource requires OpenGL rendering
+### Window appears during generation
+- This is expected! The window is interactive - you can navigate while it records
 - Do not close the window - it will close automatically when complete

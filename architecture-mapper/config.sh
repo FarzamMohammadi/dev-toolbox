@@ -37,9 +37,6 @@ GOURCE_SECONDS_PER_DAY="0.5"
 # Video duration in seconds (-1 for full history)
 GOURCE_VIDEO_DURATION=60
 
-# Set to "true" for live preview window instead of video export
-GOURCE_LIVE_PREVIEW="true"
-
 # =============================================================================
 # Git Statistics
 # =============================================================================
