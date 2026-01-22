@@ -5,56 +5,85 @@ description: Manage Jira tickets - create, search, update, comment, and transiti
 
 # Jira Skill Instructions
 
-You are a Jira ticket management assistant. Use curl to interact with the Jira REST API.
+Use curl to interact with the Jira REST API. All responses are saved locally for reliable parsing.
 
 ## Pre-Flight Check
 
-Before any operation, verify environment variables exist:
+Verify environment variables are set (source the shell profile first):
 
 ```bash
-[[ -z "$JIRA_URL" || -z "$JIRA_USER" || -z "$JIRA_TOKEN" ]] && echo "Missing: JIRA_URL, JIRA_USER, or JIRA_TOKEN"
+source ~/.zshrc 2>/dev/null || source ~/.bashrc 2>/dev/null; echo "JIRA_URL: ${JIRA_URL:-(not set)}"; echo "JIRA_USER: ${JIRA_USER:-(not set)}"; echo "JIRA_TOKEN: ${JIRA_TOKEN:+set}"
 ```
 
-If missing, instruct the user to set them (see README.md).
-
-## Authentication
-
-All requests use Basic Auth with the user's email and API token:
+**If variables are missing**, guide the user to add them to `~/.zshrc`:
 
 ```bash
-curl -s -u "$JIRA_USER:$JIRA_TOKEN" \
-  -H "Content-Type: application/json" \
-  "$JIRA_URL/rest/api/2/..."
+# Appends to ~/.zshrc
+printf '\nexport JIRA_URL="https://company.atlassian.net"\nexport JIRA_USER="your-email@company.com"\nexport JIRA_TOKEN="your-api-token"\n' >> ~/.zshrc && source ~/.zshrc
 ```
+
+Do NOT ask users to paste credentials directly—the token should stay in their shell profile.
+
+## Data Storage
+
+API responses are saved to `.claude/skills/jira/tickets/` for reliable parsing (Jira responses are 30KB+ and get truncated when piped).
+
+**First-time setup** (creates directory + gitignore):
+```bash
+mkdir -p .claude/skills/jira/tickets && echo '*' > .claude/skills/jira/tickets/.gitignore
+```
+
+**Files stored:**
+- `{TICKET-KEY}.json` - Individual ticket data (e.g., `VE-3225.json`)
+- `search-latest.json` - Most recent search results
+- `my-tickets.json` - Current user's tickets
+
+Users can delete the `tickets/` folder anytime to clear cached data.
+
+## Command Pattern
+
+Every command must source the shell profile first:
+
+```bash
+source ~/.zshrc 2>/dev/null || source ~/.bashrc 2>/dev/null; <curl command>
+```
+
+All examples below omit this prefix for brevity—**always include it**.
 
 ## Operations
 
 ### Get Ticket
 
-Fetch details for a specific ticket.
-
+**Step 1: Fetch and save**
 ```bash
-curl -s -u "$JIRA_USER:$JIRA_TOKEN" \
-  "$JIRA_URL/rest/api/2/issue/PROJ-123" | jq '{
-    key: .key,
-    summary: .fields.summary,
-    status: .fields.status.name,
-    type: .fields.issuetype.name,
-    priority: .fields.priority.name,
-    assignee: .fields.assignee.displayName,
-    reporter: .fields.reporter.displayName,
-    created: .fields.created,
-    updated: .fields.updated,
-    description: .fields.description
-  }'
+curl -s -u "$JIRA_USER:$JIRA_TOKEN" "$JIRA_URL/rest/api/2/issue/PROJ-123" -o .claude/skills/jira/tickets/PROJ-123.json
 ```
 
-**Output format for user:**
+**Step 2: Parse**
+```bash
+jq '{
+  key: .key,
+  summary: .fields.summary,
+  status: .fields.status.name,
+  type: .fields.issuetype.name,
+  priority: .fields.priority.name,
+  assignee: .fields.assignee.displayName,
+  reporter: .fields.reporter.displayName,
+  created: .fields.created[0:10],
+  updated: .fields.updated[0:10],
+  description: .fields.description,
+  parent_key: .fields.parent.key,
+  parent_summary: .fields.parent.fields.summary
+}' .claude/skills/jira/tickets/PROJ-123.json
+```
+
+**Output format:**
 ```
 PROJ-123: Summary here
 Status: In Progress | Type: Bug | Priority: High
 Assignee: John Doe | Reporter: Jane Smith
 Created: 2024-01-15 | Updated: 2024-01-20
+Parent: PROJ-100 - Epic Name
 
 Description:
 [description text]
@@ -62,50 +91,43 @@ Description:
 
 ### Search Tickets
 
-Query tickets using JQL (Jira Query Language).
-
+**Step 1: Fetch and save**
 ```bash
-curl -s -u "$JIRA_USER:$JIRA_TOKEN" \
-  -G --data-urlencode "jql=project = PROJ AND status = Open" \
-  --data-urlencode "maxResults=20" \
-  --data-urlencode "fields=key,summary,status,assignee,priority" \
-  "$JIRA_URL/rest/api/2/search" | jq '.issues[] | {
-    key: .key,
-    summary: .fields.summary,
-    status: .fields.status.name,
-    assignee: .fields.assignee.displayName,
-    priority: .fields.priority.name
-  }'
+curl -s -u "$JIRA_USER:$JIRA_TOKEN" -G \
+  --data-urlencode 'jql=project = PROJ AND status = Open' \
+  --data-urlencode 'maxResults=20' \
+  --data-urlencode 'fields=key,summary,status,assignee,priority' \
+  "$JIRA_URL/rest/api/2/search" -o .claude/skills/jira/tickets/search-latest.json
 ```
 
-**Output as a table for user.**
+**Step 2: Parse**
+```bash
+jq '.issues[] | {key: .key, summary: .fields.summary, status: .fields.status.name, assignee: .fields.assignee.displayName, priority: .fields.priority.name}' .claude/skills/jira/tickets/search-latest.json
+```
+
+Output as a table for user.
 
 ### My Tickets
 
-List tickets assigned to the current user.
-
+**Step 1: Fetch and save**
 ```bash
-curl -s -u "$JIRA_USER:$JIRA_TOKEN" \
-  -G --data-urlencode "jql=assignee = currentUser() AND status != Done ORDER BY updated DESC" \
-  --data-urlencode "maxResults=20" \
-  --data-urlencode "fields=key,summary,status,priority,updated" \
-  "$JIRA_URL/rest/api/2/search" | jq '.issues[] | {
-    key: .key,
-    summary: .fields.summary,
-    status: .fields.status.name,
-    priority: .fields.priority.name,
-    updated: .fields.updated
-  }'
+curl -s -u "$JIRA_USER:$JIRA_TOKEN" -G \
+  --data-urlencode 'jql=assignee = currentUser() AND status != Done ORDER BY updated DESC' \
+  --data-urlencode 'maxResults=20' \
+  --data-urlencode 'fields=key,summary,status,priority,updated' \
+  "$JIRA_URL/rest/api/2/search" -o .claude/skills/jira/tickets/my-tickets.json
+```
+
+**Step 2: Parse**
+```bash
+jq '.issues[] | {key: .key, summary: .fields.summary, status: .fields.status.name, priority: .fields.priority.name, updated: .fields.updated[0:10]}' .claude/skills/jira/tickets/my-tickets.json
 ```
 
 ### Create Ticket
 
-Create a new ticket. Required: project key, summary, issue type.
-
 ```bash
 curl -s -u "$JIRA_USER:$JIRA_TOKEN" \
-  -X POST \
-  -H "Content-Type: application/json" \
+  -X POST -H 'Content-Type: application/json' \
   -d '{
     "fields": {
       "project": {"key": "PROJ"},
@@ -119,131 +141,79 @@ curl -s -u "$JIRA_USER:$JIRA_TOKEN" \
 
 **Issue types:** Task, Bug, Story, Epic, Sub-task (varies by project)
 
-**Optional fields:**
-- `"priority": {"name": "High"}`
-- `"assignee": {"name": "username"}` or `{"accountId": "..."}`
-- `"labels": ["label1", "label2"]`
-- `"components": [{"name": "Backend"}]`
+**Optional fields:** `"priority": {"name": "High"}`, `"assignee": {"accountId": "..."}`, `"labels": ["label1"]`
 
-**After creation, report:** "Created PROJ-123: [summary]" with link.
+After creation, report: "Created PROJ-123: [summary]" with link.
 
 ### Update Ticket
 
-Modify ticket fields.
-
 ```bash
 curl -s -u "$JIRA_USER:$JIRA_TOKEN" \
-  -X PUT \
-  -H "Content-Type: application/json" \
-  -d '{
-    "fields": {
-      "summary": "Updated summary",
-      "description": "Updated description"
-    }
-  }' \
+  -X PUT -H 'Content-Type: application/json' \
+  -d '{"fields": {"summary": "Updated summary"}}' \
   "$JIRA_URL/rest/api/2/issue/PROJ-123"
 ```
 
-**Note:** PUT returns empty on success (HTTP 204). Verify by fetching the ticket.
+PUT returns empty on success (HTTP 204). Verify by fetching the ticket.
 
 ### Add Comment
 
-Add a comment to a ticket.
-
 ```bash
 curl -s -u "$JIRA_USER:$JIRA_TOKEN" \
-  -X POST \
-  -H "Content-Type: application/json" \
-  -d '{
-    "body": "Comment text here"
-  }' \
+  -X POST -H 'Content-Type: application/json' \
+  -d '{"body": "Comment text here"}' \
   "$JIRA_URL/rest/api/2/issue/PROJ-123/comment" | jq '{id: .id, created: .created}'
 ```
 
-### Transition Ticket (Change Status)
-
-Changing status requires two steps:
+### Transition Ticket
 
 **Step 1: Get available transitions**
-
 ```bash
 curl -s -u "$JIRA_USER:$JIRA_TOKEN" \
   "$JIRA_URL/rest/api/2/issue/PROJ-123/transitions" | jq '.transitions[] | {id: .id, name: .name}'
 ```
 
-This returns transitions like:
-```json
-{"id": "11", "name": "To Do"}
-{"id": "21", "name": "In Progress"}
-{"id": "31", "name": "Done"}
-```
-
-**Step 2: Apply the transition**
-
+**Step 2: Apply transition**
 ```bash
 curl -s -u "$JIRA_USER:$JIRA_TOKEN" \
-  -X POST \
-  -H "Content-Type: application/json" \
-  -d '{
-    "transition": {"id": "21"}
-  }' \
+  -X POST -H 'Content-Type: application/json' \
+  -d '{"transition": {"id": "21"}}' \
   "$JIRA_URL/rest/api/2/issue/PROJ-123/transitions"
 ```
 
-**Note:** Transition IDs vary by project/workflow. Always fetch available transitions first.
+Transition IDs vary by project—always fetch available transitions first.
 
 ### Get Comments
 
-List comments on a ticket.
-
 ```bash
 curl -s -u "$JIRA_USER:$JIRA_TOKEN" \
-  "$JIRA_URL/rest/api/2/issue/PROJ-123/comment" | jq '.comments[] | {
-    author: .author.displayName,
-    created: .created,
-    body: .body
-  }'
+  "$JIRA_URL/rest/api/2/issue/PROJ-123/comment" | jq '.comments[] | {author: .author.displayName, created: .created[0:10], body: .body}'
 ```
 
 ## Error Handling
 
-Parse error responses:
+If a response contains `errorMessages` or `errors`, it failed. Common errors:
 
-```bash
-response=$(curl -s -w "\n%{http_code}" -u "$JIRA_USER:$JIRA_TOKEN" "$JIRA_URL/rest/api/2/issue/PROJ-123")
-http_code=$(echo "$response" | tail -n1)
-body=$(echo "$response" | sed '$d')
-
-case $http_code in
-  200|201|204) echo "Success" ;;
-  400) echo "Bad request: $(echo "$body" | jq -r '.errorMessages[0] // .errors | to_entries[0].value')" ;;
-  401) echo "Unauthorized: Check JIRA_USER and JIRA_TOKEN" ;;
-  403) echo "Forbidden: No permission for this action" ;;
-  404) echo "Not found: Check ticket key or URL" ;;
-  *) echo "Error $http_code: $body" ;;
-esac
-```
-
-## Common Error Messages
-
-| Error | Cause | Fix |
-|-------|-------|-----|
-| "Issue does not exist" | Wrong ticket key | Verify key format (PROJ-123) |
-| "Field 'project' is required" | Missing project in create | Add project key |
-| "It is not on the appropriate screen" | Field not editable | Field may be read-only or hidden |
-| "Transition id is invalid" | Wrong transition ID | Fetch available transitions first |
+| Error | Fix |
+|-------|-----|
+| "Issue does not exist" | Check ticket key format (PROJ-123) |
+| "Field 'project' is required" | Add project key to create request |
+| "Transition id is invalid" | Fetch available transitions first |
+| 401 Unauthorized | Check JIRA_USER and JIRA_TOKEN |
+| 403 Forbidden | User lacks permission for this action |
 
 ## Output Guidelines
 
 1. **Be concise**: Show key fields, not raw JSON
-2. **Format dates**: Convert ISO dates to readable format
-3. **Truncate long text**: Show first 500 chars of descriptions
-4. **Link tickets**: Provide clickable URL: `$JIRA_URL/browse/PROJ-123`
-5. **Confirm actions**: After create/update/transition, confirm what changed
+2. **Format dates**: Use `[0:10]` slice for YYYY-MM-DD
+3. **Link tickets**: `$JIRA_URL/browse/PROJ-123`
+4. **Include parent**: Show parent key and summary when present
 
-## Workflow Tips
+## URL Parsing
 
-- Before creating: Ask user for project key if not specified
-- Before transitioning: Show available transitions, let user pick
-- On error: Explain what went wrong and how to fix
-- After success: Provide ticket link
+Extract ticket keys from URLs:
+
+| URL Pattern | Key Location |
+|-------------|--------------|
+| `.../browse/PROJ-123` | After `/browse/` |
+| `...?selectedIssue=PROJ-123` | Query param `selectedIssue` |
