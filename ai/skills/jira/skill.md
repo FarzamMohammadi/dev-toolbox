@@ -1,9 +1,9 @@
 ---
-name: jira
+name: jira-ticket-manager
 description: Manage Jira tickets - create, search, update, comment, and transition issues
 ---
 
-# Jira Skill Instructions
+# Jira Ticket Manager Skill Instructions
 
 Use curl to interact with the Jira REST API. All responses are saved locally for reliable parsing.
 
