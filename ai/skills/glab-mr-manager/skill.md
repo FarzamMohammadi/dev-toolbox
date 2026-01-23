@@ -415,11 +415,23 @@ For operations not covered by glab commands, use the API directly:
 glab api projects/:id/merge_requests/123 | jq '.'
 ```
 
-**Get MR discussions/comments:**
+**IMPORTANT: Two Types of MR Comments**
+
+GitLab has two types of comments:
+1. **Inline/Diff comments** - attached to specific code lines (returned by `/discussions`)
+2. **General notes** - not attached to code (returned by `/notes`)
+
+**Get ALL MR comments (inline + general) - USE THIS FIRST:**
 ```bash
-glab api "projects/:id/merge_requests/123/discussions" -o .claude/skills/glab/discussions.json
-jq '.[].notes[] | {author: .author.username, body: .body, created: .created_at}' .claude/skills/glab/discussions.json
+glab api "projects/:id/merge_requests/123/notes" | jq '[.[] | select(.system == false) | {body: .body, author: .author.username, created: .created_at}]'
 ```
+
+**Get inline comments only (with file/line info):**
+```bash
+glab api "projects/:id/merge_requests/123/discussions" | jq '[.[] | select(.notes[0].type == "DiffNote") | {file: .notes[0].position.new_path, line: .notes[0].position.new_line, body: .notes[0].body, resolved: .notes[0].resolved}]'
+```
+
+**Best practice:** When reviewing MR feedback, always fetch from `/notes` endpoint first to ensure you get ALL comments, then use `/discussions` if you need file/line locations for inline comments.
 
 **Get MR approvals:**
 ```bash
