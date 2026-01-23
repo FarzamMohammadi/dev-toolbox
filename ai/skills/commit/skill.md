@@ -125,6 +125,7 @@ For each changed file, capture:
 - Explain WHY, not just WHAT
 - Include context not obvious from diff
 - Reference issues if applicable (`Refs: #123`)
+- **NEVER add Co-Authored-By tags for AI/Claude** - only human co-authors
 
 ### Output Format
 
