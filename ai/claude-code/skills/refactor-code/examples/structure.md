@@ -211,3 +211,162 @@ def calculate_item_price(item):
 ```
 
 Reader can understand the high-level flow from `process_order()` without reading implementation details.
+
+---
+
+## Logical Code Blocks → Extract to Named Functions
+
+Extract code blocks into well-named functions for readability - **whether or not there's a comment**.
+
+Comments are just a signal. If you can describe what a block does in a phrase, it should be a function with that name.
+
+### Bad - Comment explains what the code does
+```python
+def validate_order(self, order, user_id, session_id):
+    detected_violations = []
+    violation_details = []
+
+    # Check order amount
+    if order.total > MAX_ORDER_AMOUNT:
+        detected_violations.append("amount_exceeded")
+        violation_details.append(f"Order total exceeds limit ({order.total} > {MAX_ORDER_AMOUNT})")
+
+    # Check each validation rule
+    for rule_name, checks in _VALIDATION_RULES.items():
+        for check in checks:
+            if check.fails(order):
+                detected_violations.append(rule_name)
+                violation_details.append(f"Failed: {rule_name}")
+                break
+
+    if detected_violations:
+        result = ValidationResult(
+            is_valid=False,
+            details="; ".join(violation_details),
+            failed_rules=tuple(detected_violations),
+        )
+
+        # Structured logging for monitoring
+        logger.bind(
+            event="order_validation_failed",
+            failed_rules=detected_violations,
+            user_id=user_id,
+        ).warning(f"Order validation failed")
+
+        return result
+
+    return ValidationResult(is_valid=True)
+```
+
+### Good - Comments replaced with well-named functions
+```python
+def validate_order(self, order, user_id, session_id):
+    detected_violations = []
+    violation_details = []
+
+    self._append_violation_if_amount_exceeded(order, detected_violations, violation_details)
+    self._check_and_append_rule_violations(order, detected_violations, violation_details)
+
+    if detected_violations:
+        return self._create_and_log_validation_result(
+            detected_violations, violation_details, user_id, session_id, order.total
+        )
+
+    return ValidationResult(is_valid=True)
+
+def _append_violation_if_amount_exceeded(self, order, detected_violations, violation_details):
+    if order.total > MAX_ORDER_AMOUNT:
+        detected_violations.append("amount_exceeded")
+        violation_details.append(f"Order total exceeds limit ({order.total} > {MAX_ORDER_AMOUNT})")
+
+def _check_and_append_rule_violations(self, order, detected_violations, violation_details):
+    for rule_name, checks in _VALIDATION_RULES.items():
+        for check in checks:
+            if check.fails(order):
+                detected_violations.append(rule_name)
+                violation_details.append(f"Failed: {rule_name}")
+                break
+
+def _create_and_log_validation_result(self, detected_violations, violation_details, user_id, session_id, order_total):
+    result = ValidationResult(
+        is_valid=False,
+        details="; ".join(violation_details),
+        failed_rules=tuple(detected_violations),
+    )
+
+    logger.bind(
+        event="order_validation_failed",
+        failed_rules=detected_violations,
+        user_id=user_id,
+    ).warning(f"Order validation failed")
+
+    return result
+```
+
+**Why this is better:**
+1. Main function reads like an outline - easy to understand at a glance
+2. No comments needed - function names communicate intent
+3. Each extracted function has a single responsibility
+4. Reader can dive into details only when needed
+
+---
+
+### Example: Extraction WITHOUT Comments
+
+The code below has NO comments, but still needs extraction:
+
+**Bad - No comments, but blocks should still be extracted:**
+```python
+def process_user_data(user, settings):
+    if not user.email or "@" not in user.email:
+        raise ValueError(f"Invalid email: {user.email}")
+    if user.age < 0 or user.age > 150:
+        raise ValueError(f"Invalid age: {user.age}")
+
+    normalized_name = user.name.strip().title()
+    normalized_email = user.email.lower().strip()
+
+    if settings.notify_on_signup:
+        email_client.send(
+            to=normalized_email,
+            subject="Welcome!",
+            body=f"Hello {normalized_name}, welcome to our platform."
+        )
+
+    return User(name=normalized_name, email=normalized_email, age=user.age)
+```
+
+**Good - Extract logical blocks even without comments:**
+```python
+def process_user_data(user, settings):
+    _validate_user_fields(user)
+    normalized = _normalize_user_data(user)
+    _send_welcome_email_if_enabled(normalized, settings)
+    return normalized
+
+def _validate_user_fields(user):
+    if not user.email or "@" not in user.email:
+        raise ValueError(f"Invalid email: {user.email}")
+    if user.age < 0 or user.age > 150:
+        raise ValueError(f"Invalid age: {user.age}")
+
+def _normalize_user_data(user):
+    return User(
+        name=user.name.strip().title(),
+        email=user.email.lower().strip(),
+        age=user.age
+    )
+
+def _send_welcome_email_if_enabled(user, settings):
+    if settings.notify_on_signup:
+        email_client.send(
+            to=user.email,
+            subject="Welcome!",
+            body=f"Hello {user.name}, welcome to our platform."
+        )
+```
+
+**Key insight:** No comments were present in the original, but we could still ask "what does this block do?" and extract accordingly:
+- Validation block → `_validate_user_fields()`
+- Normalization block → `_normalize_user_data()`
+- Email block → `_send_welcome_email_if_enabled()`

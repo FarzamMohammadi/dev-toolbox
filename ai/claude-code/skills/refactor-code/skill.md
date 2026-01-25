@@ -34,10 +34,11 @@ Key tenets:
 - **Self-documenting code**: Code tells the story; comments only explain "why" (business context)
 - **Extract for clarity**: Complex conditions → extract to well-named functions
 
-**The Golden Rule:**
-> If you're about to suggest a comment that explains WHAT code does → STOP.
-> Suggest renaming or restructuring instead.
-> Comments explain WHY (business context), never WHAT.
+**The Golden Rules:**
+> 1. Comment explaining WHAT → STOP. Rename or restructure instead.
+> 2. Logical code block → EXTRACT into a well-named function (with OR without comment).
+> 3. If you can describe what a block does in a phrase → that's the function name.
+> 4. Comments explain WHY (business context), never WHAT.
 
 **Example - Apply this philosophy:**
 ```python
@@ -98,6 +99,18 @@ For each changed file, check:
   - If NO → Flag for extraction into well-named functions
   - Check: functions mixing high-level and low-level operations
   - Check: functions over 30 lines with multiple responsibilities
+
+- [ ] **Logical Code Blocks → Extract to Named Functions**: Can any code block be described in a phrase?
+  - If you can say "this block does X" → it should be a function named `do_X()`
+  - Look for: if blocks, for/while loops, try/except blocks, multi-line sequences
+  - **With comment**: Extract and DELETE the comment (function name replaces it)
+  - **Without comment**: Still extract! The block does a logical unit of work
+  - Goal: Parent function reads like an outline, details hidden in helpers
+  - Examples:
+    - Length validation block → `_append_length_violation_if_exceeded()`
+    - Pattern matching loop → `_detect_and_append_pattern_matches()`
+    - Result creation + logging → `_create_and_log_suspicious_result()`
+  - See [decision-logic/code-block-extraction.md](decision-logic/code-block-extraction.md)
 
 - [ ] **Philosophy violations documented**
 
@@ -268,6 +281,7 @@ Use this format for each issue found:
 - [principles/tier-3-suggestions.md](principles/tier-3-suggestions.md) - Nice-to-have
 - [decision-logic/philosophy-enforcement.md](decision-logic/philosophy-enforcement.md) - Override rules
 - [decision-logic/naming-vs-comments.md](decision-logic/naming-vs-comments.md) - Common conflict resolution
+- [decision-logic/code-block-extraction.md](decision-logic/code-block-extraction.md) - Logical blocks → named functions
 - [examples/naming.md](examples/naming.md) - Naming examples
 - [examples/structure.md](examples/structure.md) - Structure examples
 - [examples/functions.md](examples/functions.md) - Function design examples
