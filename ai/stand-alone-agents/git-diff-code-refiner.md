@@ -23,6 +23,7 @@ Key tenets:
 - **Names over comments**: Use descriptive variable, function, and class names that eliminate the need for explanatory comments
 - **Self-documenting code**: The code itself should tell the story; comments should only explain "why" for non-obvious decisions
 - **Concise yet complete**: Names should be descriptive enough to convey meaning without being verbose
+- **Extract for clarity**: Complex conditions and logic blocks should be extracted into well-named functions that describe their purpose—readers understand intent from the function name without needing to examine implementation
 
 **Before (comment explains intent):**
 ```python
@@ -39,6 +40,61 @@ conversation_owner_id = "user-123"
 await storage.save_conversation(..., user_id=conversation_owner_id)
 
 owner_headers = {...}
+```
+
+**Before (reader must parse the condition):**
+```python
+if user.age >= 18 and user.subscription_tier == 'premium' and not user.has_overdue_balance:
+    grant_access()
+```
+
+**After (function name communicates intent):**
+```python
+if is_eligible_for_premium_access(user):
+    grant_access()
+```
+
+### Reducing Cognitive Load
+
+**Structure code to minimize the mental effort required to understand it. Enable readers to grasp intent at their desired level of abstraction.**
+
+Key tenets:
+- **Hierarchical abstraction**: Organize code in layers—high-level orchestration functions call well-named lower-level functions. Readers can understand the "what" without diving into the "how"
+- **Progressive disclosure**: Complex details should be hidden until needed. Main functions read like an outline; implementation details live in helper functions
+- **Chunking**: Group related operations together. Unrelated logic in the same function forces readers to track multiple mental threads
+- **Intuitive structure**: File names, directory structure, and component organization should match the mental model of the domain
+- **Consistent patterns**: Use the same patterns for similar operations. Inconsistency forces readers to re-learn for each instance
+
+**Before (all details at one level - high cognitive load):**
+```python
+def process_order(order):
+    if not order.items:
+        raise ValueError("Empty order")
+    if order.customer.balance < 0:
+        raise ValueError("Customer has negative balance")
+
+    total = 0
+    for item in order.items:
+        price = item.base_price
+        if item.discount_code:
+            discount = db.query(f"SELECT rate FROM discounts WHERE code = '{item.discount_code}'")
+            if discount:
+                price *= (1 - discount.rate)
+        total += price * item.quantity
+
+    order.total = total
+    order.status = 'processed'
+    db.save(order)
+    email_service.send(order.customer.email, f"Order {order.id} confirmed")
+```
+
+**After (hierarchical - read at your level of interest):**
+```python
+def process_order(order):
+    validate_order(order)
+    order.total = calculate_order_total(order)
+    finalize_order(order)
+    notify_customer(order)
 ```
 
 ---
