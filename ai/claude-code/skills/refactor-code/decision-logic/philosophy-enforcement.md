@@ -11,9 +11,25 @@ PHILOSOPHIES (Non-negotiable)
 PRINCIPLES (Secondary - must defer to philosophies)
 ```
 
+## Write to Notes File
+
+**CRITICAL**: All findings and revisions must be written to the per-file notes file.
+
+After each layer checkpoint:
+1. Write all findings to the appropriate layer section
+2. If a finding was revised due to philosophy conflict, note it:
+   ```markdown
+   ⚠️ REVISED: Line 42 - originally "add comment" → changed to "rename function"
+   ```
+3. Compile final changes in "Changes to Apply" section
+
+This externalizes context to prevent overflow and ensures all findings are captured.
+
+---
+
 ## Checkpoint Decision Tree
 
-Use this after EVERY layer to validate suggestions:
+Use this after EVERY layer to validate suggestions (and write results to notes):
 
 ```
 For each refactoring suggestion:

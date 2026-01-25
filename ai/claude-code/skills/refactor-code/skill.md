@@ -1,7 +1,7 @@
 ---
 name: refactor-code
 description: Review git diffs against refactoring philosophies and principles. Use when user wants code review, refactoring suggestions, or mentions reviewing changes.
-allowed-tools: Read, Bash, Grep, Glob
+allowed-tools: Read, Write, Edit, Bash, Grep, Glob
 argument-hint: [git-diff-command]
 context: fork
 ---
@@ -81,138 +81,141 @@ def process_order(order):
 
 ---
 
-## Review Process (Layered - Follow In Order)
+## Review Process (File-Based Multi-Pass)
 
-**CRITICAL: Complete each layer before proceeding to the next.**
+**Uses per-file notes as external memory to prevent context overflow.**
 
-### Layer 1: Philosophy Check (REQUIRED FIRST)
+### Phase 1: Comprehensive Understanding
 
-For each changed file, check:
+1. Run the git diff command provided
+2. List ALL changed files
+3. Read each file to understand changes holistically
+4. Identify cross-file dependencies
 
-- [ ] **Code as Communication**: Is there code that needs a comment to explain WHAT it does?
-  - If YES → Flag for rename/restructure (NOT comment)
-  - Check: vague function names like `validate()`, `process()`, `handle()`
-  - Check: complex conditions that need inline explanation
-  - Check: variables named `data`, `temp`, `result`, `info`
+### Phase 2: Per-File Analysis
 
-- [ ] **Reducing Cognitive Load**: Can a reader understand intent at their desired level?
-  - If NO → Flag for extraction into well-named functions
-  - Check: functions mixing high-level and low-level operations
-  - Check: functions over 30 lines with multiple responsibilities
+**For EACH changed file**, create a notes file and analyze layer-by-layer:
 
-- [ ] **Logical Code Blocks → Extract to Named Functions**: Can any code block be described in a phrase?
-  - If you can say "this block does X" → it should be a function named `do_X()`
-  - Look for: if blocks, for/while loops, try/except blocks, multi-line sequences
-  - **With comment**: Extract and DELETE the comment (function name replaces it)
-  - **Without comment**: Still extract! The block does a logical unit of work
-  - Goal: Parent function reads like an outline, details hidden in helpers
-  - Examples:
-    - Length validation block → `_append_length_violation_if_exceeded()`
-    - Pattern matching loop → `_detect_and_append_pattern_matches()`
-    - Result creation + logging → `_create_and_log_suspicious_result()`
-  - See [decision-logic/code-block-extraction.md](decision-logic/code-block-extraction.md)
+```
+{filename}.refactor-notes.md  ← Created in SAME directory as source file
+```
 
-- [ ] **Philosophy violations documented**
+**Process for each file:**
 
-⚠️ **GATE**: Do not proceed to Layer 2 until Layer 1 is complete.
+1. **Create notes file** using [templates/refactor-notes-template.md](templates/refactor-notes-template.md)
+2. **Layer 1 → Write to notes**: Philosophy checks (Code as Communication, Cognitive Load, Code Block Extraction)
+3. **Layer 2 → Write to notes**: Tier 1 Principles (blocking issues)
+4. **Layer 3 → Write to notes**: Tier 2 Principles (important issues)
+5. **Layer 4 → Write to notes**: Tier 3 Principles (suggestions)
+6. **Layer 5 → Write to notes**: Philosophy alignment check, compile "Changes to Apply"
+7. **Move to next file** (don't apply changes yet!)
+
+See [Per-File Layer Details](#per-file-layer-details) below.
+
+### Phase 3: Apply Changes
+
+**For EACH notes file:**
+
+1. Read `{filename}.refactor-notes.md`
+2. Apply each item in "Changes to Apply" checklist
+3. Mark items complete as applied
+4. Verify changes match documented intent
+
+### Phase 4: Cleanup
+
+1. **Delete ALL `.refactor-notes.md` files** created during review
+2. Generate final summary report
 
 ---
 
-### Layer 2: Tier 1 Principles (Blocking)
+## Per-File Layer Details
 
-Issues that **must be fixed**. See [principles/tier-1-blocking.md](principles/tier-1-blocking.md).
+### Layer 1: Philosophy Check (WRITE TO NOTES)
 
-- [ ] **3.1 Intent-revealing names**: Names eliminate need for explanation
+Check and write findings to notes file:
+
+**Code as Communication:**
+- [ ] Vague function names (`validate()`, `process()`, `handle()`) → rename
+- [ ] Comments explaining WHAT → extract to named function
+- [ ] Vague variables (`data`, `temp`, `result`, `info`) → rename
+
+**Reducing Cognitive Load:**
+- [ ] Functions mixing abstraction levels → extract helpers
+- [ ] Functions > 30 lines with multiple responsibilities → split
+
+**Code Block Extraction:**
+- [ ] If blocks, for/while loops, try/except → can describe in a phrase?
+  - YES → extract to function with that name
+  - With comment: DELETE comment after extraction
+  - Without comment: still extract if logical unit
+- See [decision-logic/code-block-extraction.md](decision-logic/code-block-extraction.md)
+
+### Layer 2: Tier 1 Principles (WRITE TO NOTES)
+
+See [principles/tier-1-blocking.md](principles/tier-1-blocking.md).
+
+- [ ] **3.1 Intent-revealing names**
 - [ ] **3.9 Semantic specificity**: `validate()` → `validate_user_input()`
-- [ ] **3.5 No misleading names**: Behavior matches name exactly
-- [ ] **1.1 Single Responsibility**: One reason to change per class
-- [ ] **1.7 Separation of Concerns**: Data, logic, presentation separated
-- [ ] **5.1 Specific exceptions**: No generic `except Exception:`
-- [ ] **5.2 No silent failures**: No `except: pass`
-- [ ] **2.9 Fail fast**: Validate at start, not after processing
+- [ ] **3.5 No misleading names**
+- [ ] **1.1 Single Responsibility**
+- [ ] **1.7 Separation of Concerns**
+- [ ] **5.1 Specific exceptions** (no `except Exception:`)
+- [ ] **5.2 No silent failures** (no `except: pass`)
+- [ ] **2.9 Fail fast**
 
-⚠️ **CHECKPOINT**: Review each finding against Layer 1.
-Does any suggestion conflict with a Philosophy? If YES → Revise to align.
+⚠️ **Write checkpoint to notes**: Do findings conflict with Layer 1? Revise.
 
-- [ ] **All Tier 1 issues documented**
+### Layer 3: Tier 2 Principles (WRITE TO NOTES)
 
----
-
-### Layer 3: Tier 2 Principles (Important)
-
-Issues that **should be fixed**. See [principles/tier-2-important.md](principles/tier-2-important.md).
+See [principles/tier-2-important.md](principles/tier-2-important.md).
 
 - [ ] **Naming**: Abbreviations, searchability, domain consistency, boolean naming
 - [ ] **Structure**: Cohesion, coupling, dependency injection, abstraction levels
-- [ ] **Functions**: Do one thing, length < 30 lines, max 4 params, nesting < 3 levels
-- [ ] **Errors**: Context in messages, user vs system errors, fail safely
-- [ ] **Code quality**: DRY, KISS, primitive obsession, magic numbers
-- [ ] **Types**: Type hints, null safety, defensive at boundaries
-- [ ] **Comments**: Explain why (not what), no outdated comments
+- [ ] **Functions**: Length < 30, max 4 params, nesting < 3 levels
+- [ ] **Errors**: Context in messages, fail safely
+- [ ] **Code quality**: DRY, KISS, magic numbers
+- [ ] **Types**: Type hints, null safety
 
-⚠️ **CHECKPOINT**: Review each finding against Layer 1.
-Does any suggestion conflict with a Philosophy? If YES → Revise to align.
+⚠️ **Write checkpoint to notes**: Do findings conflict with Layer 1? Revise.
 
-- [ ] **All Tier 2 issues documented**
+### Layer 4: Tier 3 Principles (WRITE TO NOTES)
 
----
+See [principles/tier-3-suggestions.md](principles/tier-3-suggestions.md).
 
-### Layer 4: Tier 3 Principles (Suggestions)
+- [ ] **Style**: Noise words, composition over inheritance
+- [ ] **Code cleanup**: YAGNI, dead code
+- [ ] **Interface design**: SOLID, Law of Demeter
+- [ ] **Performance**: Only if profiled
 
-Nice-to-have improvements. See [principles/tier-3-suggestions.md](principles/tier-3-suggestions.md).
+⚠️ **Write checkpoint to notes**: Do findings conflict with Layer 1? Revise.
 
-- [ ] **Style**: Noise words, composition over inheritance, feature envy
-- [ ] **Code cleanup**: YAGNI, speculative generality, dead code
-- [ ] **Interface design**: SOLID principles, Law of Demeter
-- [ ] **Performance**: Only if profiled bottlenecks exist
+### Layer 5: Final Validation (WRITE TO NOTES)
 
-⚠️ **CHECKPOINT**: Review each finding against Layer 1.
-Does any suggestion conflict with a Philosophy? If YES → Revise to align.
-
-- [ ] **All Tier 3 issues documented**
+- [ ] Re-read ALL layer findings in notes
+- [ ] Verify NONE suggest comments for WHAT explanations
+- [ ] Compile "Changes to Apply" checklist with specific line numbers
 
 ---
 
-### Layer 5: Final Validation
+## Quick Reference
 
-Before generating report:
+### Decision Trees
 
-- [ ] Re-read ALL suggestions from Layers 2-4
-- [ ] Verify NONE suggest comments for things that should be renames
-- [ ] Verify all suggestions align with both Philosophies
-- [ ] Remove any suggestions that slipped through checkpoints
-
-⚠️ **FINAL CHECK**: If any suggestion says "add comment to explain [what code does]":
-→ REPLACE with suggestion to rename/restructure
-→ See [decision-logic/naming-vs-comments.md](decision-logic/naming-vs-comments.md)
-
-- [ ] **Report ready to generate**
-
----
-
-## Quick Reference: Common Patterns
-
-### Naming → Comment Decision
-
+**Naming → Comment:**
 ```
 Need to explain code?
-├── Explaining WHAT → RENAME (Philosophy 1 applies)
+├── Explaining WHAT → RENAME (Philosophy 1)
 └── Explaining WHY (business context) → Comment OK
 ```
 
-See [decision-logic/naming-vs-comments.md](decision-logic/naming-vs-comments.md) for full decision tree.
-
-### Philosophy Enforcement
-
+**Philosophy Enforcement:**
 ```
 For each suggestion:
 ├── Aligns with Philosophies? → Keep
 └── Conflicts with Philosophy? → REVISE or REJECT
 ```
 
-See [decision-logic/philosophy-enforcement.md](decision-logic/philosophy-enforcement.md) for details.
-
-### Tier Quick Summary
+### Tier Summary
 
 | Tier | Enforcement | Focus |
 |------|-------------|-------|
@@ -222,66 +225,55 @@ See [decision-logic/philosophy-enforcement.md](decision-logic/philosophy-enforce
 
 ---
 
-## Reporting Format
+## Final Summary Report Format
 
-Use this format for each issue found:
-
-```markdown
-## [filename]
-
-### Layer [N]: [Issue Name] (Tier [T])
-**Line [N]:** [Description of the issue]
-**Philosophy alignment:** ✓ Compliant / ⚠️ Revised from [original suggestion]
-
-**Current:**
-```[language]
-[code snippet]
-```
-
-**Suggested:**
-```[language]
-[improved code]
-```
-
-**Rationale:** [Brief explanation linking to philosophy or principle]
-```
-
-### Report Structure
+After all notes files are processed and changes applied:
 
 ```markdown
 # Refactoring Review: [git diff command]
 
 ## Summary
+- Files reviewed: [N]
+- Total changes applied: [N]
 - Layer 1 (Philosophy): [N] findings
 - Layer 2 (Tier 1 - Blocking): [N] findings
 - Layer 3 (Tier 2 - Important): [N] findings
 - Layer 4 (Tier 3 - Suggestions): [N] findings
 
-## Findings by File
+## Changes Applied by File
 
 ### [filename1]
-[Issues...]
+- Line X: [change description]
+- Line Y: [change description]
 
 ### [filename2]
-[Issues...]
+- Line X: [change description]
 
-## Philosophy Alignment Check
+## Philosophy Alignment
 ✓ All suggestions verified against Philosophies
 ✓ No comments suggested for WHAT explanations
-✓ All naming follows semantic specificity
+✓ All notes files cleaned up
 ```
 
 ---
 
 ## Reference Materials
 
+**Templates:**
+- [templates/refactor-notes-template.md](templates/refactor-notes-template.md) - Per-file notes structure
+
+**Principles:**
 - [principles/index.md](principles/index.md) - Full principle classification
 - [principles/tier-1-blocking.md](principles/tier-1-blocking.md) - Must-fix issues
 - [principles/tier-2-important.md](principles/tier-2-important.md) - Should-fix issues
 - [principles/tier-3-suggestions.md](principles/tier-3-suggestions.md) - Nice-to-have
+
+**Decision Logic:**
 - [decision-logic/philosophy-enforcement.md](decision-logic/philosophy-enforcement.md) - Override rules
 - [decision-logic/naming-vs-comments.md](decision-logic/naming-vs-comments.md) - Common conflict resolution
 - [decision-logic/code-block-extraction.md](decision-logic/code-block-extraction.md) - Logical blocks → named functions
+
+**Examples:**
 - [examples/naming.md](examples/naming.md) - Naming examples
 - [examples/structure.md](examples/structure.md) - Structure examples
 - [examples/functions.md](examples/functions.md) - Function design examples
