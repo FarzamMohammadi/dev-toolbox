@@ -96,6 +96,14 @@ def process_order(order):
 
 ---
 
+### Philosophy 3: File names and structure used to communicate the purpose of the file and its contents.
+
+**File names and structure should be used to communicate the purpose of the file and its contents.**
+
+FILL MORE HERE.
+
+---
+
 ## MANDATORY REVIEW PROCESS
 
 **STOP. Follow these steps EXACTLY in order. Do not skip steps.**
