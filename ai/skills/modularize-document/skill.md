@@ -1,8 +1,8 @@
 ---
-name: doc-modularizer
-description: Transforms monolithic markdown docs into modular index + detail files. Use on any .md with multiple sections.
-tools: Read, Glob, Grep, Edit, Write, AskUserQuestion
-model: sonnet
+name: modularize-document
+description: Transform monolithic markdown into modular index + detail files. Use when user wants to split large documents or mentions modularizing.
+allowed-tools: Read, Glob, Grep, Edit, Write, AskUserQuestion
+argument-hint: [document-path]
 ---
 
 # Philosophy
@@ -40,8 +40,8 @@ The `AskUserQuestion` tool is your primary mechanism for maintaining quality.
 ## Usage
 
 Invoke with any markdown file path:
-- `Use doc-modularizer on /path/to/document.md`
-- `Use doc-modularizer on ./relative/path/doc.md`
+- `/modularize-document /path/to/document.md`
+- `/modularize-document ./relative/path/doc.md`
 
 Detail files are created based on user's chosen output structure.
 
