@@ -81,79 +81,111 @@ def process_order(order):
 
 ---
 
-## Review Process (File-Based Multi-Pass)
+## MANDATORY REVIEW PROCESS
 
-**Uses per-file notes as external memory to prevent context overflow.**
-
-### Phase 1: Comprehensive Understanding
-
-1. Run the git diff command provided
-2. List ALL changed files
-3. Read each file to understand changes holistically
-4. Identify cross-file dependencies
-
-### Phase 2: Per-File Analysis
-
-**For EACH changed file**, create a notes file and analyze layer-by-layer:
-
-```
-{filename}.refactor-notes.md  ← Created in SAME directory as source file
-```
-
-**Process for each file:**
-
-1. **Create notes file** using [templates/refactor-notes-template.md](templates/refactor-notes-template.md)
-2. **Layer 1 → Write to notes**: Philosophy checks (Code as Communication, Cognitive Load, Code Block Extraction)
-3. **Layer 2 → Write to notes**: Tier 1 Principles (blocking issues)
-4. **Layer 3 → Write to notes**: Tier 2 Principles (important issues)
-5. **Layer 4 → Write to notes**: Tier 3 Principles (suggestions)
-6. **Layer 5 → Write to notes**: Philosophy alignment check, compile "Changes to Apply"
-7. **Move to next file** (don't apply changes yet!)
-
-See [Per-File Layer Details](#per-file-layer-details) below.
-
-### Phase 3: Apply Changes
-
-**For EACH notes file:**
-
-1. Read `{filename}.refactor-notes.md`
-2. Apply each item in "Changes to Apply" checklist
-3. Mark items complete as applied
-4. Verify changes match documented intent
-
-### Phase 4: Cleanup
-
-1. **Delete ALL `.refactor-notes.md` files** created during review
-2. Generate final summary report
+**STOP. Follow these steps EXACTLY in order. Do not skip steps.**
 
 ---
 
-## Per-File Layer Details
+### STEP 1: Run the Git Diff
 
-### Layer 1: Philosophy Check (WRITE TO NOTES)
+Run the provided git diff command using Bash:
+```bash
+{user's git diff command}
+```
 
-Check and write findings to notes file:
+List all changed files. Write them down.
 
-**Code as Communication:**
+---
+
+### STEP 2: For EACH Changed File - CREATE NOTES FILE
+
+**MANDATORY: Before analyzing ANY code, create a notes file.**
+
+For the FIRST changed file:
+1. Determine the file path (e.g., `src/utils/validator.py`)
+2. **USE THE WRITE TOOL NOW** to create:
+   ```
+   src/utils/validator.py.refactor-notes.md
+   ```
+3. Write this initial content:
+   ```markdown
+   # Refactor Notes: validator.py
+
+   ## File Context
+   - Path: src/utils/validator.py
+   - Analyzing: [brief description]
+
+   ## Layer 1: Philosophy Check
+   [Will populate below]
+
+   ## Layer 2: Tier 1 Principles
+   [Will populate below]
+
+   ## Layer 3: Tier 2 Principles
+   [Will populate below]
+
+   ## Layer 4: Tier 3 Principles
+   [Will populate below]
+
+   ## Layer 5: Final Validation
+   [Will populate below]
+
+   ## Changes to Apply
+   [Will compile at end]
+   ```
+
+**DO NOT PROCEED** until this notes file exists.
+
+---
+
+### STEP 3: Layer 1 Analysis - WRITE TO NOTES FILE
+
+Read the source file. Check for philosophy violations.
+
+**USE THE EDIT TOOL** to update the notes file, replacing `[Will populate below]` under "Layer 1" with actual findings:
+
+```markdown
+## Layer 1: Philosophy Check
+
+### Code as Communication
+- [ ] Line 42: `validate()` is vague → rename to `validate_user_credentials()`
+- [ ] Line 78: comment explains WHAT → extract to `_check_password_strength()`
+
+### Reducing Cognitive Load
+- [ ] Lines 50-95: function mixes levels → extract helpers
+
+### Code Block Extraction
+- [ ] Lines 23-35: if block → `_validate_email_format()`
+```
+
+**Checklist for Layer 1:**
 - [ ] Vague function names (`validate()`, `process()`, `handle()`) → rename
 - [ ] Comments explaining WHAT → extract to named function
 - [ ] Vague variables (`data`, `temp`, `result`, `info`) → rename
-
-**Reducing Cognitive Load:**
 - [ ] Functions mixing abstraction levels → extract helpers
-- [ ] Functions > 30 lines with multiple responsibilities → split
-
-**Code Block Extraction:**
-- [ ] If blocks, for/while loops, try/except → can describe in a phrase?
-  - YES → extract to function with that name
-  - With comment: DELETE comment after extraction
-  - Without comment: still extract if logical unit
+- [ ] If blocks, for/while loops, try/except that can be described in a phrase → extract
 - See [decision-logic/code-block-extraction.md](decision-logic/code-block-extraction.md)
 
-### Layer 2: Tier 1 Principles (WRITE TO NOTES)
+**DO NOT PROCEED** to Layer 2 until Layer 1 findings are written to the notes file.
 
-See [principles/tier-1-blocking.md](principles/tier-1-blocking.md).
+---
 
+### STEP 4: Layer 2 Analysis - WRITE TO NOTES FILE
+
+Check Tier 1 principles. See [principles/tier-1-blocking.md](principles/tier-1-blocking.md).
+
+**USE THE EDIT TOOL** to update notes file, replacing `[Will populate below]` under "Layer 2":
+
+```markdown
+## Layer 2: Tier 1 Principles
+- [ ] Line 55: generic `except Exception:` → catch specific types
+- [ ] Line 89: silent failure `except: pass` → add logging
+
+**Checkpoint**: Verified against Layer 1 ✓
+```
+
+**Checklist for Layer 2:**
 - [ ] **3.1 Intent-revealing names**
 - [ ] **3.9 Semantic specificity**: `validate()` → `validate_user_input()`
 - [ ] **3.5 No misleading names**
@@ -163,12 +195,27 @@ See [principles/tier-1-blocking.md](principles/tier-1-blocking.md).
 - [ ] **5.2 No silent failures** (no `except: pass`)
 - [ ] **2.9 Fail fast**
 
-⚠️ **Write checkpoint to notes**: Do findings conflict with Layer 1? Revise.
+⚠️ **MANDATORY CHECKPOINT**: Do findings conflict with Layer 1 philosophies? If yes, REVISE.
 
-### Layer 3: Tier 2 Principles (WRITE TO NOTES)
+**DO NOT PROCEED** until Layer 2 findings are written to the notes file.
 
-See [principles/tier-2-important.md](principles/tier-2-important.md).
+---
 
+### STEP 5: Layer 3 Analysis - WRITE TO NOTES FILE
+
+Check Tier 2 principles. See [principles/tier-2-important.md](principles/tier-2-important.md).
+
+**USE THE EDIT TOOL** to update notes file, replacing `[Will populate below]` under "Layer 3":
+
+```markdown
+## Layer 3: Tier 2 Principles
+- [ ] Line 12: missing type hints → add `def func(name: str) -> bool:`
+- [ ] Lines 40-90: function 50 lines → split into helpers
+
+**Checkpoint**: Verified against Layer 1 ✓
+```
+
+**Checklist for Layer 3:**
 - [ ] **Naming**: Abbreviations, searchability, domain consistency, boolean naming
 - [ ] **Structure**: Cohesion, coupling, dependency injection, abstraction levels
 - [ ] **Functions**: Length < 30, max 4 params, nesting < 3 levels
@@ -176,24 +223,88 @@ See [principles/tier-2-important.md](principles/tier-2-important.md).
 - [ ] **Code quality**: DRY, KISS, magic numbers
 - [ ] **Types**: Type hints, null safety
 
-⚠️ **Write checkpoint to notes**: Do findings conflict with Layer 1? Revise.
+⚠️ **MANDATORY CHECKPOINT**: Do findings conflict with Layer 1 philosophies? If yes, REVISE.
 
-### Layer 4: Tier 3 Principles (WRITE TO NOTES)
+**DO NOT PROCEED** until Layer 3 findings are written to the notes file.
 
-See [principles/tier-3-suggestions.md](principles/tier-3-suggestions.md).
+---
 
+### STEP 6: Layer 4 Analysis - WRITE TO NOTES FILE
+
+Check Tier 3 principles. See [principles/tier-3-suggestions.md](principles/tier-3-suggestions.md).
+
+**USE THE EDIT TOOL** to update notes file, replacing `[Will populate below]` under "Layer 4":
+
+```markdown
+## Layer 4: Tier 3 Principles
+- [ ] Line 5: dead import `import unused_module`
+
+**Checkpoint**: Verified against Layer 1 ✓
+```
+
+**Checklist for Layer 4:**
 - [ ] **Style**: Noise words, composition over inheritance
 - [ ] **Code cleanup**: YAGNI, dead code
 - [ ] **Interface design**: SOLID, Law of Demeter
 - [ ] **Performance**: Only if profiled
 
-⚠️ **Write checkpoint to notes**: Do findings conflict with Layer 1? Revise.
+⚠️ **MANDATORY CHECKPOINT**: Do findings conflict with Layer 1 philosophies? If yes, REVISE.
 
-### Layer 5: Final Validation (WRITE TO NOTES)
+**DO NOT PROCEED** until Layer 4 findings are written to the notes file.
 
-- [ ] Re-read ALL layer findings in notes
-- [ ] Verify NONE suggest comments for WHAT explanations
-- [ ] Compile "Changes to Apply" checklist with specific line numbers
+---
+
+### STEP 7: Layer 5 - COMPILE CHANGES TO APPLY
+
+Review all findings in the notes file.
+
+**USE THE EDIT TOOL** to populate "Layer 5" and "Changes to Apply":
+
+```markdown
+## Layer 5: Final Validation
+- [x] Re-read ALL layer findings above
+- [x] Verified NONE suggest comments for WHAT explanations
+- [x] All suggestions align with both Philosophies
+
+**Revisions made:**
+- Line 42: Originally suggested "add comment" → changed to "rename function"
+
+## Changes to Apply
+1. [ ] Line 42: Rename `validate()` → `validate_user_credentials()`
+2. [ ] Lines 23-35: Extract to `_validate_email_format()`
+3. [ ] Line 55: Change `except Exception` → `except ValueError, KeyError`
+4. [ ] Line 89: Add `logger.warning()` to except block
+```
+
+---
+
+### STEP 8: REPEAT FOR NEXT FILE
+
+Go back to STEP 2 for the next changed file. Create its notes file and repeat the process.
+
+**DO NOT APPLY ANY CHANGES YET.**
+
+---
+
+### STEP 9: APPLY CHANGES
+
+Only after ALL notes files are complete:
+
+For EACH notes file:
+1. Read the "Changes to Apply" section
+2. **USE THE EDIT TOOL** to make each change to the source file
+3. Mark items complete in the notes file as you go
+
+---
+
+### STEP 10: CLEANUP
+
+**DELETE ALL `.refactor-notes.md` files** using Bash:
+```bash
+find . -name "*.refactor-notes.md" -delete
+```
+
+Generate final summary report
 
 ---
 

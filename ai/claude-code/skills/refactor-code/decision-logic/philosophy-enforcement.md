@@ -11,17 +11,24 @@ PHILOSOPHIES (Non-negotiable)
 PRINCIPLES (Secondary - must defer to philosophies)
 ```
 
-## Write to Notes File
+## MANDATORY: Write to Notes File
 
-**CRITICAL**: All findings and revisions must be written to the per-file notes file.
+**STOP. You MUST write all findings to the notes file. Do not hold findings in memory.**
 
-After each layer checkpoint:
-1. Write all findings to the appropriate layer section
-2. If a finding was revised due to philosophy conflict, note it:
+### After EACH layer analysis:
+
+1. **USE THE EDIT TOOL NOW** to write findings to the notes file
+2. If you revised a finding due to philosophy conflict, **WRITE IT DOWN**:
    ```markdown
    ⚠️ REVISED: Line 42 - originally "add comment" → changed to "rename function"
    ```
-3. Compile final changes in "Changes to Apply" section
+3. **DO NOT PROCEED** to the next layer until findings are written
+
+### Before applying ANY changes:
+
+1. **USE THE EDIT TOOL** to compile all findings into "Changes to Apply" section
+2. Read the notes file to verify all changes are captured
+3. **DO NOT APPLY CHANGES** from memory - only from the notes file
 
 This externalizes context to prevent overflow and ensures all findings are captured.
 
