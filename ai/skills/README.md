@@ -23,6 +23,7 @@ Quick path:
 2. Customize frontmatter and instructions
 3. Test with `/skill-name`
 4. Deploy to `.claude/skills/`
+   > **Note:** Dev uses `skill.md`. Rename to `SKILL.md` when installing for use (official spec).
 
 ## For AI Agents
 
