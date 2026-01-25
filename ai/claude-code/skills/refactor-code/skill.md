@@ -27,20 +27,24 @@ These are the user's core coding beliefs. **Non-negotiable. Always win over prin
 
 ### Philosophy 1: Code as Communication
 
-**Code should communicate intent through names and structure, not comments.**
+**Code should communicate intent through names, not comments.**
 
-Key tenets:
-- **Names over comments**: Use descriptive names that eliminate need for explanatory comments
-- **Self-documenting code**: Code tells the story; comments only explain "why" (business context)
-- **Extract for clarity**: Complex conditions → extract to well-named functions
+---
 
-**The Golden Rules:**
-> 1. Comment explaining WHAT → STOP. Rename or restructure instead.
-> 2. Logical code block → EXTRACT into a well-named function (with OR without comment).
-> 3. If you can describe what a block does in a phrase → that's the function name.
-> 4. Comments explain WHY (business context), never WHAT.
+**Core Focus: NAMING**
 
-**Example - Apply this philosophy:**
+| Aspect | Apply This |
+|--------|------------|
+| Intent-revealing names | Names describe purpose: `validate()` → `validate_user_credentials()` |
+| Semantic specificity | Avoid vague names: `data`, `temp`, `result`, `info` → specific meaning |
+| Misleading names | Names must match behavior: `getUser()` that modifies state → fix |
+| Boolean clarity | Booleans read as yes/no questions: `isValid`, `hasPermission`, `canEdit` |
+
+**Structure Clarity:**
+- Comments explaining WHAT → rename or restructure instead
+- Comments explain WHY (business context), never WHAT
+
+**Example:**
 ```python
 # Bad - comment explains what
 input_guard.validate(request)  # Validates and logs suspicious patterns
@@ -49,16 +53,27 @@ input_guard.validate(request)  # Validates and logs suspicious patterns
 input_guard.detect_and_log_suspicious_patterns(request)
 ```
 
+---
+
 ### Philosophy 2: Reducing Cognitive Load
 
 **Structure code so readers understand at their desired abstraction level.**
 
-Key tenets:
-- **Hierarchical abstraction**: High-level functions call well-named lower-level functions
-- **Progressive disclosure**: Main functions read like an outline; details in helpers
-- **Consistent patterns**: Same approach for similar operations
+---
 
-**Example - Apply this philosophy:**
+**Core Focus: STRUCTURE**
+
+| Aspect | Apply This |
+|--------|------------|
+| Hierarchical abstraction | High-level functions call well-named lower-level functions |
+| Progressive disclosure | Main functions read like an outline; details in helpers |
+| Consistent patterns | Same approach for similar operations |
+
+**Code Block Extraction:**
+- Logical blocks (if/for/while/try) that can be described in a phrase → extract to named function
+- See [decision-logic/code-block-extraction.md](decision-logic/code-block-extraction.md)
+
+**Example:**
 ```python
 # Bad - all details at one level
 def process_order(order):
@@ -117,6 +132,11 @@ For the FIRST changed file:
    - Analyzing: [brief description]
 
    ## Layer 1: Philosophy Check
+
+   ### Philosophy 1: Code as Communication
+   [Will populate below]
+
+   ### Philosophy 2: Reducing Cognitive Load
    [Will populate below]
 
    ## Layer 2: Tier 1 Principles
@@ -139,61 +159,75 @@ For the FIRST changed file:
 
 ---
 
-### STEP 3: Layer 1 Analysis - WRITE TO NOTES FILE
+### STEP 3: Layer 1 Analysis - PHILOSOPHY CHECK
 
-Read the source file. Check for philosophy violations.
+Read the source file. **Check BOTH philosophies with EQUAL attention.**
 
-**USE THE EDIT TOOL** to update the notes file, replacing `[Will populate below]` under "Layer 1" with actual findings:
+---
+
+#### Philosophy 1: Code as Communication
+**Reference:** [Philosophy 1 section above](#philosophy-1-code-as-communication)
+
+Check ALL naming aspects:
+- Intent-revealing names
+- Semantic specificity
+- Misleading names
+- Boolean clarity
+
+Check ALL structure aspects:
+- Self-documenting code (comments explaining WHAT should become names)
+- Comments explain WHY not WHAT
+
+**Write findings to notes file under "Philosophy 1".**
+
+---
+
+#### Philosophy 2: Reducing Cognitive Load
+**Reference:** [Philosophy 2 section above](#philosophy-2-reducing-cognitive-load)
+
+Check ALL structure aspects:
+- Hierarchical abstraction
+- Progressive disclosure
+- Consistent patterns
+- Code block extraction (logical blocks → named functions)
+
+**Write findings to notes file under "Philosophy 2".**
+
+---
+
+**USE THE EDIT TOOL** to update the notes file:
 
 ```markdown
 ## Layer 1: Philosophy Check
 
-### Code as Communication
-- [ ] Line 42: `validate()` is vague → rename to `validate_user_credentials()`
-- [ ] Line 78: comment explains WHAT → extract to `_check_password_strength()`
+### Philosophy 1: Code as Communication
+[Record findings from ALL naming and structure clarity aspects]
 
-### Reducing Cognitive Load
-- [ ] Lines 50-95: function mixes levels → extract helpers
-
-### Code Block Extraction
-- [ ] Lines 23-35: if block → `_validate_email_format()`
+### Philosophy 2: Reducing Cognitive Load
+[Record findings from ALL cognitive load aspects]
 ```
-
-**Checklist for Layer 1:**
-- [ ] Vague function names (`validate()`, `process()`, `handle()`) → rename
-- [ ] Comments explaining WHAT → extract to named function
-- [ ] Vague variables (`data`, `temp`, `result`, `info`) → rename
-- [ ] Functions mixing abstraction levels → extract helpers
-- [ ] If blocks, for/while loops, try/except that can be described in a phrase → extract
-- See [decision-logic/code-block-extraction.md](decision-logic/code-block-extraction.md)
 
 **DO NOT PROCEED** to Layer 2 until Layer 1 findings are written to the notes file.
 
 ---
 
-### STEP 4: Layer 2 Analysis - WRITE TO NOTES FILE
+### STEP 4: Layer 2 Analysis - TIER 1 PRINCIPLES
 
-Check Tier 1 principles. See [principles/tier-1-blocking.md](principles/tier-1-blocking.md).
+**Reference:** [principles/tier-1-blocking.md](principles/tier-1-blocking.md) (MUST-FIX issues)
 
-**USE THE EDIT TOOL** to update notes file, replacing `[Will populate below]` under "Layer 2":
+Review ALL Tier 1 categories with equal attention:
+- **Naming** (3.1, 3.5, 3.9): Intent-revealing, no misleading, semantic specificity
+- **Structure** (1.1, 1.7): Single responsibility, separation of concerns
+- **Error handling** (5.1, 5.2, 2.9): Specific exceptions, no silent failures, fail fast
+
+**USE THE EDIT TOOL** to update notes file:
 
 ```markdown
 ## Layer 2: Tier 1 Principles
-- [ ] Line 55: generic `except Exception:` → catch specific types
-- [ ] Line 89: silent failure `except: pass` → add logging
+[Record findings from ALL Tier 1 categories]
 
 **Checkpoint**: Verified against Layer 1 ✓
 ```
-
-**Checklist for Layer 2:**
-- [ ] **3.1 Intent-revealing names**
-- [ ] **3.9 Semantic specificity**: `validate()` → `validate_user_input()`
-- [ ] **3.5 No misleading names**
-- [ ] **1.1 Single Responsibility**
-- [ ] **1.7 Separation of Concerns**
-- [ ] **5.1 Specific exceptions** (no `except Exception:`)
-- [ ] **5.2 No silent failures** (no `except: pass`)
-- [ ] **2.9 Fail fast**
 
 ⚠️ **MANDATORY CHECKPOINT**: Do findings conflict with Layer 1 philosophies? If yes, REVISE.
 
@@ -201,27 +235,26 @@ Check Tier 1 principles. See [principles/tier-1-blocking.md](principles/tier-1-b
 
 ---
 
-### STEP 5: Layer 3 Analysis - WRITE TO NOTES FILE
+### STEP 5: Layer 3 Analysis - TIER 2 PRINCIPLES
 
-Check Tier 2 principles. See [principles/tier-2-important.md](principles/tier-2-important.md).
+**Reference:** [principles/tier-2-important.md](principles/tier-2-important.md) (SHOULD-FIX issues)
 
-**USE THE EDIT TOOL** to update notes file, replacing `[Will populate below]` under "Layer 3":
+Review ALL Tier 2 categories with equal attention:
+- **Naming**: Abbreviations, searchability, domain consistency, boolean naming
+- **Structure**: Cohesion, coupling, dependency injection, abstraction levels
+- **Functions**: Length < 30 lines, max 4 params, nesting < 3 levels
+- **Errors**: Context in messages, fail safely
+- **Code quality**: DRY, KISS, magic numbers
+- **Types**: Type hints, null safety
+
+**USE THE EDIT TOOL** to update notes file:
 
 ```markdown
 ## Layer 3: Tier 2 Principles
-- [ ] Line 12: missing type hints → add `def func(name: str) -> bool:`
-- [ ] Lines 40-90: function 50 lines → split into helpers
+[Record findings from ALL Tier 2 categories]
 
 **Checkpoint**: Verified against Layer 1 ✓
 ```
-
-**Checklist for Layer 3:**
-- [ ] **Naming**: Abbreviations, searchability, domain consistency, boolean naming
-- [ ] **Structure**: Cohesion, coupling, dependency injection, abstraction levels
-- [ ] **Functions**: Length < 30, max 4 params, nesting < 3 levels
-- [ ] **Errors**: Context in messages, fail safely
-- [ ] **Code quality**: DRY, KISS, magic numbers
-- [ ] **Types**: Type hints, null safety
 
 ⚠️ **MANDATORY CHECKPOINT**: Do findings conflict with Layer 1 philosophies? If yes, REVISE.
 
@@ -229,24 +262,24 @@ Check Tier 2 principles. See [principles/tier-2-important.md](principles/tier-2-
 
 ---
 
-### STEP 6: Layer 4 Analysis - WRITE TO NOTES FILE
+### STEP 6: Layer 4 Analysis - TIER 3 PRINCIPLES
 
-Check Tier 3 principles. See [principles/tier-3-suggestions.md](principles/tier-3-suggestions.md).
+**Reference:** [principles/tier-3-suggestions.md](principles/tier-3-suggestions.md) (NICE-TO-HAVE issues)
 
-**USE THE EDIT TOOL** to update notes file, replacing `[Will populate below]` under "Layer 4":
+Review ALL Tier 3 categories with equal attention:
+- **Style**: Noise words, composition over inheritance
+- **Code cleanup**: YAGNI, dead code
+- **Interface design**: SOLID, Law of Demeter
+- **Performance**: Only if profiled
+
+**USE THE EDIT TOOL** to update notes file:
 
 ```markdown
 ## Layer 4: Tier 3 Principles
-- [ ] Line 5: dead import `import unused_module`
+[Record findings from ALL Tier 3 categories]
 
 **Checkpoint**: Verified against Layer 1 ✓
 ```
-
-**Checklist for Layer 4:**
-- [ ] **Style**: Noise words, composition over inheritance
-- [ ] **Code cleanup**: YAGNI, dead code
-- [ ] **Interface design**: SOLID, Law of Demeter
-- [ ] **Performance**: Only if profiled
 
 ⚠️ **MANDATORY CHECKPOINT**: Do findings conflict with Layer 1 philosophies? If yes, REVISE.
 
