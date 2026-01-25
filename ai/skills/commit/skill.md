@@ -1,6 +1,6 @@
 ---
 name: commit
-description: Analyze changes and create modular, conventional commits with clear messages
+description: Analyze changes and create clear, descriptive commits with simple sentence messages
 disable-model-invocation: true
 argument-hint: [--staged | --all]
 allowed-tools: Read, Bash
@@ -8,7 +8,7 @@ allowed-tools: Read, Bash
 
 # Commit Skill
 
-Analyze code changes, group them into logical commits, and create conventional commit messages with clear subjects and informative bodies.
+Analyze code changes, group them into logical commits, and create clear commit messages using simple, descriptive sentences.
 
 ---
 
@@ -54,57 +54,44 @@ git diff --cached
 git diff
 ```
 
-### Step 1.3: Build File List
+### Step 1.3: Check Recent Commit Style
 
-For each changed file, capture:
-- File path
-- Change type (A=added, M=modified, D=deleted, R=renamed)
-- Staged vs unstaged
-- Lines added/removed
+```bash
+git log --oneline -10
+```
 
 ---
 
 ## Phase 2: Analyze and Group Changes
 
+### Core Principle
+
+**One commit = one sentence description.** If changes can't be described in a single clear sentence, split them into multiple commits.
+
 ### Grouping Priority
 
 | Priority | Criterion | Example |
 |----------|-----------|---------|
-| 1 | Feature cohesion | All files for "add user auth" |
+| 1 | Feature cohesion | All files for user auth feature |
 | 2 | Directory scope | All changes in `auth/` module |
-| 3 | Change type | Tests, docs, configs separate |
+| 3 | Logical separation | Config changes separate from code |
 | 4 | Dependency order | Interface before implementation |
 
-### Commit Type Detection
+### Split Decision
 
-| Signal | Type | Example |
-|--------|------|---------|
-| New functionality | `feat` | `feat(auth): add OAuth2 login` |
-| Bug fix, error correction | `fix` | `fix(api): handle null response` |
-| `.md`, `README`, `docs/` | `docs` | `docs: update install guide` |
-| Test files (`.test.ts`, `_test.go`, `spec.`) | `test` | `test(auth): add login tests` |
-| `package.json`, `Cargo.toml`, build configs | `build` | `build: upgrade to Node 20` |
-| `.github/workflows/`, `Jenkinsfile`, CI configs | `ci` | `ci: add GitHub Actions` |
-| Formatting, whitespace only | `style` | `style: apply prettier` |
-| Restructure without behavior change | `refactor` | `refactor: extract helper` |
-| Performance improvement | `perf` | `perf: add query index` |
-| `.gitignore`, tooling, maintenance | `chore` | `chore: update gitignore` |
+| Can describe in one sentence? | Action |
+|-------------------------------|--------|
+| Yes | Single commit |
+| No - multiple unrelated changes | Split by concern |
+| No - too complex | Split by logical phase |
 
-### Grouping Rules
+**Examples of good single-sentence commits:**
+- "Add OAuth2 authentication to login flow"
+- "Update GitLab MR skill to fetch all comments"
+- "Refactor design guide into modular directory structure"
 
-1. **Atomic commits** - Each commit = one logical change
-2. **Self-contained** - Commit should not break the build
-3. **Reviewable** - Changes understandable in isolation
-
-### Grouping Decisions
-
-| Scenario | Decision |
-|----------|----------|
-| Feature + its tests | **One commit** - tests are part of feature |
-| Feature + unrelated fix | **Two commits** - separate concerns |
-| Refactor + dependent feature | **Two commits** - refactor first |
-| Multiple unrelated fixes | **Multiple commits** - one per fix |
-| Formatting + logic changes | **Two commits** - style first |
+**Example of when to split:**
+- Updating a skill AND refactoring unrelated code → Two commits
 
 ---
 
@@ -112,20 +99,31 @@ For each changed file, capture:
 
 ### Commit Message Format
 
-**Subject line:**
-- Format: `type(scope): description`
-- Max 72 characters (aim for 50)
-- Imperative mood ("add" not "added")
+**Simple sentence style:**
+- One clear, descriptive sentence
+- **Capitalize first letter**
+- **Capitalize names and titles** (Claude Code, GitLab, OAuth2, README, etc.)
+- Imperative mood ("Add" not "Added")
 - No period at end
-- Capitalize first letter after colon
+- Max 72 characters (prefer under 50)
+- Comprehensive but concise
 
-**Body:**
+**Good examples:**
+- `Add fuzzy search to file finder`
+- `Update Jira skill to support JQL queries`
+- `Create modular skill design guide`
+- `Fix null pointer in API response handler`
+
+**Bad examples:**
+- `fix bug` (too vague)
+- `Updated the thing` (past tense, vague)
+- `Add feature, fix bug, update docs` (multiple things - split it)
+
+**Body (optional):**
+- Only if subject can't capture full context
 - Blank line after subject
-- Wrap at 72 characters
-- Explain WHY, not just WHAT
-- Include context not obvious from diff
+- Explain WHY if not obvious
 - Reference issues if applicable (`Refs: #123`)
-- **NEVER add Co-Authored-By tags for AI/Claude** - only human co-authors
 
 ### Output Format
 
@@ -136,32 +134,19 @@ Present plan to user:
 
 ## Summary
 - Commits proposed: [N]
-- Files to commit: [N]
-- Total: +[N] / -[N] lines
+- Files: [N]
+- Changes: +[N] / -[N] lines
 
 ---
 
 ## Commit 1 of N
 
-**Message:**
-```
-type(scope): subject line here
-
-Body explaining why this change was made.
-Context that won't be obvious later.
-
-Refs: #123
-```
+**Message:** `[Single descriptive sentence]`
 
 **Files:**
-| File | Change | Lines |
-|------|--------|-------|
-| path/to/file.ts | Modified | +45, -12 |
-
----
-
-## Commit 2 of N
-[...]
+| File | Change |
+|------|--------|
+| path/to/file.ts | Modified |
 
 ---
 
@@ -192,15 +177,17 @@ Refs: #123
 git add path/to/file1.ts path/to/file2.ts
 ```
 
-**Step 4.2: Create commit with HEREDOC**
+**Step 4.2: Create commit**
+```bash
+git commit -m "Commit message here"
+```
+
+For multi-line messages (rare), use HEREDOC:
 ```bash
 git commit -m "$(cat <<'EOF'
-type(scope): subject line
+Subject line here
 
-Body explaining the change.
-Why this was needed.
-
-Refs: #123
+Body explaining why if needed.
 EOF
 )"
 ```
@@ -219,10 +206,9 @@ Report summary:
 
 | # | Hash | Message |
 |---|------|---------|
-| 1 | abc1234 | feat(auth): add OAuth2 login |
-| 2 | def5678 | test(auth): add OAuth2 tests |
+| 1 | abc1234 | Add OAuth2 authentication |
+| 2 | def5678 | Update test configuration |
 
-**Remaining unstaged:** [N files]
 **Ready to push:** `git push`
 ```
 
@@ -236,15 +222,6 @@ Report summary:
 | "nothing to commit" | No changes | Inform user, exit gracefully |
 | "pre-commit hook failed" | Hook rejected | Show hook output, suggest fixes |
 | "merge conflict" | Unresolved conflicts | List files, abort |
-| "pathspec did not match" | File not found | Re-gather changes |
-
-### Recovery
-
-If commit fails mid-execution:
-1. Report which commits succeeded (with hashes)
-2. Report which commit failed and why
-3. Remaining files stay in their staged/unstaged state
-4. Suggest: "Fix the issue and run `/commit` again"
 
 ---
 
@@ -258,17 +235,17 @@ If commit fails mid-execution:
 
 ### Examples
 
-**Mixed feature and fix:**
+**Single logical change:**
 ```
 $ /commit
 # Proposes:
-# 1. feat(search): add fuzzy matching
-# 2. fix(api): handle timeout errors
+# 1. Add fuzzy search to command palette
 ```
 
-**Single atomic change:**
+**Multiple unrelated changes → split:**
 ```
-$ /commit --staged
+$ /commit
 # Proposes:
-# 1. refactor(utils): extract date formatter
+# 1. Update commit skill message format
+# 2. Refactor skill design guide into modular structure
 ```
