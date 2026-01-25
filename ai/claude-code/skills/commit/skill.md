@@ -77,6 +77,15 @@ git log --oneline -10
 | 3 | Logical separation | Config changes separate from code |
 | 4 | Dependency order | Interface before implementation |
 
+### Commit Sequence
+
+When splitting into multiple commits, consider the logical order of changes:
+- What change enables or defines the others?
+- Would a reviewer understand each commit in isolation?
+- Does the sequence tell a coherent story?
+
+Order commits so earlier ones provide context for later ones.
+
 ### Split Decision
 
 | Can describe in one sentence? | Action |
