@@ -11,6 +11,38 @@ Review specific range: git diff abc123..def456
 Review staged changes: git diff --cached
 ```
 
+## Philosophy
+
+Philosophies are higher-priority guiding beliefs that inform all the principles below.
+
+### Code as Communication
+
+**Code should communicate as effectively, clearly, and comprehensively as possible to decrease mental load and make the codebase intuitive to follow, understand, maintain, and modify.**
+
+Key tenets:
+- **Names over comments**: Use descriptive variable, function, and class names that eliminate the need for explanatory comments
+- **Self-documenting code**: The code itself should tell the story; comments should only explain "why" for non-obvious decisions
+- **Concise yet complete**: Names should be descriptive enough to convey meaning without being verbose
+
+**Before (comment explains intent):**
+```python
+user_id = "user-123"
+# Conversation owned by authenticated user
+await storage.save_conversation(..., user_id=user_id)
+
+headers = {...}  # Headers for the owner
+```
+
+**After (names communicate intent):**
+```python
+conversation_owner_id = "user-123"
+await storage.save_conversation(..., user_id=conversation_owner_id)
+
+owner_headers = {...}
+```
+
+---
+
 ## Process
 
 1. Run the specified `git diff` command
