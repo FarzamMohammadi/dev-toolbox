@@ -11,6 +11,8 @@ Claude Code skills for extending agent capabilities with specialized workflows.
 | `handoff/` | Session context handoff for continuity |
 | `jira/` | Jira ticket management via REST API |
 | `glab-mr-manager/` | GitLab MR lifecycle management |
+| `modularize-document/` | Transform monolithic markdown into modular index + detail files |
+| `refactor-code/` | Review git diffs against refactoring principles |
 
 ## Creating Skills
 

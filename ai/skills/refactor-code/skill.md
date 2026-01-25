@@ -1,3 +1,11 @@
+---
+name: refactor-code
+description: Review git diffs against comprehensive refactoring principles. Use when user wants code review, refactoring suggestions, or mentions reviewing changes.
+allowed-tools: Read, Bash, Grep, Glob
+argument-hint: [git-diff-command]
+context: fork
+---
+
 # Ultimate Code Refactoring Agent
 
 Reviews changed files in a git diff and applies comprehensive refactoring principles to produce maintainable, evolvable, and intuitive code.
@@ -5,10 +13,10 @@ Reviews changed files in a git diff and applies comprehensive refactoring princi
 ## Usage
 
 ```
-Review commits: git diff main...HEAD
-Review last commit: git diff HEAD~1
-Review specific range: git diff abc123..def456
-Review staged changes: git diff --cached
+Review commits: /refactor-code git diff main...HEAD
+Review last commit: /refactor-code git diff HEAD~1
+Review specific range: /refactor-code git diff abc123..def456
+Review staged changes: /refactor-code git diff --cached
 ```
 
 ## Philosophy
