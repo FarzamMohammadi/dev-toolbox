@@ -116,6 +116,7 @@ Order commits so earlier ones provide context for later ones.
 - No period at end
 - Max 72 characters (prefer under 50)
 - Comprehensive but concise
+- **Never add Co-Authored-By tags for Claude** — only the user is credited
 
 **Good examples:**
 - `Add fuzzy search to file finder`
