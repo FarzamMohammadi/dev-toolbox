@@ -19,10 +19,42 @@ This skill prevents common mistakes like:
 
 ## Related Skills
 
-This skill is part of the **RPI Workflow** (Research -> Plan -> Implement):
-- **Current:** `/rpi-research` — Creates research document
-- **Next:** `/rpi-plan` — Creates implementation plan from research
-- **Then:** `/rpi-implement` — Executes the plan
+This skill is part of the **RPI Workflow**:
+
+| Step | Skill | Purpose |
+|------|-------|---------|
+| 1 | `/rpi-research` | Architecture-first codebase research |
+| 2 | `/rpi-plan` | Self-contained implementation plan |
+| 3 | `/rpi-implement` | Methodical execution with verification |
+
+**Current:** `/rpi-research`
+
+```
+Research ──► Plan ──► Implement
+   ◄─────────┴────────┘
+      (if issues found)
+```
+
+---
+
+## Pre-Flight Check
+
+Verify before proceeding:
+
+- Working directory is a git repository or codebase root
+- User has provided task goal or ticket reference
+
+**If unclear**, ask user to clarify before continuing.
+
+---
+
+## First-Time Setup
+
+Create research output directory (safe to run multiple times):
+
+```bash
+mkdir -p thoughts/shared/research
+```
 
 ---
 
@@ -41,7 +73,7 @@ Phase 4: Detailed Analysis
     ↓
 [GATE] Final Validation
     ↓
-Phase 7: Generate Document
+Phase 5: Generate Document
 ```
 
 ---
@@ -292,25 +324,15 @@ This skill specifically prevents:
 
 ---
 
-## Error Recovery
+## Error Handling
 
-### If Search Returns Too Many Results
-
-1. Stop and ask user to narrow scope
-2. Don't proceed with "I'll figure it out" mentality
-3. Explicitly list what you found and ask which areas to focus on
-
-### If Architecture Is Unclear
-
-1. Stop at Phase 2 gate
-2. Ask specific questions about unclear parts
-3. Don't guess at component relationships
-
-### If User Disagrees with Categorization
-
-1. Update categorization based on user input
-2. Re-validate before proceeding
-3. Document the correction in the research output
+| Error | Cause | Resolution |
+|-------|-------|------------|
+| No files found | Search terms too specific | Broaden search, ask user for hints |
+| Too many results | Search too broad | Ask user to narrow scope, list what was found |
+| Architecture unclear | Complex system | Stop at Phase 2, request docs or user walkthrough |
+| User disagrees with categorization | Misunderstanding | Update categorization, re-validate, document correction |
+| Can't verify if code is called | Complex call chain | Ask user, note uncertainty in research document |
 
 ---
 
@@ -325,3 +347,14 @@ Before completing, verify:
 - [ ] All "Needs Attention" items have been resolved
 - [ ] Document is written to `thoughts/shared/research/`
 - [ ] Next step pointer to `/rpi-plan` is included
+
+---
+
+## Usage Examples
+
+```
+/rpi-research VE-1234
+/rpi-research "authentication flow"
+/rpi-research implement caching for API responses
+/rpi-research understand how sub-agents are invoked
+```

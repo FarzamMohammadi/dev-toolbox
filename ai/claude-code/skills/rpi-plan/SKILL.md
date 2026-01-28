@@ -21,10 +21,42 @@ This skill ensures implementation plans:
 
 ## Related Skills
 
-This skill is part of the **RPI Workflow** (Research -> Plan -> Implement):
-- **Previous:** `/rpi-research` — Creates research document
-- **Current:** `/rpi-plan` — Creates implementation plan from research
-- **Next:** `/rpi-implement` — Executes the plan
+This skill is part of the **RPI Workflow**:
+
+| Step | Skill | Purpose |
+|------|-------|---------|
+| 1 | `/rpi-research` | Architecture-first codebase research |
+| 2 | `/rpi-plan` | Self-contained implementation plan |
+| 3 | `/rpi-implement` | Methodical execution with verification |
+
+**Current:** `/rpi-plan`
+
+```
+Research ──► Plan ──► Implement
+   ◄─────────┴────────┘
+      (if issues found)
+```
+
+---
+
+## Pre-Flight Check
+
+Verify before proceeding:
+
+- Research document exists in `thoughts/shared/research/`
+- Research document has required sections (Architecture, Findings, Exclusions)
+
+**If missing**, run `/rpi-research` first.
+
+---
+
+## First-Time Setup
+
+Create plan output directory (safe to run multiple times):
+
+```bash
+mkdir -p thoughts/shared/plans
+```
 
 ---
 
@@ -231,8 +263,16 @@ This section is **MANDATORY**. It documents findings that won't be modified.
 
 #### 3. Implementation Phases
 
-Each phase MUST include:
+Each phase MUST include exact code (not pseudocode) so implementation can proceed without re-reading files.
 
+**BAD (not self-contained):**
+```markdown
+### Phase 1
+- Update the handler to include the new feature
+- Modify the relevant config
+```
+
+**GOOD (self-contained):**
 ```markdown
 ### Phase [N]: [Phase Name]
 
@@ -241,18 +281,16 @@ Each phase MUST include:
 **Pre-conditions**:
 - [What must be true before starting]
 
-**Files to Modify**:
-
 #### [filename.py]
 
 **Current code** (lines [X]-[Y]):
 ```[language]
-[exact current code from research/verification]
+[exact current code copied from file]
 ```
 
 **New code**:
 ```[language]
-[exact code to write, not pseudocode]
+[exact replacement code]
 ```
 
 **Rationale**: [Why this change]
@@ -371,63 +409,6 @@ Include reference to source research:
 
 ---
 
-## Self-Contained Plan Requirements
-
-A plan is "self-contained" if someone can execute it WITHOUT:
-- Re-reading the original codebase
-- Re-running the research
-- Asking clarifying questions
-
-### Checklist
-
-| Requirement | How to Satisfy |
-|-------------|----------------|
-| Exact file paths | Full paths, not relative |
-| Exact line numbers | From verification step |
-| Exact current code | Copied from files, not paraphrased |
-| Exact new code | Complete code, not pseudocode |
-| Verification commands | Runnable as-is |
-| Clear exclusions | With reasons |
-
-### Bad vs Good Examples
-
-**BAD (not self-contained):**
-```markdown
-### Phase 1
-- Update the handler to include the new feature
-- Modify the relevant config
-```
-
-**GOOD (self-contained):**
-```markdown
-### Phase 1: Add Feature Flag Check
-
-**File**: src/api/handler.py
-
-**Current code** (lines 45-52):
-```python
-def process_request(request):
-    validated = validate(request)
-    return orchestrator.handle(validated)
-```
-
-**New code**:
-```python
-def process_request(request):
-    validated = validate(request)
-    if feature_flags.is_enabled('new_feature'):
-        return orchestrator.handle_v2(validated)
-    return orchestrator.handle(validated)
-```
-
-**Verification**:
-```bash
-python -m pytest tests/test_handler.py -v
-```
-```
-
----
-
 ## Anti-Pattern Prevention
 
 | Anti-Pattern | How This Skill Prevents It |
@@ -440,42 +421,15 @@ python -m pytest tests/test_handler.py -v
 
 ---
 
-## Error Recovery
+## Error Handling
 
-### If Research Is Stale
-
-```
-Research was conducted [N] days ago. Codebase may have changed.
-
-Options:
-1. Verify key modification points are still accurate (I'll check)
-2. Re-run /rpi-research for fresh analysis
-```
-
-### If Plan Is Too Large
-
-```
-This plan has [N] phases and modifies [M] files.
-
-Recommendation: Split into smaller plans:
-1. [Subset 1 description]
-2. [Subset 2 description]
-
-Which subset should I plan first?
-```
-
-### If User Rejects Plan
-
-```
-Understood. What aspects need revision?
-
-1. Scope too large/small?
-2. Wrong modification points?
-3. Missing exclusions?
-4. Different phase ordering?
-```
-
-Update plan and re-present for approval.
+| Error | Cause | Resolution |
+|-------|-------|------------|
+| Research document not found | Wrong path or not created | Verify path, run `/rpi-research` |
+| Research missing sections | Incomplete research | Re-run `/rpi-research` with full process |
+| Code changed since research | Stale research | Verify key points or re-research |
+| Plan too large | Scope too broad | Split into smaller plans, ask user which first |
+| User rejects plan | Wrong approach | Ask what to revise (scope, points, exclusions, ordering) |
 
 ---
 
@@ -491,3 +445,13 @@ Before completing, verify:
 - [ ] Plan links back to research document
 - [ ] Plan is written to `thoughts/shared/plans/`
 - [ ] Next step pointer to `/rpi-implement` is included
+
+---
+
+## Usage Examples
+
+```
+/rpi-plan thoughts/shared/research/2024-01-15-VE-1234-feature.md
+/rpi-plan VE-1234
+/rpi-plan
+```

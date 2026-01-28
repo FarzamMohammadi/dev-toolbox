@@ -20,10 +20,33 @@ This skill ensures implementation:
 
 ## Related Skills
 
-This skill is part of the **RPI Workflow** (Research -> Plan -> Implement):
-- **Previous:** `/rpi-research` — Creates research document
-- **Previous:** `/rpi-plan` — Creates implementation plan from research
-- **Current:** `/rpi-implement` — Executes the plan
+This skill is part of the **RPI Workflow**:
+
+| Step | Skill | Purpose |
+|------|-------|---------|
+| 1 | `/rpi-research` | Architecture-first codebase research |
+| 2 | `/rpi-plan` | Self-contained implementation plan |
+| 3 | `/rpi-implement` | Methodical execution with verification |
+
+**Current:** `/rpi-implement`
+
+```
+Research ──► Plan ──► Implement
+   ◄─────────┴────────┘
+      (if issues found)
+```
+
+---
+
+## Pre-Flight Check
+
+Verify before proceeding:
+
+- Plan document exists in `thoughts/shared/plans/`
+- Plan has Implementation Phases with code snippets
+- Git working tree is clean (`git status` shows no uncommitted changes)
+
+**If dirty working tree**, ask user to commit or stash first.
 
 ---
 
@@ -174,6 +197,12 @@ Options:
 - [x] Current code matches plan expectations
 - [x] All verification commands identified
 
+### Checkpoint Mode
+
+How should I handle phase transitions?
+- **Per-phase confirmation** (default): Stop after each phase for approval
+- **Batch mode**: Execute all phases, only stop on errors
+
 **Ready to begin implementation?**
 ```
 
@@ -300,59 +329,30 @@ Phase [N+1]: [name]
 
 ---
 
-## Handling Failures
+## Error Handling
 
-### Verification Failure
-
-```markdown
-## Verification Failed
-
-**Phase**: [N]
-**Command**: `[command]`
-**Expected**: [what should happen]
-**Actual**: [what happened]
-
-**Error output**:
-```
-[error details]
-```
-
-Options:
-1. Review and fix the issue
-2. Rollback phase changes and investigate
-3. Abort implementation
-
-**What would you like to do?**
-```
-
-### Code Mismatch During Execution
-
-```markdown
-## Unexpected Code State
-
-**File**: [file.py]
-**Expected at lines [X]-[Y]**:
-```
-[code from plan]
-```
-
-**Actual**:
-```
-[different code]
-```
-
-This doesn't match the plan. Possible causes:
-- Code was modified after plan creation
-- Plan has incorrect line numbers
-- Wrong file
-
-Cannot proceed without resolution. Options:
-1. Update plan and restart
-2. Manually adjust and continue
-3. Abort implementation
-```
+| Error | Cause | Resolution |
+|-------|-------|------------|
+| Plan not found | Wrong path | Verify path, check `thoughts/shared/plans/` |
+| Code mismatch | Code changed since plan | STOP, show diff, ask user to update plan or proceed |
+| Verification failed | Test failure or syntax error | STOP, show error, ask user: fix/rollback/abort |
+| Pre-condition failed | Dependency not met | STOP, report which condition, await user fix |
+| Excluded file modified | Accidental change | Rollback with `git checkout -- [file]` |
 
 **NEVER** guess or improvise. Always stop and ask.
+
+### Rollback Commands
+
+```bash
+# Single phase
+git checkout -- [files from that phase]
+
+# All changes
+git checkout -- [all modified files]
+
+# Check what changed
+git diff
+```
 
 ---
 
@@ -454,34 +454,6 @@ git diff [excluded_file2.py]  # Should show no changes
 
 ---
 
-## Error Recovery Commands
-
-### Rollback Single Phase
-
-```bash
-# If a single phase needs to be undone
-git checkout -- [files from that phase]
-```
-
-### Rollback All Changes
-
-```bash
-# If entire implementation needs to be undone
-git checkout -- [all modified files]
-```
-
-### Check What Changed
-
-```bash
-# See all modifications
-git diff
-
-# See specific file
-git diff [file.py]
-```
-
----
-
 ## Anti-Pattern Prevention
 
 | Anti-Pattern | How This Skill Prevents It |
@@ -491,16 +463,6 @@ git diff [file.py]
 | "Skip verification, looks fine" | Mandatory verification gates |
 | "I know better than the plan" | Plan is authoritative - stop and ask |
 | "Modified excluded file by accident" | Exclusion verification in final check |
-
----
-
-## Important Reminders
-
-1. **The plan is authoritative** - Don't second-guess it during execution
-2. **Stop at mismatches** - Never proceed when reality differs from plan
-3. **Report everything** - User should know exactly what changed
-4. **Verify exclusions** - Confirm you didn't touch what you shouldn't
-5. **No silent failures** - Every error gets reported and requires decision
 
 ---
 
@@ -514,3 +476,13 @@ Before completing, verify:
 - [ ] Final verification commands all passed
 - [ ] Summary report generated
 - [ ] Git diff available for review
+
+---
+
+## Usage Examples
+
+```
+/rpi-implement thoughts/shared/plans/2024-01-15-VE-1234-feature.md
+/rpi-implement VE-1234
+/rpi-implement
+```
