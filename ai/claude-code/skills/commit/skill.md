@@ -1,74 +1,31 @@
 ---
 name: commit
-description: Analyze changes and create clear, descriptive commits with simple sentence messages
-disable-model-invocation: true
+description: Analyze code changes, group them into logical packages where appropriate, to create sequential, clear, descriptive commits with effective titles and detailed descriptions
 argument-hint: [--staged | --all]
 allowed-tools: Read, Bash
 ---
 
 # Commit Skill
 
-Analyze code changes, group them into logical commits, and create clear commit messages using simple, descriptive sentences.
+Analyze code changes, group them into logical packages where appropriate, to create sequential, clear, descriptive commits with effective titles and detailed descriptions.
 
 ---
 
-## Pre-Flight Check
+## Levels of Detail
 
-Verify git repository and current state:
-
-```bash
-git rev-parse --is-inside-work-tree 2>/dev/null && echo "Git repo: yes" || echo "Git repo: NO"
-git status --porcelain | head -1 | grep -q . && echo "Changes: yes" || echo "Changes: NO"
-```
-
-**If not a git repository:** Inform user and exit.
-**If no changes:** Inform user "Working tree clean. Nothing to commit." and exit.
+| Level | Component | Purpose |
+|-------|-----------|---------|
+| **Highest** | Title | Single sentence capturing all changes comprehensively yet succinctly |
+| **Middle** | Description | One level deeper - enough to fully understand without viewing files |
+| **Lowest** | Files | The actual diff - reader can inspect directly if needed |
 
 ---
 
-## Phase 1: Gather Changes
+## Step 1: Grouping
 
-### Step 1.1: Assess Current State
+Analyze all changes and determine commit packages.
 
-```bash
-# Overview
-git status --short
-
-# Staged changes
-git diff --cached --stat
-
-# Unstaged changes
-git diff --stat
-
-# Untracked files
-git ls-files --others --exclude-standard
-```
-
-### Step 1.2: Get Detailed Diffs
-
-```bash
-# Staged diff (always needed)
-git diff --cached
-
-# Unstaged diff (if --all flag or user wants to include)
-git diff
-```
-
-### Step 1.3: Check Recent Commit Style
-
-```bash
-git log --oneline -10
-```
-
----
-
-## Phase 2: Analyze and Group Changes
-
-### Core Principle
-
-**One commit = one sentence description.** If changes can't be described in a single clear sentence, split them into multiple commits.
-
-### Grouping Priority
+**Grouping Priority:**
 
 | Priority | Criterion | Example |
 |----------|-----------|---------|
@@ -77,185 +34,87 @@ git log --oneline -10
 | 3 | Logical separation | Config changes separate from code |
 | 4 | Dependency order | Interface before implementation |
 
-### Commit Sequence
+**Split Decision:**
+- Can describe in one sentence? → Single commit
+- Multiple unrelated changes? → Split by concern
+- Too complex for one sentence? → Split by logical phase
 
-When splitting into multiple commits, consider the logical order of changes:
-- What change enables or defines the others?
+**Commit Sequence (when splitting):**
+- What change enables or defines the others? → Commit first
 - Would a reviewer understand each commit in isolation?
 - Does the sequence tell a coherent story?
-
-Order commits so earlier ones provide context for later ones.
-
-### Split Decision
-
-| Can describe in one sentence? | Action |
-|-------------------------------|--------|
-| Yes | Single commit |
-| No - multiple unrelated changes | Split by concern |
-| No - too complex | Split by logical phase |
-
-**Examples of good single-sentence commits:**
-- "Add OAuth2 authentication to login flow"
-- "Update GitLab MR skill to fetch all comments"
-- "Refactor design guide into modular directory structure"
-
-**Example of when to split:**
-- Updating a skill AND refactoring unrelated code → Two commits
+- Order so earlier commits provide context for later ones
 
 ---
 
-## Phase 3: Present Commit Plan
+## Step 2: Title
 
-### Commit Message Format
-
-**Simple sentence style:**
-- One clear, descriptive sentence
-- **Capitalize first letter**
-- **Capitalize names and titles** (Claude Code, GitLab, OAuth2, README, etc.)
+Write one sentence that:
+- Captures ALL changes at the highest level
+- Is concise but comprehensive - effective word choice matters
+- Clearly conveys what changed without granular file-by-file details
+- Capitalize first letter and proper nouns (Claude Code, GitLab, OAuth2, README)
 - Imperative mood ("Add" not "Added")
 - No period at end
 - Max 72 characters (prefer under 50)
-- Comprehensive but concise
-- **Never add Co-Authored-By tags for Claude** — only the user is credited
 
-**Good examples:**
-- `Add fuzzy search to file finder`
-- `Update Jira skill to support JQL queries`
-- `Create modular skill design guide`
-- `Fix null pointer in API response handler`
+**Good:**
+- `Add OAuth2 authentication to login flow`
+- `Update GitLab MR skill to fetch all comments`
+- `Refactor design guide into modular directory structure`
 
-**Bad examples:**
+**Bad:**
 - `fix bug` (too vague)
 - `Updated the thing` (past tense, vague)
 - `Add feature, fix bug, update docs` (multiple things - split it)
 
-**Body (optional):**
-- Only if subject can't capture full context
-- Blank line after subject
-- Explain WHY if not obvious
-- Reference issues if applicable (`Refs: #123`)
-
-### Output Format
-
-Present plan to user:
-
-```markdown
-# Commit Plan
-
-## Summary
-- Commits proposed: [N]
-- Files: [N]
-- Changes: +[N] / -[N] lines
-
 ---
 
-## Commit 1 of N
+## Step 3: Description
 
-**Message:** `[Single descriptive sentence]`
+Write bullet points (or other clear format) that:
+- Go one level deeper than the title
+- Provide enough detail that reader fully understands WITHOUT looking at files
+- Stay concise - not overly verbose or exhaustive
+- Complement the title, don't repeat it
 
-**Files:**
-| File | Change |
-|------|--------|
-| path/to/file.ts | Modified |
+**Example:**
+```
+Add 8-step autonomous session protocol with cross-references
 
----
-
-**Proceed?** [Y/n/edit]
+- Create autonomous-protocol.md defining discover/plan/execute/verify/document/commit/continue/stop steps
+- Add cross-references to memory.md, execution.md, and core.md
+- Create continuation-prompt-template.md for consistent session prompts
+- Update CHANGELOG with Phase 3 entries
 ```
 
 ---
 
-## GATE: User Approval
+## Step 4: Execute
 
-**STOP and wait for explicit user confirmation before executing any commits.**
+Stage files and commit using HEREDOC format:
 
-| Response | Action |
-|----------|--------|
-| "Y" / "yes" / "proceed" | Execute commits |
-| "n" / "no" / "abort" | Cancel, no changes made |
-| "edit" | Ask what to modify, re-present plan |
-| Specific feedback | Incorporate changes, re-present |
-
----
-
-## Phase 4: Execute Commits
-
-### For Each Planned Commit
-
-**Step 4.1: Stage files**
 ```bash
-git add path/to/file1.ts path/to/file2.ts
-```
+git add file1.ts file2.ts
 
-**Step 4.2: Create commit**
-```bash
-git commit -m "Commit message here"
-```
-
-For multi-line messages (rare), use HEREDOC:
-```bash
 git commit -m "$(cat <<'EOF'
-Subject line here
+Title sentence here
 
-Body explaining why if needed.
+- Description bullet 1
+- Description bullet 2
+- Description bullet 3
 EOF
 )"
-```
 
-**Step 4.3: Verify**
-```bash
 git log -1 --oneline
 ```
 
-### After All Commits
-
-Report summary:
-
-```markdown
-# Commits Created
-
-| # | Hash | Message |
-|---|------|---------|
-| 1 | abc1234 | Add OAuth2 authentication |
-| 2 | def5678 | Update test configuration |
-
-**Ready to push:** `git push`
-```
+If multiple commits, repeat for each in the planned sequence.
 
 ---
 
-## Error Handling
+## Rules
 
-| Error | Cause | Resolution |
-|-------|-------|------------|
-| "not a git repository" | Not in git repo | Inform user, exit |
-| "nothing to commit" | No changes | Inform user, exit gracefully |
-| "pre-commit hook failed" | Hook rejected | Show hook output, suggest fixes |
-| "merge conflict" | Unresolved conflicts | List files, abort |
-
----
-
-## Usage
-
-```
-/commit              # Analyze all changes, propose commits
-/commit --staged     # Only commit currently staged changes
-/commit --all        # Include untracked files
-```
-
-### Examples
-
-**Single logical change:**
-```
-$ /commit
-# Proposes:
-# 1. Add fuzzy search to command palette
-```
-
-**Multiple unrelated changes → split:**
-```
-$ /commit
-# Proposes:
-# 1. Update commit skill message format
-# 2. Refactor skill design guide into modular structure
-```
+- **Never add Co-Authored-By** or other attribution lines - only the user is credited
+- **Never ask questions** - analyze and commit
+- **Match project style** - check recent commits for conventions
