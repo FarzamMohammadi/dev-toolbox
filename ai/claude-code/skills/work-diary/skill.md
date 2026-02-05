@@ -1,7 +1,7 @@
 ---
 name: work-diary
 description: Create a work diary entry from session context. Use when user wants to document work, learnings, or decisions from a session.
-argument-hint: "[diary-path] [context sources] (e.g., @../work-diary commits 8b8bf6b..2dfe130, @../work-diary @thoughts/shared/)"
+argument-hint: [diary-path] [context sources] (e.g., "@../work-diary commits 8b8bf6b..2dfe130", "@../work-diary @thoughts/shared/")
 allowed-tools: Read, Write, Edit, Bash, AskUserQuestion
 disable-model-invocation: true
 context: fork
