@@ -29,20 +29,27 @@ Identify all files changed in this session:
 
 ## Step 2: Deep Review
 
-Analyze each dimension. **Skip dimensions that don't apply.**
+You know this code — you built it. Use that knowledge. Don't scan; *think*.
 
-| Dimension | What to look for |
-|-----------|-----------------|
-| **Correctness** | Edge cases, off-by-ones, null paths, race conditions, error propagation |
-| **Naming** | Does every name reveal intent? Would a stranger understand without context? |
-| **Structure** | Right abstractions? Functions doing one thing? Clear data flow? |
-| **Consistency** | Does new code match existing patterns, conventions, style? |
-| **Simplicity** | Over-engineering? Unnecessary abstractions? Could anything be removed? |
-| **Completeness** | Missing tests? Missing error handling? Gaps in coverage? |
-| **Edge cases** | Empty inputs, boundaries, concurrent access, failure modes |
-| **Documentation** | Do comments explain *why*, not *what*? Any stale comments left behind? |
+### Hindsight
 
-**The test for each finding**: "Would I be embarrassed if a senior engineer reviewed this?"
+1. **You have full context now.** Research, plan, implementation — use hindsight. What would you do differently if starting over?
+2. **Challenge the first solution.** The first thing that worked isn't always the best. Was there a simpler, clearer, or more robust way?
+
+### Absence Over Presence
+
+3. **Hunt for what's missing.** Gaps are harder to see than bugs — missing tests, unhandled paths, undocumented assumptions.
+4. **Broken code is obvious. Incomplete code ships quietly.** Look for the quiet gaps.
+
+### Intent
+
+5. **Everything should reveal its purpose to a stranger.** Every name, function, and structure. If it needs explanation, it needs rewriting.
+6. **Code communicates.** Does this code say what it means?
+
+### Honesty
+
+7. **You know where you cut corners.** Go back to those spots first.
+8. **Don't manufacture findings.** If it's solid, say "this is solid."
 
 ## Step 3: Report
 
