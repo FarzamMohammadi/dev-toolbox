@@ -1,0 +1,9 @@
+{
+  "name": "medium-post-generator",
+  "version": "1.0.0",
+  "description": "Convert .md blog posts to Medium-optimized HTML for copy-paste publishing",
+  "type": "module",
+  "dependencies": {
+    "marked": "^15.0.0"
+  }
+}

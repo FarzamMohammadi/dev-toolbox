@@ -30,6 +30,9 @@ Compare CSV and Excel files with field-level difference reporting. Handles 10M+ 
 ## Conversion Tools
 Utilities for converting between different file formats and data structures.
 
+### [Medium Post Converter](./medium-post-converter/README.md)
+Converts Markdown blog posts to Medium-optimized HTML for copy-paste publishing. Handles code blocks, images, tables, and all Medium formatting constraints.
+
 ### [T-SQL Stored Procedure to Query](./conversion/tsql-sp-to-query/README.md)
 
 ### [XLSX to JSON](./conversion/xlsx-to-json/README.md)
