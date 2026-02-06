@@ -82,7 +82,30 @@ Do not modify the command.
 - **Narrow bridge with cliffs:** One safe way forward → low freedom, specific guardrails
 - **Open field:** Many paths lead to success → high freedom, general direction
 
-### 3. Write Effective Descriptions
+### 3. Choose Descriptive Names
+
+The skill name is what users type after `/`. It should immediately tell someone what the skill does — no guessing.
+
+**Rules:**
+- Name should describe the **action or outcome**, not an abstract concept
+- A stranger should understand the skill's purpose from the name alone
+- When in doubt, be literal over clever
+
+```yaml
+# Good - immediately obvious
+name: commit              # Creates git commits
+name: jira-ticket-manager # Manages Jira tickets
+name: work-diary          # Produces a work diary entry
+name: refactor-code       # Refactors code
+name: literary-editor     # Edits writing like a literary editor
+
+# Bad - ambiguous, could mean anything
+name: refine              # Refine what? Code? Text? A plan?
+name: enhance             # Too vague
+name: flow                # Abstract, unclear purpose
+```
+
+### 4. Write Effective Descriptions
 
 The `description` field enables skill discovery. Claude uses it to choose the right skill from potentially 100+ available skills.
 
