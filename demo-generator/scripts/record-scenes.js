@@ -70,6 +70,100 @@ const HW_ENCODER_AVAILABLE = detectHWEncoder();
 const USE_HW_ENCODER = USE_JPEG && HW_ENCODER_AVAILABLE;
 
 // ---------------------------------------------------------------------------
+// Progress display
+// ---------------------------------------------------------------------------
+
+const IS_TTY = process.stdout.isTTY;
+const COLUMNS = process.stdout.columns || 80;
+
+class ProgressDisplay {
+  constructor() {
+    this.slots = new Map();      // slotId → { label, detail }
+    this.slotOrder = [];         // ordered slot IDs for consistent rendering
+    this.activeLineCount = 0;   // number of active lines currently drawn
+  }
+
+  update(slotId, label, detail) {
+    if (!this.slots.has(slotId)) {
+      this.slotOrder.push(slotId);
+    }
+    this.slots.set(slotId, { label, detail });
+    this._render();
+  }
+
+  finish(slotId, finalText) {
+    this.slots.delete(slotId);
+    const idx = this.slotOrder.indexOf(slotId);
+    if (idx !== -1) this.slotOrder.splice(idx, 1);
+
+    if (!IS_TTY) {
+      console.log(`  ${finalText}`);
+      return;
+    }
+
+    // Cursor is at start of last active line. Move to first active line.
+    if (this.activeLineCount > 1) {
+      process.stdout.write(`\x1b[${this.activeLineCount - 1}A`);
+    }
+
+    // Clear all active lines
+    for (let i = 0; i < this.activeLineCount; i++) {
+      process.stdout.write(`\x1b[K${i < this.activeLineCount - 1 ? "\n" : ""}`);
+    }
+
+    // Move back to first cleared line
+    if (this.activeLineCount > 1) {
+      process.stdout.write(`\x1b[${this.activeLineCount - 1}A`);
+    }
+    process.stdout.write("\r");
+
+    // Print finished line permanently
+    process.stdout.write(`  ${finalText}\x1b[K\n`);
+
+    // Reset count — active lines will be redrawn below
+    this.activeLineCount = 0;
+
+    // Redraw remaining active slots
+    if (this.slotOrder.length > 0) {
+      this._drawActiveSlots();
+    }
+  }
+
+  _render() {
+    if (!IS_TTY) {
+      // Non-TTY: skip in-place updates; only finish() prints output
+      return;
+    }
+
+    // Cursor is at start of last active line. Move to first active line.
+    if (this.activeLineCount > 1) {
+      process.stdout.write(`\x1b[${this.activeLineCount - 1}A`);
+    }
+    if (this.activeLineCount > 0) {
+      process.stdout.write("\r");
+    }
+
+    this._drawActiveSlots();
+  }
+
+  _drawActiveSlots() {
+    const lines = this.slotOrder.map((id) => {
+      const { label, detail } = this.slots.get(id);
+      const text = `  ${label}  ${detail}`;
+      return text.length > COLUMNS ? text.slice(0, COLUMNS) : text;
+    });
+
+    this.activeLineCount = lines.length;
+
+    for (let i = 0; i < lines.length; i++) {
+      process.stdout.write(`${lines[i]}\x1b[K${i < lines.length - 1 ? "\n" : ""}`);
+    }
+
+    process.stdout.write("\r");
+  }
+}
+
+// ---------------------------------------------------------------------------
 // Time-virtualization injection script (runs in page context BEFORE any JS)
 // ---------------------------------------------------------------------------
 
@@ -333,7 +427,7 @@ async function captureFrame(cdp) {
 // Scene recording
 // ---------------------------------------------------------------------------
 
-async function recordScene(browser, sceneFile, outputDir, label) {
+async function recordScene(browser, sceneFile, outputDir, label, progress) {
   const sceneName = basename(sceneFile, ".html");
   const filePath = resolve(outputDir, sceneFile);
   const outputPath = resolve(outputDir, `${sceneName}.mp4`);
@@ -341,10 +435,9 @@ async function recordScene(browser, sceneFile, outputDir, label) {
 
   const duration = await extractDuration(filePath);
   const totalFrames = Math.ceil((duration + EXTRA_SECONDS) * FPS);
+  const slotId = `${label}${sceneName}`;
 
-  console.log(`\n  ${label}Recording: ${sceneName}`);
-  console.log(`  ${label}Duration:  ${duration}s (+${EXTRA_SECONDS}s padding)`);
-  console.log(`  ${label}Frames:    ${totalFrames} @ ${FPS}fps`);
+  progress.update(slotId, `${label}${sceneName}`, `${duration}s  ${totalFrames} frames  loading...`);
 
   const page = await browser.newPage();
   await page.setViewport({ width: WIDTH, height: HEIGHT, deviceScaleFactor: 1 });
@@ -402,7 +495,7 @@ async function recordScene(browser, sceneFile, outputDir, label) {
     if ((frame + 1) % FPS === 0 || frame === totalFrames - 1) {
       const pct = Math.round(((frame + 1) / totalFrames) * 100);
       const elapsed = ((Date.now() - startTime) / 1000).toFixed(1);
-      process.stdout.write(`\r  ${label}Progress:  ${pct}% (${frame + 1}/${totalFrames} frames, ${elapsed}s elapsed)`);
+      progress.update(slotId, `${label}${sceneName}`, `${duration}s  ${totalFrames} frames  ${pct}%  ${elapsed}s`);
     }
   }
 
@@ -410,7 +503,7 @@ async function recordScene(browser, sceneFile, outputDir, label) {
   await ffmpegDone;
 
   const wallTime = ((Date.now() - startTime) / 1000).toFixed(1);
-  console.log(`\n  ${label}Done:      ${wallTime}s → ${sceneName}.mp4`);
+  progress.finish(slotId, `${label}${sceneName}  ${duration}s  ${totalFrames} frames  done ${wallTime}s`);
 
   await cdp.detach();
   await page.close();
@@ -429,10 +522,10 @@ function distributeScenes(scenes, numWorkers) {
   return chunks.filter((c) => c.length > 0);
 }
 
-async function recordChunk(browser, sceneFiles, outputDir, workerLabel) {
+async function recordChunk(browser, sceneFiles, outputDir, workerLabel, progress) {
   const results = [];
   for (const sceneFile of sceneFiles) {
-    const result = await recordScene(browser, sceneFile, outputDir, workerLabel);
+    const result = await recordScene(browser, sceneFile, outputDir, workerLabel, progress);
     results.push(result);
   }
   return results;
@@ -483,6 +576,7 @@ async function main() {
 
   const launchArgs = buildLaunchArgs();
   const launchOpts = { headless: true, args: launchArgs };
+  const progress = new ProgressDisplay();
 
   let results;
 
@@ -491,7 +585,7 @@ async function main() {
     const workerCount = Math.min(PARALLEL, scenes.length);
     const chunks = distributeScenes(scenes, workerCount);
 
-    console.log(`\n  Launching ${workerCount} parallel workers...`);
+    console.log(`\n  Launching ${workerCount} parallel workers...\n`);
 
     const browsers = await Promise.all(
       Array.from({ length: workerCount }, () => launch(launchOpts))
@@ -500,7 +594,7 @@ async function main() {
     try {
       const chunkResults = await Promise.all(
         chunks.map((chunk, i) =>
-          recordChunk(browsers[i], chunk, outputDir, `[W${i + 1}] `)
+          recordChunk(browsers[i], chunk, outputDir, `[W${i + 1}] `, progress)
         )
       );
       results = chunkResults.flat();
@@ -512,11 +606,12 @@ async function main() {
     results.sort((a, b) => a.sceneName.localeCompare(b.sceneName));
   } else {
     // Sequential: single browser
+    console.log();
     const browser = await launch(launchOpts);
     results = [];
     try {
       for (const sceneFile of scenes) {
-        const result = await recordScene(browser, sceneFile, outputDir, "");
+        const result = await recordScene(browser, sceneFile, outputDir, "", progress);
         results.push(result);
       }
     } finally {
