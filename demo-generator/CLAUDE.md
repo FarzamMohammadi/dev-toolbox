@@ -310,9 +310,43 @@ Before showing the user each scene, verify:
 
 ---
 
-## Phase 6: Recording
+## Phase 6: Recording (Automated)
 
-Walk the user through recording. Read `guides/recording.md` for full details, then give them the specific steps:
+Use the automated recorder as the default. It renders each scene to a deterministic 1080p 60fps MP4 by virtualizing all browser timing APIs and capturing frame-by-frame.
+
+### Prerequisites
+
+- Dev server running: `npm run dev` (in a separate terminal)
+- ffmpeg installed: `brew install ffmpeg`
+- Puppeteer installed: `npm install` (one-time)
+
+### Run
+
+```bash
+npm run record                     # record all scenes
+npm run record -- --scene 01       # record a single scene
+npm run record -- --fps 30         # lower fps (faster, smaller files)
+npm run record -- --width 1920 --height 1080  # custom resolution
+```
+
+Output MP4s land in `output/` alongside the HTML files (e.g. `output/01-hook.mp4`).
+
+### How It Works
+
+The recorder injects a virtual clock before page JS runs, overriding `performance.now()`, `Date.now()`, `requestAnimationFrame`, `setTimeout`, `setInterval`, and `Element.prototype.animate` (WAAPI). Every frame advance is deterministic — no timing drift, no dropped frames.
+
+This covers all animation types in the project:
+- **JS-timed**: `scrambleText` (setInterval + performance.now), `typewrite` (setTimeout chain), `countUp` (rAF + performance.now)
+- **WAAPI-based**: `fadeSlide`, `ripple`, `traceSVG` (Motion.dev's `animate()` → Element.prototype.animate)
+- **Scene/timeline**: `scene-controller` and `BeatTimeline` (rAF + performance.now)
+
+### After Recording
+
+Check the MP4s play correctly — animations should be smooth and match what you see in the browser. If a single scene needs re-recording, use `--scene NN` to redo just that one.
+
+### Fallback: Manual Recording
+
+If automated recording isn't working for a particular scene, fall back to manual screen recording:
 
 1. "Open Chrome and go to http://localhost:3000/output/01-hook.html"
 2. "Press Cmd+Shift+F to go fullscreen"

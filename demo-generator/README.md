@@ -1,6 +1,6 @@
 # Demo Generator
 
-Generate animated web-based demo videos with Claude. No motion graphics software needed — Claude builds beat-synced scene web apps that you screen-record and assemble into polished demo videos.
+Generate animated web-based demo videos with Claude. No motion graphics software needed — Claude builds beat-synced scene web apps, records them to MP4 automatically, and guides you through assembly.
 
 > Inspired by [Aaron Francis's approach](https://x.com/aarondfrancis/status/2019864355039269128) to creating his Solo launch video entirely with Claude.
 
@@ -30,7 +30,7 @@ uv sync
    - **Scene Design** — Design scenes with narrative arc (hook → problem → solution → demo → results → CTA)
    - **Build** — Generate standalone HTML scene files with Motion.dev animations
    - **Review** — Open scenes in browser, fine-tune timing with the HUD
-   - **Record** — Screen-record each scene (Claude guides you step by step)
+   - **Record** — Automated headless recording to MP4 (`npm run record`), or manual screen-record as fallback
    - **Assemble** — Combine recordings with music in a video editor
 
 Each scene is a standalone HTML file. No build tools, no React — just open in a browser and press play.
@@ -65,13 +65,13 @@ Animation engine uses [Motion.dev](https://motion.dev/) free tier (MIT, 2.3kb) v
 | Node.js >= 18 | Dev server | `brew install node` |
 | Python 3 >= 3.10 | Beat analysis | `brew install python3` |
 | uv | Python package manager | `curl -LsSf https://astral.sh/uv/install.sh \| sh` |
-| ffmpeg | Audio conversion | `brew install ffmpeg` |
+| ffmpeg | Audio conversion + scene recording | `brew install ffmpeg` |
 
 ### Optional
 
 | Tool | Purpose |
 |------|---------|
-| Screen recorder | QuickTime (built-in), OBS (free), or ScreenFlow |
+| Screen recorder | QuickTime (built-in) or OBS (free) — only needed if automated recording doesn't work for a scene |
 | Video editor | iMovie (built-in), DaVinci Resolve (free), or ScreenFlow |
 
 Run `npm run check` to verify what's installed.

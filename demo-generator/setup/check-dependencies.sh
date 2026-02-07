@@ -45,24 +45,21 @@ else
 fi
 
 echo ""
-echo "-- Optional (for recording & assembly) --"
+echo "-- Optional (manual recording fallback & assembly) --"
 
 if command -v obs &>/dev/null || [ -d "/Applications/OBS.app" ]; then
   printf "${GREEN}[OK]${NC}  %-18s %s\n" "OBS Studio" "found"
   ((pass++)) || true
 else
-  printf "${YELLOW}[OPTIONAL]${NC}  %-12s %s\n" "OBS Studio" "https://obsproject.com (free screen recorder)"
+  printf "${YELLOW}[OPTIONAL]${NC}  %-12s %s\n" "OBS Studio" "https://obsproject.com (fallback screen recorder)"
   ((warn++)) || true
 fi
 
-if [ -d "/Applications/ScreenFlow.app" ]; then
-  printf "${GREEN}[OK]${NC}  %-18s %s\n" "ScreenFlow" "found"
-  ((pass++)) || true
-elif [ -f "/System/Applications/QuickTime Player.app/Contents/MacOS/QuickTime Player" ]; then
-  printf "${GREEN}[OK]${NC}  %-18s %s\n" "QuickTime Player" "found (built-in screen recorder)"
+if [ -f "/System/Applications/QuickTime Player.app/Contents/MacOS/QuickTime Player" ]; then
+  printf "${GREEN}[OK]${NC}  %-18s %s\n" "QuickTime Player" "found (fallback screen recorder)"
   ((pass++)) || true
 else
-  printf "${YELLOW}[OPTIONAL]${NC}  %-12s %s\n" "Screen Recorder" "QuickTime (built-in) or OBS (free)"
+  printf "${YELLOW}[OPTIONAL]${NC}  %-12s %s\n" "Screen Recorder" "QuickTime (built-in) — only needed if automated recording fails"
   ((warn++)) || true
 fi
 
