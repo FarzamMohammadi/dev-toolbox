@@ -1,12 +1,13 @@
+<!-- Template: Copy this file to output/ to start a new scene. Paths are relative to output/. -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Scene: [SCENE_NAME]</title>
-  <link rel="stylesheet" href="styles/reset.css">
-  <link rel="stylesheet" href="styles/core.css">
-  <link rel="stylesheet" href="styles/effects.css">
+  <link rel="stylesheet" href="../scaffolding/styles/reset.css">
+  <link rel="stylesheet" href="../scaffolding/styles/core.css">
+  <link rel="stylesheet" href="../scaffolding/styles/effects.css">
   <style>
     /* Scene-specific styles go here */
   </style>
@@ -24,9 +25,9 @@
 
   <script type="module">
     import { animate, stagger } from "https://cdn.jsdelivr.net/npm/motion@12/+esm";
-    import { BeatTimeline, loadBeats, createFixedBeats } from "js/beat-sync.js";
-    import { initScene } from "js/scene-controller.js";
-    import { initHUD } from "js/hud.js";
+    import { BeatTimeline, loadBeats, createFixedBeats } from "../scaffolding/js/beat-sync.js";
+    import { initScene } from "../scaffolding/js/scene-controller.js";
+    import { initHUD } from "../scaffolding/js/hud.js";
 
     // === SCENE CONFIG ===
     const scene = initScene({
@@ -36,7 +37,7 @@
 
     // === BEAT SYNC (optional) ===
     // Option A: Load beats from analyzed music
-    // const beats = await loadBeats('../output/beats.json');
+    // const beats = await loadBeats('beats.json');
     // Option B: Fixed timing (no music)
     const beats = createFixedBeats({ bpm: 120, duration: scene.duration });
     const timeline = new BeatTimeline(beats);

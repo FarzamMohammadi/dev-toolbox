@@ -22,6 +22,16 @@ Inspired by Aaron Francis's approach: Claude builds web apps with animated scene
 
 When the user activates you in this directory, begin here.
 
+### Clean Up
+
+If there are existing files in `output/` from a previous project, run:
+
+```bash
+npm run clean
+```
+
+This removes generated HTML, Markdown, and JSON files from `output/`, giving you a fresh start. Confirm with the user before running if you see existing output files.
+
 ### Gather
 
 Ask the user for:
@@ -119,14 +129,16 @@ For each scene, write to `output/scene-plan.md`:
 ```markdown
 ## Scene [N]: [Name]
 - **Type**: hook / problem / solution / demo / results / cta
-- **Duration**: Xs (beats N-M)
+- **Duration**: Xs
 - **Text content**: [exact strings that will display]
 - **Visual elements**: [background, colors, layout, effects]
 - **Animations**:
-  - [element] → [animation type] at beat [N]
-  - [element] → [animation type] at beat [N]
+  - [element] → [animation type] at beat [N] ([T]s)
+  - [element] → [animation type] at beat [N] ([T]s)
 - **Mood/notes**: [creative direction notes]
 ```
+
+> **Beat numbering**: Use LOCAL beat indices per scene, starting from 0. Each scene file has its own independent BeatTimeline that starts at beat 0 / time 0s. Do NOT use global beat numbers across the full demo. Including the time in seconds (e.g., "at beat 4 (2.0s)") helps verify alignment during implementation.
 
 ### Quality Gate
 
@@ -148,7 +160,7 @@ npm install
 npm run dev
 ```
 
-The server runs at `http://localhost:3000` and serves the `output/` directory.
+The server runs at `http://localhost:3000` and serves the project root. Scene files are at `http://localhost:3000/output/[filename].html`.
 
 ### Build Each Scene
 
@@ -210,7 +222,7 @@ For each scene in the approved plan:
 
     const scene = initScene({ name: '[Name]', duration: [N] });
     const beats = createFixedBeats({ bpm: 120, duration: scene.duration });
-    // OR: const beatsData = await loadBeats('beats.json');
+    // OR: const beats = await loadBeats('beats.json');
     const timeline = new BeatTimeline(beats);
     initHUD(scene, timeline);
 
@@ -234,6 +246,45 @@ For each scene in the approved plan:
 - All elements that animate should start with `opacity: 0` (use `.hidden` class) and be revealed by animations
 - Test each scene in the browser before moving to the next
 
+> **Beat index convention**: `timeline.at(index)` is 0-indexed. Beat 0 is the first beat of the scene (time 0s). If your scene plan says "at beat 4 (2.0s)", use `timeline.at(3, ...)`. Alternatively, `timeline.atTime(seconds)` schedules by absolute time within the scene, which avoids index math: `timeline.atTime(2.0, ...)`.
+
+### Animation Cleanup in onRestart()
+
+Each animation primitive requires specific cleanup to avoid stale state on replay. Store animation instances in variables and clean them up in `onRestart()`:
+
+| Animation | Cleanup required |
+|-----------|-----------------|
+| `scrambleText` | Call `.cancel()` to clear the interval timer. Reset `element.textContent` to original value. |
+| `typewrite` / `typewriteLines` | Call `.cancel()` to stop the timeout chain and remove the cursor element. Clear `element.textContent`. For `typewriteLines`, also remove dynamically created `<div>` children from the container via `container.innerHTML = ''`. |
+| `ripple` | Remove SVG elements from the DOM: `container.querySelectorAll('svg').forEach(el => el.remove())`. Each `ripple()` call appends a new SVG overlay; without removal they accumulate. |
+| `countUp` | Call `.cancel()` to stop the requestAnimationFrame loop. Reset `element.textContent`. |
+| `fadeSlide` / `fadeSlideOut` | Reset `element.style.opacity = '0'` and `element.style.transform = ''`. |
+| `traceSVG` | Reset path elements: set `pathLength` style back to 0, remove glow filters if added. |
+
+**Example pattern:**
+```javascript
+let scramble1, typer1, counter1;
+
+scene.onPlay(() => {
+  scramble1 = scrambleText(titleEl, { duration: 1200 });
+  scramble1.play();
+  // ...
+});
+
+scene.onRestart(() => {
+  scramble1?.cancel();
+  typer1?.cancel();
+  counter1?.cancel();
+  // Remove ripple SVGs
+  rippleContainer.querySelectorAll('svg').forEach(el => el.remove());
+  // Reset all animated elements
+  document.querySelectorAll('[data-animate]').forEach(el => {
+    el.style.opacity = '0';
+    el.style.transform = '';
+  });
+});
+```
+
 ---
 
 ## Phase 5: Review and Refine
@@ -242,7 +293,7 @@ For each scene in the approved plan:
 
 For each scene:
 
-1. Tell them: "Open http://localhost:3000/[NN]-[scene-name].html in Chrome"
+1. Tell them: "Open http://localhost:3000/output/[NN]-[scene-name].html in Chrome"
 2. Tell them: "Press Space to play, R to restart, H to hide the HUD"
 3. Ask: "Does the timing feel right? Any text changes? Want different colors?"
 4. Make adjustments based on feedback
@@ -263,7 +314,7 @@ Before showing the user each scene, verify:
 
 Walk the user through recording. Read `guides/recording.md` for full details, then give them the specific steps:
 
-1. "Open Chrome and go to http://localhost:3000/01-hook.html"
+1. "Open Chrome and go to http://localhost:3000/output/01-hook.html"
 2. "Press Cmd+Shift+F to go fullscreen"
 3. "Press H to hide the HUD"
 4. "Open QuickTime > File > New Screen Recording (or your preferred recorder)"
@@ -363,6 +414,35 @@ animate("path", { pathLength: [0, 1] }, { duration: 2 });
 - `"-0.2"` — 0.2s before previous ends (overlap)
 - `"<"` — same start as previous
 - `1.5` — absolute time 1.5s from start
+
+### BeatTimeline
+```javascript
+import { BeatTimeline, createFixedBeats, loadBeats } from "../scaffolding/js/beat-sync.js";
+
+const beats = createFixedBeats({ bpm: 120, duration: 10 });
+const timeline = new BeatTimeline(beats);
+
+// Schedule by beat index (0-indexed: beat 0 = first beat)
+timeline.at(0, () => { /* fires at first beat */ });
+timeline.at(3, () => { /* fires at fourth beat */ });
+
+// Schedule by absolute time in seconds
+timeline.atTime(2.5, () => { /* fires at 2.5s */ });
+
+// Schedule by downbeat index (0-indexed, every 4th beat)
+timeline.atDownbeat(0, () => { /* first downbeat */ });
+
+// Fire on every beat
+timeline.onBeat((beatIndex, time) => { /* pulse effect, etc. */ });
+
+// Control
+timeline.play();
+timeline.pause();
+timeline.restart();
+timeline.speed = 0.5; // half speed
+```
+
+> **Indexing**: All `at()`, `atDownbeat()`, and `onBeat()` indices are 0-based. The first beat is index 0, not 1.
 
 ---
 

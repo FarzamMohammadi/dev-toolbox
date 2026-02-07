@@ -16,7 +16,7 @@
 - **Background**: Close all other windows, hide dock, clean desktop
 
 ## Recording Workflow Per Scene
-1. Open scene in Chrome: `http://localhost:3000/01-hook.html`
+1. Open scene in Chrome: `http://localhost:3000/output/01-hook.html`
 2. Make browser fullscreen (Cmd+Shift+F)
 3. Press **H** to hide the HUD
 4. Start screen recording

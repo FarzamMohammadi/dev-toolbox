@@ -4,10 +4,10 @@
   "description": "Generate animated web-based demo videos with Claude",
   "type": "module",
   "scripts": {
-    "dev": "npx serve output -p 3000 --no-clipboard",
-    "dev:scaffold": "npx serve . -p 3000 --no-clipboard",
+    "dev": "npx serve . -p 3000 --no-clipboard",
     "check": "bash setup/check-dependencies.sh",
-    "beats": "uv run python scripts/analyze-beats.py"
+    "beats": "uv run python scripts/analyze-beats.py",
+    "clean": "rm -f output/*.html output/*.md output/*.json"
   },
   "devDependencies": {
     "serve": "^14.2.0"
