@@ -148,6 +148,33 @@ This is where your design skills matter. For each demo, think about:
 - **Pacing**: Fast scenes for energy, slow scenes for impact. Vary the rhythm.
 - **Surprise moments**: One unexpected visual per demo — something the viewer didn't see coming.
 
+### Design Patterns
+
+Before designing scenes, **read the files in `sample-output/`**. They are reference scenes from a completed demo and represent the visual quality bar.
+
+**Prefer HTML/CSS over SVG.** Raw SVG diagrams (boxes + arrows) render flat and tiny at 1080p. Use glass cards with large HTML text instead — they look dramatically better on camera.
+
+**Text sizing guide** (these produce impactful visuals at 1920x1080):
+- Hero numbers (one massive focal point): `30–36rem`
+- Card/stat numbers: `7–10rem`
+- Titles and tech names: `4–5rem`
+- Subtitles and taglines: `2–2.5rem`
+- Mono labels and captions: `1.3–1.6rem`
+
+**Glass card pattern** (the go-to for any card, stat block, or panel):
+```css
+background: rgba(255, 255, 255, 0.03);
+border: 1px solid rgba(255, 255, 255, 0.06);
+border-radius: 16px;
+backdrop-filter: blur(8px);
+```
+
+**Every scene needs a background effect.** Combine a gradient background class (`gradient-bg-midnight`, `gradient-bg-ocean`, etc.) with texture overlays (`scanlines`, `grain`) and dynamic elements (`ripple` bursts). Never ship a scene on a plain `#0a0a0a` background.
+
+**Connectors between elements** — use animated CSS pulse dots traveling along a line, not static SVG dashed lines with tiny triangle arrowheads.
+
+**Visual weight balance** — when a scene has two opposing panels (e.g., receipt → JSON), they must feel equally substantial. If one panel has large text, the other needs a larger terminal, bigger font, or more padding to match.
+
 ### Document the Plan
 
 For each scene, write to `output/scene-plan.md`:
@@ -219,6 +246,8 @@ For each scene in the approved plan:
 6. Wire up the scene controller and HUD
 7. Implement the animations per the scene plan
 8. Handle `scene.onRestart()` to reset all elements for replay
+
+> **Recording scale**: The `.scene` container has `transform: scale(1.05)` so that 1080p recordings match the visual weight seen in a full-size browser window. Design for how it looks in the browser — the recording will match.
 
 ### Scene File Structure
 
@@ -580,4 +609,5 @@ scripts/record-scenes.js        — Automated scene recorder (run via npm run re
 scripts/assemble.js             — Final video assembly (run via npm run assemble)
 output/                         — Generated scenes, beats.json, project-brief.md, scene-plan.md
 audio/                          — User's music files
+sample-output/                  — Reference scenes from a completed demo (study before designing)
 ```
