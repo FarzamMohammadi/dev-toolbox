@@ -1,0 +1,191 @@
+/* === Glow Effects === */
+.glow-blue { text-shadow: 0 0 10px rgba(59, 130, 246, 0.5), 0 0 40px rgba(59, 130, 246, 0.2); }
+.glow-cyan { text-shadow: 0 0 10px rgba(6, 182, 212, 0.5), 0 0 40px rgba(6, 182, 212, 0.2); }
+.glow-green { text-shadow: 0 0 10px rgba(34, 197, 94, 0.5), 0 0 40px rgba(34, 197, 94, 0.2); }
+.glow-purple { text-shadow: 0 0 10px rgba(168, 85, 247, 0.5), 0 0 40px rgba(168, 85, 247, 0.2); }
+.glow-orange { text-shadow: 0 0 10px rgba(249, 115, 22, 0.5), 0 0 40px rgba(249, 115, 22, 0.2); }
+.glow-pink { text-shadow: 0 0 10px rgba(236, 72, 153, 0.5), 0 0 40px rgba(236, 72, 153, 0.2); }
+
+/* Strong glow variant */
+.glow-blue-strong { text-shadow: 0 0 10px rgba(59, 130, 246, 0.8), 0 0 40px rgba(59, 130, 246, 0.4), 0 0 80px rgba(59, 130, 246, 0.2); }
+.glow-cyan-strong { text-shadow: 0 0 10px rgba(6, 182, 212, 0.8), 0 0 40px rgba(6, 182, 212, 0.4), 0 0 80px rgba(6, 182, 212, 0.2); }
+.glow-green-strong { text-shadow: 0 0 10px rgba(34, 197, 94, 0.8), 0 0 40px rgba(34, 197, 94, 0.4), 0 0 80px rgba(34, 197, 94, 0.2); }
+.glow-purple-strong { text-shadow: 0 0 10px rgba(168, 85, 247, 0.8), 0 0 40px rgba(168, 85, 247, 0.4), 0 0 80px rgba(168, 85, 247, 0.2); }
+
+/* Box glow (for containers/cards) */
+.box-glow-blue { box-shadow: 0 0 15px rgba(59, 130, 246, 0.3), 0 0 45px rgba(59, 130, 246, 0.1); }
+.box-glow-cyan { box-shadow: 0 0 15px rgba(6, 182, 212, 0.3), 0 0 45px rgba(6, 182, 212, 0.1); }
+.box-glow-green { box-shadow: 0 0 15px rgba(34, 197, 94, 0.3), 0 0 45px rgba(34, 197, 94, 0.1); }
+.box-glow-purple { box-shadow: 0 0 15px rgba(168, 85, 247, 0.3), 0 0 45px rgba(168, 85, 247, 0.1); }
+
+/* === Neon Effect === */
+.neon {
+  animation: neon-flicker 3s ease-in-out infinite alternate;
+}
+
+@keyframes neon-flicker {
+  0%, 19%, 21%, 23%, 25%, 54%, 56%, 100% {
+    text-shadow:
+      0 0 4px #fff,
+      0 0 11px #fff,
+      0 0 19px #fff,
+      0 0 40px var(--accent-cyan),
+      0 0 80px var(--accent-cyan),
+      0 0 90px var(--accent-cyan);
+  }
+  20%, 24%, 55% {
+    text-shadow: none;
+  }
+}
+
+/* === Scanlines === */
+.scanlines::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: repeating-linear-gradient(
+    0deg,
+    transparent,
+    transparent 2px,
+    rgba(0, 0, 0, 0.08) 2px,
+    rgba(0, 0, 0, 0.08) 4px
+  );
+  pointer-events: none;
+  z-index: 100;
+}
+
+/* === Film Grain === */
+.grain::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.04'/%3E%3C/svg%3E");
+  pointer-events: none;
+  z-index: 99;
+}
+
+/* === Gradient Backgrounds === */
+.gradient-bg-midnight {
+  background: linear-gradient(135deg, #0a0a2e 0%, #1a0a3e 50%, #0a1a2e 100%);
+}
+
+.gradient-bg-aurora {
+  background: linear-gradient(135deg, #0a1628 0%, #1a0a3e 30%, #0a2a3e 60%, #0a1628 100%);
+}
+
+.gradient-bg-ember {
+  background: linear-gradient(135deg, #1a0a0a 0%, #2a0a0a 50%, #1a1a0a 100%);
+}
+
+.gradient-bg-ocean {
+  background: linear-gradient(135deg, #0a0a1a 0%, #0a1a2a 50%, #0a2a3a 100%);
+}
+
+/* Animated gradient */
+.gradient-bg-shift {
+  background: linear-gradient(270deg, var(--accent-blue), var(--accent-purple), var(--accent-cyan));
+  background-size: 600% 600%;
+  animation: gradient-shift 8s ease infinite;
+}
+
+@keyframes gradient-shift {
+  0% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
+
+/* === Glassmorphism === */
+.glass {
+  background: rgba(255, 255, 255, 0.05);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 12px;
+}
+
+.glass-strong {
+  background: rgba(255, 255, 255, 0.1);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  border-radius: 12px;
+}
+
+/* === Terminal Window === */
+.terminal {
+  background: #0d1117;
+  border: 1px solid #30363d;
+  border-radius: 8px;
+  font-family: var(--font-mono);
+  font-size: var(--text-sm);
+  overflow: hidden;
+}
+
+.terminal-header {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 10px 14px;
+  background: #161b22;
+  border-bottom: 1px solid #30363d;
+}
+
+.terminal-dot {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+}
+
+.terminal-dot--red { background: #ff5f56; }
+.terminal-dot--yellow { background: #ffbd2e; }
+.terminal-dot--green { background: #27c93f; }
+
+.terminal-body {
+  padding: 16px;
+  line-height: 1.6;
+  color: #c9d1d9;
+}
+
+.terminal-prompt {
+  color: var(--accent-green);
+}
+
+.terminal-prompt::before {
+  content: '$ ';
+}
+
+/* === Card === */
+.card {
+  background: var(--bg-surface);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: 12px;
+  padding: var(--space-6);
+}
+
+/* === Divider === */
+.divider {
+  width: 60px;
+  height: 3px;
+  background: linear-gradient(90deg, var(--accent-blue), var(--accent-purple));
+  border-radius: 2px;
+}
+
+/* === Pulse animation (for emphasis) === */
+.pulse {
+  animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.5; }
+}
+
+/* === SVG Glow Filter (for svg-tracer) === */
+.svg-glow {
+  filter: drop-shadow(0 0 6px var(--accent-cyan)) drop-shadow(0 0 12px var(--accent-cyan));
+}
+
+.svg-glow-blue { filter: drop-shadow(0 0 6px var(--accent-blue)) drop-shadow(0 0 12px var(--accent-blue)); }
+.svg-glow-green { filter: drop-shadow(0 0 6px var(--accent-green)) drop-shadow(0 0 12px var(--accent-green)); }
+.svg-glow-purple { filter: drop-shadow(0 0 6px var(--accent-purple)) drop-shadow(0 0 12px var(--accent-purple)); }
+.svg-glow-orange { filter: drop-shadow(0 0 6px var(--accent-orange)) drop-shadow(0 0 12px var(--accent-orange)); }

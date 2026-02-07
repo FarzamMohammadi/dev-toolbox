@@ -6,6 +6,9 @@ A collection of utility scripts and tools that streamline my daily development w
 
 ---
 
+## [Demo Generator](./demo-generator/README.md)
+Generate animated web-based demo videos with Claude. Builds beat-synced scene web apps that you screen-record and assemble into polished demo videos.
+
 ## [Directory Tree Printer](./directory-tree-printer/README.md)
 Generates a visual tree of your directory structure that respects .gitignore rules. Output is displayed in terminal and saved to a text file.
 

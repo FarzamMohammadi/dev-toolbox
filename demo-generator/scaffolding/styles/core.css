@@ -1,0 +1,141 @@
+/* Fonts via Google CDN */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@300;400;500;600;700&display=swap');
+
+/* === Theme Variables === */
+:root {
+  /* Backgrounds */
+  --bg-primary: #0a0a0a;
+  --bg-secondary: #111111;
+  --bg-surface: #1a1a1a;
+  --bg-elevated: #222222;
+
+  /* Text */
+  --text-primary: #f0f0f0;
+  --text-secondary: #a0a0a0;
+  --text-muted: #666666;
+
+  /* Accents */
+  --accent-blue: #3b82f6;
+  --accent-cyan: #06b6d4;
+  --accent-green: #22c55e;
+  --accent-purple: #a855f7;
+  --accent-orange: #f97316;
+  --accent-pink: #ec4899;
+  --accent-red: #ef4444;
+  --accent-yellow: #eab308;
+
+  /* Fonts */
+  --font-display: 'Inter', system-ui, -apple-system, sans-serif;
+  --font-mono: 'JetBrains Mono', 'Fira Code', monospace;
+
+  /* Type scale */
+  --text-xs: 0.75rem;
+  --text-sm: 0.875rem;
+  --text-base: 1rem;
+  --text-lg: 1.125rem;
+  --text-xl: 1.25rem;
+  --text-2xl: 1.5rem;
+  --text-3xl: 1.875rem;
+  --text-4xl: 2.25rem;
+  --text-5xl: 3rem;
+  --text-6xl: 3.75rem;
+  --text-7xl: 4.5rem;
+  --text-8xl: 6rem;
+  --text-9xl: 8rem;
+
+  /* Spacing */
+  --space-1: 0.25rem;
+  --space-2: 0.5rem;
+  --space-3: 0.75rem;
+  --space-4: 1rem;
+  --space-6: 1.5rem;
+  --space-8: 2rem;
+  --space-12: 3rem;
+  --space-16: 4rem;
+
+  /* Transitions */
+  --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+  --ease-in-out: cubic-bezier(0.65, 0, 0.35, 1);
+}
+
+/* === Base === */
+body {
+  font-family: var(--font-display);
+  font-size: var(--text-base);
+  color: var(--text-primary);
+  background: var(--bg-primary);
+  line-height: 1.5;
+}
+
+/* === Scene Container === */
+.scene {
+  width: 100vw;
+  height: 100vh;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+}
+
+/* === Typography === */
+.display { font-size: var(--text-8xl); font-weight: 800; line-height: 1; letter-spacing: -0.03em; }
+.heading-1 { font-size: var(--text-6xl); font-weight: 700; line-height: 1.1; letter-spacing: -0.02em; }
+.heading-2 { font-size: var(--text-4xl); font-weight: 600; line-height: 1.2; }
+.heading-3 { font-size: var(--text-2xl); font-weight: 600; line-height: 1.3; }
+.body-lg { font-size: var(--text-xl); font-weight: 400; line-height: 1.6; }
+.body { font-size: var(--text-base); font-weight: 400; line-height: 1.6; }
+.caption { font-size: var(--text-sm); font-weight: 400; color: var(--text-secondary); }
+.mono { font-family: var(--font-mono); }
+.mono-sm { font-family: var(--font-mono); font-size: var(--text-sm); }
+
+/* === Layout Utilities === */
+.center { display: flex; align-items: center; justify-content: center; }
+.flex-col { display: flex; flex-direction: column; }
+.flex-row { display: flex; flex-direction: row; }
+.gap-1 { gap: var(--space-1); }
+.gap-2 { gap: var(--space-2); }
+.gap-4 { gap: var(--space-4); }
+.gap-6 { gap: var(--space-6); }
+.gap-8 { gap: var(--space-8); }
+.text-center { text-align: center; }
+.text-left { text-align: left; }
+.absolute-fill { position: absolute; inset: 0; }
+.relative { position: relative; }
+
+/* === Color Utilities === */
+.text-muted { color: var(--text-muted); }
+.text-secondary { color: var(--text-secondary); }
+.text-blue { color: var(--accent-blue); }
+.text-cyan { color: var(--accent-cyan); }
+.text-green { color: var(--accent-green); }
+.text-purple { color: var(--accent-purple); }
+.text-orange { color: var(--accent-orange); }
+.text-pink { color: var(--accent-pink); }
+
+/* === Text Gradient === */
+.text-gradient {
+  background: linear-gradient(135deg, var(--accent-blue), var(--accent-purple));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.text-gradient-warm {
+  background: linear-gradient(135deg, var(--accent-orange), var(--accent-pink));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.text-gradient-cool {
+  background: linear-gradient(135deg, var(--accent-cyan), var(--accent-blue));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+/* === Visibility (for animation starts) === */
+.hidden { opacity: 0; }
+.invisible { visibility: hidden; }

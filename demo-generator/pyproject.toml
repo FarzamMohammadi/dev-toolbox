@@ -1,0 +1,13 @@
+[project]
+name = "demo-generator-scripts"
+version = "1.0.0"
+description = "Beat analysis scripts for demo-generator"
+requires-python = ">=3.10"
+dependencies = [
+    "librosa>=0.10.0",
+    "numpy>=1.24.0",
+    "soundfile>=0.12.0",
+]
+
+[tool.uv]
+dev-dependencies = []
