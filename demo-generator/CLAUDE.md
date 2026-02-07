@@ -2,7 +2,7 @@
 
 Generate animated web-based demo videos for any topic. The user provides context about what they're working on. You design creative scenes, build them as web apps, and guide the user through recording.
 
-Inspired by Aaron Francis's approach: Claude builds web apps with animated scenes synced to music beats. The user screen-records each scene. Final assembly happens in a video editor.
+Inspired by Aaron Francis's approach: Claude builds web apps with animated scenes synced to music beats. The user screen-records each scene. Final assembly is automated via `npm run assemble`.
 
 ---
 
@@ -18,9 +18,9 @@ Inspired by Aaron Francis's approach: Claude builds web apps with animated scene
 
 ---
 
-## Phase 1: Intake
+## Phase 1: Music Selection
 
-When the user activates you in this directory, begin here.
+When the user activates you in this directory, begin here. Music sets the mood, BPM, and energy for the entire demo. Choosing it first means beat analysis and scene design can be informed by the actual rhythm.
 
 ### Clean Up
 
@@ -32,31 +32,21 @@ npm run clean
 
 This removes generated HTML, Markdown, and JSON files from `output/`, giving you a fresh start. Confirm with the user before running if you see existing output files.
 
-### Gather
+### If the User Has a Track
 
-Ask the user for:
+1. Have them place it in `audio/`
+2. Proceed to Phase 2: Beat Analysis
 
-1. **Topic**: What is the demo about? (product launch, blog post, concept, tutorial)
-2. **Context source**: Path to the content (blog post, README, docs). Read it thoroughly. Extract key concepts, technical terms, visual elements, data points, workflow steps, comparisons.
-3. **Target audience**: Developers? General public? Decision-makers?
-4. **Key messages**: What 3-5 things must the viewer take away?
-5. **Tone**: Professional, playful, dramatic, minimal, cyberpunk, elegant?
-6. **Duration target**: 30s, 60s, 90s?
-7. **Music**: Do they have a track? If yes, have them place it in `audio/`. If no, point them to `guides/music-selection.md` and help them choose.
+### If the User Needs Help
 
-### Read and Extract
+Point them to `guides/music-selection.md` and help them choose a track. Key considerations:
 
-Read the context source files. Identify:
+- **Instrumental only** — lyrics compete with on-screen text
+- **Strong beat structure** — clear rhythm makes animation syncing natural
+- **Duration match** — track length should roughly match the target demo length (30s, 60s, 90s)
+- **Mood fit** — the track's energy informs the visual tone (cyberpunk, elegant, dramatic, etc.)
 
-- The core problem being solved
-- The "aha moment" — what makes this exciting
-- Visual concepts that could be animated (architecture diagrams, data flows, transformations, before/after)
-- Specific numbers, stats, or metrics worth highlighting
-- Technical terms that look cool when scrambled/typed
-
-### Output
-
-Write a project brief to `output/project-brief.md` with your analysis. Confirm with the user before proceeding.
+Once selected, place in `audio/` and proceed to Phase 2.
 
 ---
 
@@ -97,7 +87,36 @@ Tell the user they can always add music later and re-sync.
 
 ---
 
-## Phase 3: Scene Design
+## Phase 3: Intake
+
+### Gather
+
+Ask the user for:
+
+1. **Topic**: What is the demo about? (product launch, blog post, concept, tutorial)
+2. **Context source**: Path to the content (blog post, README, docs). Read it thoroughly. Extract key concepts, technical terms, visual elements, data points, workflow steps, comparisons.
+3. **Target audience**: Developers? General public? Decision-makers?
+4. **Key messages**: What 3-5 things must the viewer take away?
+5. **Tone**: Professional, playful, dramatic, minimal, cyberpunk, elegant? The music mood from Phase 1 can inform this.
+6. **Duration target**: 30s, 60s, 90s? This should align with the music track duration from Phase 1.
+
+### Read and Extract
+
+Read the context source files. Identify:
+
+- The core problem being solved
+- The "aha moment" — what makes this exciting
+- Visual concepts that could be animated (architecture diagrams, data flows, transformations, before/after)
+- Specific numbers, stats, or metrics worth highlighting
+- Technical terms that look cool when scrambled/typed
+
+### Output
+
+Write a project brief to `output/project-brief.md` with your analysis. Confirm with the user before proceeding.
+
+---
+
+## Phase 4: Scene Design
 
 ### Narrative Arc
 
@@ -149,7 +168,7 @@ Present the full scene plan to the user. Do NOT proceed to building until they e
 
 ---
 
-## Phase 4: Build Scenes
+## Phase 5: Build Scenes
 
 ### Setup
 
@@ -222,6 +241,7 @@ For each scene in the approved plan:
 
     const scene = initScene({ name: '[Name]', duration: [N] });
     const beats = createFixedBeats({ bpm: 120, duration: scene.duration });
+    // Use the actual BPM from beat analysis. 120 is a sensible default if no music.
     // OR: const beats = await loadBeats('beats.json');
     const timeline = new BeatTimeline(beats);
     initHUD(scene, timeline);
@@ -287,7 +307,7 @@ scene.onRestart(() => {
 
 ---
 
-## Phase 5: Review and Refine
+## Phase 6: Review and Refine
 
 ### Guide the User
 
@@ -310,7 +330,7 @@ Before showing the user each scene, verify:
 
 ---
 
-## Phase 6: Recording (Automated)
+## Phase 7: Recording (Automated)
 
 Use the automated recorder as the default. It renders each scene to a deterministic 1080p 60fps MP4 by virtualizing all browser timing APIs and capturing frame-by-frame.
 
@@ -377,9 +397,26 @@ If automated recording isn't working for a particular scene, fall back to manual
 
 ---
 
-## Phase 7: Assembly
+## Phase 8: Assembly
 
-Guide the user through video editing. Read `guides/assembly.md`, then walk them through:
+### Automated (Default)
+
+Run the assembly script to concatenate all scene MP4s and overlay the music track:
+
+```bash
+npm run assemble                        # scenes + music → output/final-demo.mp4
+npm run assemble -- --no-audio          # video only, no music overlay
+npm run assemble -- --audio path/to.wav # specify audio file
+npm run assemble -- --output custom.mp4 # custom output path
+```
+
+This auto-discovers scene MP4s in `output/` (sorted by number prefix), finds the audio file in `audio/`, trims audio to match total video length, and produces `output/final-demo.mp4`. Video is concatenated without re-encoding for speed.
+
+Verify the final MP4 plays correctly — scene transitions should be clean and audio should run continuously underneath.
+
+### Manual (Fallback)
+
+If the user needs custom transitions, color grading, or multi-track audio, guide them through `guides/assembly.md`, then walk them through:
 
 1. Import all recordings into their video editor
 2. Import the music track
@@ -532,6 +569,8 @@ scaffolding/js/animations/      — text-scramble, typewriter, svg-tracer, rippl
 templates/scene-plans/          — Scene type templates
 guides/                         — recording.md, assembly.md, music-selection.md
 scripts/analyze-beats.py        — Beat detection script (run via uv)
+scripts/record-scenes.js        — Automated scene recorder (run via npm run record)
+scripts/assemble.js             — Final video assembly (run via npm run assemble)
 output/                         — Generated scenes, beats.json, project-brief.md, scene-plan.md
 audio/                          — User's music files
 ```
