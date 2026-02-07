@@ -1,0 +1,310 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Scene: What Powers It</title>
+  <link rel="stylesheet" href="../scaffolding/styles/reset.css">
+  <link rel="stylesheet" href="../scaffolding/styles/core.css">
+  <link rel="stylesheet" href="../scaffolding/styles/effects.css">
+  <style>
+    .stack-layout {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0;
+      width: 92%;
+      max-width: 1600px;
+      z-index: 2;
+      position: relative;
+    }
+
+    .stack-card {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 1rem;
+      padding: 3.5rem 2rem;
+      background: rgba(255, 255, 255, 0.03);
+      border: 1px solid rgba(255, 255, 255, 0.06);
+      border-radius: 20px;
+      backdrop-filter: blur(8px);
+      opacity: 0;
+    }
+
+    .stack-icon {
+      font-size: 3rem;
+      opacity: 0.6;
+    }
+
+    .stack-name {
+      font-size: 7rem;
+      font-weight: 900;
+      font-family: var(--font-display);
+      line-height: 1;
+      letter-spacing: -0.03em;
+    }
+
+    .stack-name.glow-orange-strong {
+      text-shadow: 0 0 10px rgba(249, 115, 22, 0.8), 0 0 40px rgba(249, 115, 22, 0.4), 0 0 80px rgba(249, 115, 22, 0.2);
+    }
+
+    .stack-sub {
+      font-family: var(--font-mono);
+      font-size: 1.5rem;
+      letter-spacing: 0.12em;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      opacity: 0;
+    }
+
+    .connector {
+      width: 90px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      position: relative;
+      flex-shrink: 0;
+    }
+
+    .connector-line {
+      width: 100%;
+      height: 2px;
+      background: rgba(168, 85, 247, 0.25);
+      position: relative;
+      opacity: 0;
+    }
+
+    .connector-pulse {
+      position: absolute;
+      width: 14px;
+      height: 14px;
+      border-radius: 50%;
+      background: #a855f7;
+      filter: drop-shadow(0 0 10px rgba(168, 85, 247, 0.9));
+      top: 50%;
+      left: 0;
+      transform: translate(-50%, -50%);
+      opacity: 0;
+    }
+
+    .stack-tagline {
+      font-size: 2.4rem;
+      font-weight: 300;
+      color: var(--text-secondary);
+      margin-top: 3rem;
+      z-index: 2;
+      position: relative;
+      opacity: 0;
+    }
+
+    .ripple-bg {
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+      z-index: 1;
+    }
+  </style>
+</head>
+<body>
+  <div id="scene" class="scene gradient-bg-ocean scanlines grain">
+    <div class="ripple-bg relative" id="ripple-bg"></div>
+
+    <div class="flex-col center" style="gap: 0;">
+      <div class="stack-layout">
+        <!-- Card 1: Ollama -->
+        <div class="stack-card" id="card1">
+          <div class="stack-icon" id="icon1">🧠</div>
+          <div class="stack-name text-cyan glow-cyan-strong" id="name1">OLLAMA</div>
+          <div class="stack-sub" id="sub1">qwen3-vl · 10GB</div>
+        </div>
+
+        <!-- Connector 1 -->
+        <div class="connector">
+          <div class="connector-line" id="conn1">
+            <div class="connector-pulse" id="pulse1"></div>
+          </div>
+        </div>
+
+        <!-- Card 2: n8n -->
+        <div class="stack-card" id="card2">
+          <div class="stack-icon" id="icon2">⚡</div>
+          <div class="stack-name text-green glow-green-strong" id="name2">N8N</div>
+          <div class="stack-sub" id="sub2">workflow engine</div>
+        </div>
+
+        <!-- Connector 2 -->
+        <div class="connector">
+          <div class="connector-line" id="conn2">
+            <div class="connector-pulse" id="pulse2"></div>
+          </div>
+        </div>
+
+        <!-- Card 3: Prompt -->
+        <div class="stack-card" id="card3">
+          <div class="stack-icon" id="icon3">✍️</div>
+          <div class="stack-name text-orange glow-orange-strong" id="name3">PROMPT</div>
+          <div class="stack-sub" id="sub3">67 lines · optimized</div>
+        </div>
+      </div>
+
+      <p class="stack-tagline" id="stack-tagline">Self-hosted. No API keys. No data leaves your machine.</p>
+    </div>
+  </div>
+
+  <div id="hud"></div>
+
+  <script type="module">
+    import { animate, stagger } from "https://cdn.jsdelivr.net/npm/motion@12/+esm";
+    import { BeatTimeline, createFixedBeats } from "../scaffolding/js/beat-sync.js";
+    import { initScene } from "../scaffolding/js/scene-controller.js";
+    import { initHUD } from "../scaffolding/js/hud.js";
+    import { scrambleText } from "../scaffolding/js/animations/text-scramble.js";
+    import { fadeSlide } from "../scaffolding/js/animations/fade-slide.js";
+    import { ripple } from "../scaffolding/js/animations/ripple.js";
+
+    const scene = initScene({ name: 'What Powers It', duration: 5 });
+    const beats = createFixedBeats({ bpm: 99.4, duration: scene.duration });
+    const timeline = new BeatTimeline(beats);
+    initHUD(scene, timeline);
+
+    const card1 = document.getElementById('card1');
+    const card2 = document.getElementById('card2');
+    const card3 = document.getElementById('card3');
+    const name1 = document.getElementById('name1');
+    const name2 = document.getElementById('name2');
+    const name3 = document.getElementById('name3');
+    const sub1 = document.getElementById('sub1');
+    const sub2 = document.getElementById('sub2');
+    const sub3 = document.getElementById('sub3');
+    const icon1 = document.getElementById('icon1');
+    const icon2 = document.getElementById('icon2');
+    const icon3 = document.getElementById('icon3');
+    const conn1 = document.getElementById('conn1');
+    const conn2 = document.getElementById('conn2');
+    const pulse1 = document.getElementById('pulse1');
+    const pulse2 = document.getElementById('pulse2');
+    const stackTagline = document.getElementById('stack-tagline');
+    const rippleBg = document.getElementById('ripple-bg');
+
+    let scramble1, scramble2, scramble3;
+
+    function showCard(card, icon, name, sub, nameText, chars, color) {
+      fadeSlide(card, { direction: 'up', duration: 0.5, distance: 40 }, animate);
+
+      // Icon fades in with the card
+      animate(icon, { opacity: [0, 0.6] }, { duration: 0.4 });
+
+      // Name scrambles in
+      name.style.opacity = '1';
+      const s = scrambleText(name, { text: nameText, duration: 700, characters: chars });
+      s.play();
+
+      // Subtitle fades in slightly after
+      animate(sub, { opacity: [0, 1] }, { duration: 0.4, delay: 0.3 });
+
+      return s;
+    }
+
+    function fireBeam(connLine, pulseDot) {
+      // Line appears
+      animate(connLine, { opacity: [0, 1] }, { duration: 0.15 });
+
+      // Pulse dot shoots across
+      animate(pulseDot, { opacity: [0, 1, 1, 0] }, { duration: 0.5 });
+      animate(pulseDot, { left: ['0%', '100%'] }, { duration: 0.5, ease: 'easeInOut' });
+    }
+
+    scene.onPlay(() => {
+      timeline.play();
+
+      // Beat 0 (0.0s): Card 1 appears with text scramble
+      timeline.at(0, () => {
+        scramble1 = showCard(card1, icon1, name1, sub1, 'OLLAMA', 'ABCDEFGHIJKLMNOPQRSTUVWXYZ', 'cyan');
+
+        ripple(rippleBg, {
+          count: 2,
+          duration: 2,
+          color: 'rgba(6, 182, 212, 0.12)',
+          maxRadius: 500,
+          stagger: 0.3,
+        }, animate).play();
+      });
+
+      // Beat 2 (1.2s): Beam 1 fires, Card 2 appears
+      timeline.at(2, () => {
+        fireBeam(conn1, pulse1);
+        scramble2 = showCard(card2, icon2, name2, sub2, 'N8N', 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789', 'green');
+      });
+
+      // Beat 4 (2.4s): Beam 2 fires, Card 3 appears
+      timeline.at(4, () => {
+        fireBeam(conn2, pulse2);
+        scramble3 = showCard(card3, icon3, name3, sub3, 'PROMPT', 'ABCDEFGHIJKLMNOPQRSTUVWXYZ', 'orange');
+      });
+
+      // Beat 6 (3.6s): All cards pulse glow simultaneously
+      timeline.at(6, () => {
+        animate('.stack-card', {
+          scale: [1, 1.04, 1],
+        }, { duration: 0.604 });
+
+        // Second ripple burst
+        ripple(rippleBg, {
+          count: 3,
+          duration: 1.5,
+          color: 'rgba(168, 85, 247, 0.15)',
+          maxRadius: 600,
+          stagger: 0.2,
+        }, animate).play();
+      });
+
+      // Beat 7 (4.2s): Tagline fades up
+      timeline.at(7, () => {
+        fadeSlide(stackTagline, { direction: 'up', duration: 0.8 }, animate);
+      });
+    });
+
+    scene.onRestart(() => {
+      timeline.restart();
+      scramble1?.cancel();
+      scramble2?.cancel();
+      scramble3?.cancel();
+
+      // Reset cards
+      [card1, card2, card3].forEach(c => {
+        c.style.opacity = '0';
+        c.style.transform = '';
+      });
+
+      // Reset names
+      name1.textContent = 'OLLAMA';
+      name1.style.opacity = '0';
+      name2.textContent = 'N8N';
+      name2.style.opacity = '0';
+      name3.textContent = 'PROMPT';
+      name3.style.opacity = '0';
+
+      // Reset subs + icons
+      [sub1, sub2, sub3].forEach(s => { s.style.opacity = '0'; });
+      [icon1, icon2, icon3].forEach(i => { i.style.opacity = '0'; });
+
+      // Reset connectors
+      conn1.style.opacity = '0';
+      conn2.style.opacity = '0';
+      pulse1.style.opacity = '0';
+      pulse1.style.left = '0';
+      pulse2.style.opacity = '0';
+      pulse2.style.left = '0';
+
+      // Reset tagline
+      stackTagline.style.opacity = '0';
+      stackTagline.style.transform = '';
+
+      // Remove ripple SVGs
+      rippleBg.querySelectorAll('svg').forEach(el => el.remove());
+    });
+  </script>
+</body>
+</html>

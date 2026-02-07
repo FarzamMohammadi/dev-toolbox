@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Scene: Numbers Don't Lie</title>
+  <link rel="stylesheet" href="../scaffolding/styles/reset.css">
+  <link rel="stylesheet" href="../scaffolding/styles/core.css">
+  <link rel="stylesheet" href="../scaffolding/styles/effects.css">
+  <style>
+    .stats-row {
+      display: flex;
+      gap: 4rem;
+      align-items: flex-end;
+      justify-content: center;
+      z-index: 2;
+      position: relative;
+    }
+
+    .stat-card {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 0.5rem;
+      padding: 2rem 3rem;
+      background: rgba(255, 255, 255, 0.03);
+      border: 1px solid rgba(255, 255, 255, 0.06);
+      border-radius: 16px;
+      backdrop-filter: blur(8px);
+      opacity: 0;
+    }
+
+    .stat-number {
+      font-size: 10rem;
+      font-weight: 900;
+      line-height: 1;
+      font-family: var(--font-display);
+      letter-spacing: -0.04em;
+      font-variant-numeric: tabular-nums;
+    }
+
+    .stat-label {
+      font-family: var(--font-mono);
+      font-size: 1.6rem;
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+      color: var(--text-muted);
+    }
+
+    .stats-tagline {
+      font-size: 2.5rem;
+      font-weight: 300;
+      color: var(--text-secondary);
+      margin-top: 3rem;
+      z-index: 2;
+      position: relative;
+      opacity: 0;
+    }
+
+    .ripple-bg {
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+      z-index: 1;
+    }
+  </style>
+</head>
+<body>
+  <div id="scene" class="scene gradient-bg-aurora scanlines grain">
+    <div class="ripple-bg relative" id="ripple-bg"></div>
+
+    <div class="flex-col center" style="gap: 0;">
+      <div class="stats-row">
+        <div class="stat-card" id="stat1">
+          <div class="stat-number text-green glow-green-strong" id="num1">0</div>
+          <div class="stat-label">/ 20 ACCURACY</div>
+        </div>
+        <div class="stat-card" id="stat2">
+          <div class="stat-number text-cyan glow-cyan-strong" id="num2">0</div>
+          <div class="stat-label">LINES OF PROMPT</div>
+        </div>
+        <div class="stat-card" id="stat3">
+          <div class="stat-number text-purple glow-purple-strong" id="num3">0</div>
+          <div class="stat-label">COMMANDS TO DEPLOY</div>
+        </div>
+      </div>
+
+      <p class="stats-tagline" id="stats-tagline">Automated end-to-end. Tested on every edge case.</p>
+    </div>
+  </div>
+
+  <div id="hud"></div>
+
+  <script type="module">
+    import { animate, stagger } from "https://cdn.jsdelivr.net/npm/motion@12/+esm";
+    import { BeatTimeline, createFixedBeats } from "../scaffolding/js/beat-sync.js";
+    import { initScene } from "../scaffolding/js/scene-controller.js";
+    import { initHUD } from "../scaffolding/js/hud.js";
+    import { countUp } from "../scaffolding/js/animations/counter.js";
+    import { fadeSlide } from "../scaffolding/js/animations/fade-slide.js";
+    import { ripple } from "../scaffolding/js/animations/ripple.js";
+
+    const scene = initScene({ name: 'Numbers Don\'t Lie', duration: 7 });
+    const beats = createFixedBeats({ bpm: 99.4, duration: scene.duration });
+    const timeline = new BeatTimeline(beats);
+    initHUD(scene, timeline);
+
+    const stat1 = document.getElementById('stat1');
+    const stat2 = document.getElementById('stat2');
+    const stat3 = document.getElementById('stat3');
+    const num1 = document.getElementById('num1');
+    const num2 = document.getElementById('num2');
+    const num3 = document.getElementById('num3');
+    const statsTagline = document.getElementById('stats-tagline');
+    const rippleBg = document.getElementById('ripple-bg');
+
+    let counter1, counter2, counter3;
+
+    scene.onPlay(() => {
+      timeline.play();
+
+      // Beat 0 (0.0s): Background ripple burst
+      timeline.at(0, () => {
+        ripple(rippleBg, {
+          count: 2,
+          duration: 2,
+          color: 'rgba(34, 197, 94, 0.15)',
+          maxRadius: 600,
+          stagger: 0.3,
+        }, animate).play();
+      });
+
+      // Beat 1 (0.6s): Card 1 slides in + counter starts
+      timeline.at(1, () => {
+        fadeSlide(stat1, { direction: 'up', duration: 0.5, distance: 40 }, animate);
+        counter1 = countUp(num1, 0, 20, { duration: 1200 });
+        counter1.play();
+      });
+
+      // Beat 3 (1.8s): Card 2 slides in + counter
+      timeline.at(3, () => {
+        fadeSlide(stat2, { direction: 'up', duration: 0.5, distance: 40 }, animate);
+        counter2 = countUp(num2, 0, 67, { duration: 1200 });
+        counter2.play();
+      });
+
+      // Beat 5 (3.0s): Card 3 slides in + counter
+      timeline.at(5, () => {
+        fadeSlide(stat3, { direction: 'up', duration: 0.5, distance: 40 }, animate);
+        counter3 = countUp(num3, 0, 7, { duration: 800 });
+        counter3.play();
+      });
+
+      // Beat 7 (4.2s): All cards pulse simultaneously
+      timeline.at(7, () => {
+        animate('.stat-card', {
+          scale: [1, 1.04, 1],
+        }, { duration: 0.604 });
+      });
+
+      // Beat 8 (4.8s): Tagline fades up
+      timeline.at(8, () => {
+        fadeSlide(statsTagline, { direction: 'up', duration: 0.8 }, animate);
+      });
+
+      // Beat 9 (5.4s): Second ripple burst (purple)
+      timeline.at(9, () => {
+        ripple(rippleBg, {
+          count: 3,
+          duration: 1.5,
+          color: 'rgba(168, 85, 247, 0.2)',
+          maxRadius: 500,
+          stagger: 0.2,
+        }, animate).play();
+      });
+    });
+
+    scene.onRestart(() => {
+      timeline.restart();
+      counter1?.cancel();
+      counter2?.cancel();
+      counter3?.cancel();
+
+      num1.textContent = '0';
+      num2.textContent = '0';
+      num3.textContent = '0';
+
+      stat1.style.opacity = '0';
+      stat1.style.transform = '';
+      stat2.style.opacity = '0';
+      stat2.style.transform = '';
+      stat3.style.opacity = '0';
+      stat3.style.transform = '';
+
+      statsTagline.style.opacity = '0';
+      statsTagline.style.transform = '';
+
+      rippleBg.querySelectorAll('svg').forEach(el => el.remove());
+    });
+  </script>
+</body>
+</html>

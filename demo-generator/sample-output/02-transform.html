@@ -1,0 +1,441 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Scene: Chaos to Order</title>
+  <link rel="stylesheet" href="../scaffolding/styles/reset.css">
+  <link rel="stylesheet" href="../scaffolding/styles/core.css">
+  <link rel="stylesheet" href="../scaffolding/styles/effects.css">
+  <style>
+    .scene { background: #0a0a0a; }
+
+    .transform-layout {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 4rem;
+      width: 94%;
+      max-width: 1800px;
+      z-index: 2;
+      position: relative;
+    }
+
+    .panel-receipt {
+      flex: 0 0 420px;
+      opacity: 0;
+    }
+
+    .receipt-card {
+      background: #faf8f5;
+      color: #1a1a1a;
+      border-radius: 8px;
+      padding: 2.5rem 2rem;
+      font-family: var(--font-mono);
+      font-size: 1.5rem;
+      line-height: 2;
+      box-shadow: 0 8px 32px rgba(0,0,0,0.5), 0 2px 8px rgba(0,0,0,0.3);
+      transform: rotate(-2deg);
+    }
+
+    .receipt-store {
+      font-weight: 700;
+      font-size: 1.6rem;
+      text-align: center;
+      margin-bottom: 0.5rem;
+    }
+
+    .receipt-divider {
+      color: #999;
+      text-align: center;
+      letter-spacing: 0.1em;
+    }
+
+    .receipt-line {
+      display: flex;
+      justify-content: space-between;
+    }
+
+    .receipt-total {
+      font-weight: 700;
+      font-size: 1.4rem;
+      border-top: 2px solid #333;
+      padding-top: 0.5rem;
+      margin-top: 0.25rem;
+    }
+
+    .panel-center {
+      flex: 0 0 280px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 0.8rem;
+      position: relative;
+      opacity: 0;
+    }
+
+    .transform-arrow {
+      font-size: 10rem;
+      color: var(--accent-purple);
+      filter: drop-shadow(0 0 25px rgba(168, 85, 247, 0.6)) drop-shadow(0 0 50px rgba(168, 85, 247, 0.3));
+      line-height: 0.8;
+      opacity: 0;
+    }
+
+    .model-label {
+      font-family: var(--font-mono);
+      font-size: 3.2rem;
+      color: var(--accent-cyan);
+      letter-spacing: 0.05em;
+      text-shadow: 0 0 20px rgba(6, 182, 212, 0.5);
+      opacity: 0;
+    }
+
+    .thinking-dots {
+      display: flex;
+      gap: 0.6rem;
+      opacity: 0;
+    }
+
+    .thinking-dot {
+      width: 12px;
+      height: 12px;
+      border-radius: 50%;
+      background: var(--accent-purple);
+      filter: drop-shadow(0 0 6px rgba(168, 85, 247, 0.6));
+    }
+
+    .thinking-status {
+      font-family: var(--font-mono);
+      font-size: 1.3rem;
+      color: var(--text-muted);
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      opacity: 0;
+      height: 1.6rem;
+    }
+
+    .ripple-zone {
+      position: absolute;
+      inset: -150px;
+      pointer-events: none;
+    }
+
+    .panel-json {
+      flex: 1;
+      max-width: 700px;
+      opacity: 0;
+    }
+
+    .json-terminal {
+      min-height: 420px;
+    }
+
+    .json-terminal .terminal-body {
+      white-space: pre;
+      font-size: 1.15rem;
+      line-height: 1.6;
+      color: #22c55e;
+      overflow: hidden;
+    }
+
+    .json-line {
+      opacity: 0;
+      transform: translateY(4px);
+    }
+
+    /* Scan sweep effect */
+    .scan-sweep {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: linear-gradient(90deg,
+        transparent 0%,
+        rgba(168, 85, 247, 0.03) 40%,
+        rgba(168, 85, 247, 0.08) 50%,
+        rgba(168, 85, 247, 0.03) 60%,
+        transparent 100%
+      );
+      z-index: 3;
+      pointer-events: none;
+      transform: translateX(-100%);
+    }
+  </style>
+</head>
+<body>
+  <div id="scene" class="scene grain">
+    <div class="scan-sweep" id="scan-sweep"></div>
+
+    <div class="transform-layout">
+      <!-- Receipt -->
+      <div class="panel-receipt" id="panel-receipt">
+        <div class="receipt-card">
+          <div class="receipt-store">EAST REPAIR INC.</div>
+          <div class="receipt-divider">- - - - - - - - - - - - -</div>
+          <div class="receipt-line"><span>1x Brake cables</span><span>$100.00</span></div>
+          <div class="receipt-line"><span>2x Pedal arms</span><span>$30.00</span></div>
+          <div class="receipt-line"><span>3x Labor hrs</span><span>$15.00</span></div>
+          <div class="receipt-divider">- - - - - - - - - - - - -</div>
+          <div class="receipt-line"><span>Subtotal</span><span>$145.00</span></div>
+          <div class="receipt-line"><span>Sales Tax 6.25%</span><span>$9.06</span></div>
+          <div class="receipt-line receipt-total"><span>TOTAL</span><span>$154.06</span></div>
+        </div>
+      </div>
+
+      <!-- Center transformation indicator -->
+      <div class="panel-center" id="panel-center">
+        <div class="transform-arrow" id="transform-arrow">→</div>
+        <div class="model-label" id="model-label">qwen3-vl</div>
+        <div class="thinking-dots" id="thinking-dots">
+          <div class="thinking-dot" id="dot1"></div>
+          <div class="thinking-dot" id="dot2"></div>
+          <div class="thinking-dot" id="dot3"></div>
+        </div>
+        <div class="thinking-status" id="thinking-status">analyzing</div>
+        <div class="ripple-zone relative" id="ripple-zone"></div>
+      </div>
+
+      <!-- JSON Output -->
+      <div class="panel-json" id="panel-json">
+        <div class="terminal box-glow-green json-terminal">
+          <div class="terminal-header">
+            <span class="terminal-dot terminal-dot--red"></span>
+            <span class="terminal-dot terminal-dot--yellow"></span>
+            <span class="terminal-dot terminal-dot--green"></span>
+          </div>
+          <div class="terminal-body" id="json-body"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div id="hud"></div>
+
+  <script type="module">
+    import { animate, stagger } from "https://cdn.jsdelivr.net/npm/motion@12/+esm";
+    import { BeatTimeline, createFixedBeats } from "../scaffolding/js/beat-sync.js";
+    import { initScene } from "../scaffolding/js/scene-controller.js";
+    import { initHUD } from "../scaffolding/js/hud.js";
+    import { fadeSlide } from "../scaffolding/js/animations/fade-slide.js";
+    import { ripple } from "../scaffolding/js/animations/ripple.js";
+    import { scrambleText } from "../scaffolding/js/animations/text-scramble.js";
+
+    const scene = initScene({ name: 'Chaos to Order', duration: 10 });
+    const beats = createFixedBeats({ bpm: 99.4, duration: scene.duration });
+    const timeline = new BeatTimeline(beats);
+    initHUD(scene, timeline);
+
+    const panelReceipt = document.getElementById('panel-receipt');
+    const panelCenter = document.getElementById('panel-center');
+    const panelJson = document.getElementById('panel-json');
+    const transformArrow = document.getElementById('transform-arrow');
+    const modelLabel = document.getElementById('model-label');
+    const thinkingDots = document.getElementById('thinking-dots');
+    const thinkingStatus = document.getElementById('thinking-status');
+    const rippleZone = document.getElementById('ripple-zone');
+    const jsonBody = document.getElementById('json-body');
+    const scanSweep = document.getElementById('scan-sweep');
+
+    let scramble1;
+    let streamTimeouts = [];
+    let statusInterval = null;
+
+    const statusSteps = ['analyzing', 'extracting', 'structuring', 'validating'];
+
+    function startThinkingDots() {
+      // Pulsing dots in sequence
+      const dots = [document.getElementById('dot1'), document.getElementById('dot2'), document.getElementById('dot3')];
+      dots.forEach((dot, i) => {
+        animate(dot, {
+          scale: [1, 1.6, 1],
+          opacity: [0.4, 1, 0.4],
+        }, {
+          duration: 0.8,
+          delay: i * 0.2,
+          repeat: Infinity,
+        });
+      });
+    }
+
+    function startStatusCycle() {
+      let step = 0;
+      thinkingStatus.textContent = statusSteps[0];
+      statusInterval = setInterval(() => {
+        step = (step + 1) % statusSteps.length;
+        animate(thinkingStatus, { opacity: [1, 0] }, { duration: 0.15 }).then(() => {
+          thinkingStatus.textContent = statusSteps[step];
+          animate(thinkingStatus, { opacity: [0, 1] }, { duration: 0.15 });
+        });
+      }, 800);
+    }
+
+    function stopThinking() {
+      if (statusInterval) clearInterval(statusInterval);
+      statusInterval = null;
+      animate(thinkingDots, { opacity: [null, 0] }, { duration: 0.3 });
+      thinkingStatus.textContent = 'complete';
+      animate(thinkingStatus, {
+        color: ['var(--text-muted)', 'var(--accent-green)'],
+      }, { duration: 0.3 });
+    }
+
+    const jsonLines = [
+      '{',
+      '  "vendor": "East Repair Inc.",',
+      '  "currency": "USD",',
+      '  "subtotal": 145.00,',
+      '  "tax_pct": 6.25,',
+      '  "tax": 9.06,',
+      '  "total": 154.06,',
+      '  "items": [',
+      '    { "name": "Brake cables", "qty": 1, "price": 100.00 },',
+      '    { "name": "Pedal arms", "qty": 2, "price": 15.00 },',
+      '    { "name": "Labor", "qty": 3, "price": 5.00 }',
+      '  ]',
+      '}',
+    ];
+
+    function streamJSON() {
+      jsonBody.innerHTML = '';
+      jsonLines.forEach((line, i) => {
+        const div = document.createElement('div');
+        div.className = 'json-line';
+        div.textContent = line;
+        jsonBody.appendChild(div);
+
+        // Stagger each line appearing with a streaming feel
+        const delay = i * 120;
+        const tid = setTimeout(() => {
+          animate(div, {
+            opacity: [0, 1],
+            y: [4, 0],
+          }, { duration: 0.15, ease: 'easeOut' });
+        }, delay);
+        streamTimeouts.push(tid);
+      });
+    }
+
+    scene.onPlay(() => {
+      timeline.play();
+
+      // Beat 0 (0.0s): Receipt slides in from left
+      timeline.at(0, () => {
+        fadeSlide(panelReceipt, { direction: 'left', duration: 0.6, distance: 60 }, animate);
+      });
+
+      // Beat 2 (1.2s): Receipt subtle scale pulse
+      timeline.at(2, () => {
+        animate(panelReceipt, { scale: [1, 1.02, 1] }, { duration: 0.6 });
+      });
+
+      // Beat 3 (1.8s): Center panel fades in (container only)
+      timeline.at(3, () => {
+        fadeSlide(panelCenter, { direction: 'up', duration: 0.5 }, animate);
+      });
+
+      // Beat 4 (2.4s): Arrow slams in with scale
+      timeline.at(4, () => {
+        animate(transformArrow, {
+          opacity: [0, 1],
+          scale: [2, 1],
+        }, { duration: 0.3, ease: 'easeOut' });
+      });
+
+      // Beat 5 (3.0s): Model label scrambles in + ripple burst
+      timeline.at(5, () => {
+        modelLabel.style.opacity = '1';
+        scramble1 = scrambleText(modelLabel, {
+          text: 'qwen3-vl',
+          duration: 800,
+          characters: 'abcdef0123456789',
+        });
+        scramble1.play();
+
+        ripple(rippleZone, {
+          count: 4,
+          duration: 1.5,
+          color: 'rgba(168, 85, 247, 0.35)',
+          maxRadius: 250,
+          stagger: 0.15,
+        }, animate).play();
+
+        animate(scanSweep, {
+          x: ['-100%', '200%'],
+        }, { duration: 1.5, ease: 'easeInOut' });
+      });
+
+      // Beat 6 (3.6s): Thinking dots appear + status cycling starts
+      timeline.at(6, () => {
+        animate(thinkingDots, { opacity: [0, 1] }, { duration: 0.3 });
+        animate(thinkingStatus, { opacity: [0, 1] }, { duration: 0.3 });
+        startThinkingDots();
+        startStatusCycle();
+
+        // Arrow pulses while thinking
+        animate(transformArrow, {
+          scale: [1, 1.2, 1],
+          opacity: [1, 0.6, 1],
+        }, { duration: 0.604, repeat: 5 });
+      });
+
+      // Beat 8 (4.8s): JSON terminal slides in + stop thinking + stream
+      timeline.at(8, () => {
+        stopThinking();
+        fadeSlide(panelJson, { direction: 'right', duration: 0.6, distance: 60 }, animate);
+      });
+
+      // Beat 9 (5.4s): Start streaming JSON
+      timeline.at(9, () => {
+        streamJSON();
+      });
+
+      // Beat 14 (8.4s): Terminal completion glow pulse
+      timeline.at(14, () => {
+        animate(panelJson, {
+          scale: [1, 1.02, 1],
+        }, { duration: 0.6 });
+
+        const terminal = panelJson.querySelector('.json-terminal');
+        animate(terminal, {
+          boxShadow: [
+            '0 0 15px rgba(34,197,94,0.3)',
+            '0 0 40px rgba(34,197,94,0.6)',
+            '0 0 15px rgba(34,197,94,0.3)',
+          ],
+        }, { duration: 0.6 });
+      });
+    });
+
+    scene.onRestart(() => {
+      timeline.restart();
+      streamTimeouts.forEach(t => clearTimeout(t));
+      streamTimeouts = [];
+      if (statusInterval) clearInterval(statusInterval);
+      statusInterval = null;
+      scramble1?.cancel();
+
+      panelReceipt.style.opacity = '0';
+      panelReceipt.style.transform = '';
+      panelCenter.style.opacity = '0';
+      panelCenter.style.transform = '';
+      panelJson.style.opacity = '0';
+      panelJson.style.transform = '';
+      transformArrow.style.opacity = '0';
+      transformArrow.style.transform = '';
+      modelLabel.style.opacity = '0';
+      modelLabel.textContent = 'qwen3-vl';
+      thinkingDots.style.opacity = '0';
+      thinkingStatus.style.opacity = '0';
+      thinkingStatus.textContent = 'analyzing';
+      thinkingStatus.style.color = '';
+      jsonBody.innerHTML = '';
+      scanSweep.style.transform = 'translateX(-100%)';
+
+      // Remove ripple SVGs
+      rippleZone.querySelectorAll('svg').forEach(el => el.remove());
+    });
+  </script>
+</body>
+</html>

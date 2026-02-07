@@ -1,0 +1,204 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Scene: The Drop</title>
+  <link rel="stylesheet" href="../scaffolding/styles/reset.css">
+  <link rel="stylesheet" href="../scaffolding/styles/core.css">
+  <link rel="stylesheet" href="../scaffolding/styles/effects.css">
+  <style>
+    .cta-stack {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 1.5rem;
+      z-index: 2;
+      position: relative;
+    }
+
+    .cta-eyebrow {
+      font-family: var(--font-mono);
+      font-size: 1.8rem;
+      letter-spacing: 0.25em;
+      text-transform: uppercase;
+      color: var(--accent-orange);
+      opacity: 0;
+    }
+
+    .cta-hero {
+      font-size: 11rem;
+      font-weight: 900;
+      line-height: 1;
+      letter-spacing: -0.03em;
+      background: linear-gradient(135deg, #f97316, #ec4899);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      filter: drop-shadow(0 0 40px rgba(249, 115, 22, 0.4)) drop-shadow(0 0 80px rgba(236, 72, 153, 0.2));
+      opacity: 0;
+    }
+
+    .cta-divider {
+      width: 120px;
+      height: 3px;
+      background: linear-gradient(90deg, var(--accent-orange), var(--accent-pink));
+      border-radius: 2px;
+      opacity: 0;
+      transform: scaleX(0);
+    }
+
+    .cta-url {
+      font-size: 2.2rem;
+      font-weight: 400;
+      color: var(--text-secondary);
+      opacity: 0;
+    }
+
+    /* Flash burst - radial warm flash */
+    .flash-burst {
+      position: absolute;
+      inset: 0;
+      background: radial-gradient(circle at center, rgba(249, 115, 22, 0.15) 0%, transparent 70%);
+      opacity: 0;
+      z-index: 1;
+      pointer-events: none;
+    }
+
+    .ripple-cta {
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+      z-index: 1;
+    }
+  </style>
+</head>
+<body>
+  <div id="scene" class="scene gradient-bg-midnight grain">
+    <div class="flash-burst" id="flash-burst"></div>
+    <div class="ripple-cta relative" id="ripple-cta"></div>
+
+    <div class="cta-stack">
+      <p class="cta-eyebrow" id="cta-eyebrow">FULL SOURCE CODE + STEP-BY-STEP GUIDE</p>
+      <h1 class="cta-hero" id="cta-hero">READ THE BLOG</h1>
+      <div class="cta-divider" id="cta-divider"></div>
+      <p class="cta-url" id="cta-url">link above ↑</p>
+    </div>
+  </div>
+
+  <div id="hud"></div>
+
+  <script type="module">
+    import { animate, stagger } from "https://cdn.jsdelivr.net/npm/motion@12/+esm";
+    import { BeatTimeline, createFixedBeats } from "../scaffolding/js/beat-sync.js";
+    import { initScene } from "../scaffolding/js/scene-controller.js";
+    import { initHUD } from "../scaffolding/js/hud.js";
+    import { scrambleText } from "../scaffolding/js/animations/text-scramble.js";
+    import { fadeSlide } from "../scaffolding/js/animations/fade-slide.js";
+    import { ripple } from "../scaffolding/js/animations/ripple.js";
+
+    const scene = initScene({ name: 'The Drop', duration: 5 });
+    const beats = createFixedBeats({ bpm: 99.4, duration: scene.duration });
+    const timeline = new BeatTimeline(beats);
+    initHUD(scene, timeline);
+
+    const flashBurst = document.getElementById('flash-burst');
+    const rippleCta = document.getElementById('ripple-cta');
+    const ctaEyebrow = document.getElementById('cta-eyebrow');
+    const ctaHero = document.getElementById('cta-hero');
+    const ctaDivider = document.getElementById('cta-divider');
+    const ctaUrl = document.getElementById('cta-url');
+
+    let scramble1;
+
+    scene.onPlay(() => {
+      timeline.play();
+
+      // Beat 0 (0.0s): BANG - flash + ripples + hero scramble
+      timeline.at(0, () => {
+        // Flash burst
+        animate(flashBurst, {
+          opacity: [0.8, 0],
+        }, { duration: 1.2, ease: 'easeOut' });
+
+        // Explosive orange ripples
+        ripple(rippleCta, {
+          count: 5,
+          duration: 2,
+          color: 'rgba(249, 115, 22, 0.25)',
+          maxRadius: 700,
+          stagger: 0.12,
+        }, animate).play();
+
+        // Hero text appears with scale + scramble
+        ctaHero.style.opacity = '1';
+        animate(ctaHero, {
+          scale: [0.85, 1],
+        }, { duration: 0.6, ease: 'easeOut' });
+
+        scramble1 = scrambleText(ctaHero, {
+          text: 'READ THE BLOG',
+          duration: 1000,
+          characters: 'READTHBLOGPST',
+        });
+        scramble1.play();
+      });
+
+      // Beat 1 (0.6s): Eyebrow fades in from above
+      timeline.at(1, () => {
+        fadeSlide(ctaEyebrow, { direction: 'down', duration: 0.5 }, animate);
+      });
+
+      // Beat 2 (1.2s): Divider extends from center
+      timeline.at(2, () => {
+        animate(ctaDivider, {
+          opacity: [0, 1],
+          scaleX: [0, 1],
+        }, { duration: 0.5, ease: 'easeOut' });
+      });
+
+      // Beat 3 (1.8s): URL fades up
+      timeline.at(3, () => {
+        fadeSlide(ctaUrl, { direction: 'up', duration: 0.6 }, animate);
+      });
+
+      // Beat 5 (3.0s): Second ripple wave (pink)
+      timeline.at(5, () => {
+        ripple(rippleCta, {
+          count: 3,
+          duration: 1.5,
+          color: 'rgba(236, 72, 153, 0.15)',
+          maxRadius: 400,
+          stagger: 0.2,
+        }, animate).play();
+      });
+
+      // Beat 6 (3.6s): Hero gentle breathing pulse
+      timeline.at(6, () => {
+        animate(ctaHero, {
+          scale: [1, 1.03, 1],
+        }, { duration: 0.604 });
+      });
+    });
+
+    scene.onRestart(() => {
+      timeline.restart();
+      scramble1?.cancel();
+
+      ctaHero.textContent = 'READ THE BLOG';
+      ctaHero.style.opacity = '0';
+      ctaHero.style.transform = '';
+      ctaEyebrow.style.opacity = '0';
+      ctaEyebrow.style.transform = '';
+      ctaDivider.style.opacity = '0';
+      ctaDivider.style.transform = 'scaleX(0)';
+      ctaUrl.style.opacity = '0';
+      ctaUrl.style.transform = '';
+      flashBurst.style.opacity = '0';
+
+      // Remove ripple SVGs
+      rippleCta.querySelectorAll('svg').forEach(el => el.remove());
+    });
+  </script>
+</body>
+</html>

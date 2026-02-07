@@ -1,0 +1,231 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Scene: The Claim</title>
+  <link rel="stylesheet" href="../scaffolding/styles/reset.css">
+  <link rel="stylesheet" href="../scaffolding/styles/core.css">
+  <link rel="stylesheet" href="../scaffolding/styles/effects.css">
+  <style>
+    /* Override overflow:hidden so drop-shadow filters aren't clipped */
+    #scene { overflow: visible; }
+
+    .hook-container {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 1rem;
+      z-index: 2;
+      position: relative;
+      padding: 1rem;
+    }
+
+    .pre-title {
+      font-family: var(--font-mono);
+      font-size: 4.5rem;
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+      color: var(--accent-cyan);
+      text-shadow: 0 0 30px rgba(6, 182, 212, 0.5);
+      opacity: 0;
+      text-align: center;
+    }
+
+    .hero-number {
+      font-size: 36rem;
+      font-weight: 900;
+      font-family: var(--font-display);
+      letter-spacing: -0.04em;
+      line-height: 0.85;
+      background: linear-gradient(180deg, #ffffff 0%, #06b6d4 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      filter: drop-shadow(0 0 60px rgba(6, 182, 212, 0.5)) drop-shadow(0 0 120px rgba(6, 182, 212, 0.2));
+      opacity: 0;
+      padding: 0.5rem 2rem;
+    }
+
+    .hero-wrapper {
+      position: relative;
+      display: inline-block;
+    }
+
+    .vlm-badge {
+      position: absolute;
+      bottom: 0.15em;
+      right: -1.5em;
+      font-family: var(--font-mono);
+      font-size: 4.5rem;
+      font-weight: 700;
+      letter-spacing: 0.05em;
+      color: var(--accent-cyan);
+      text-shadow: 0 0 20px rgba(6, 182, 212, 0.6);
+      opacity: 0;
+      /* Reset the gradient text fill from parent */
+      -webkit-text-fill-color: var(--accent-cyan);
+    }
+
+    .hero-subtitle {
+      font-size: 3.5rem;
+      font-weight: 300;
+      color: var(--text-secondary);
+      opacity: 0;
+    }
+
+    .particle-field {
+      position: absolute;
+      inset: 0;
+      overflow: hidden;
+      z-index: 1;
+      pointer-events: none;
+    }
+
+    .particle {
+      position: absolute;
+      width: 3px;
+      height: 3px;
+      background: var(--accent-cyan);
+      border-radius: 50%;
+      opacity: 0;
+    }
+  </style>
+</head>
+<body>
+  <div id="scene" class="scene gradient-bg-midnight scanlines grain">
+    <div class="particle-field" id="particle-field"></div>
+    <div class="hook-container">
+      <p class="pre-title" id="pre-title">RUNNING LOCALLY ON YOUR MACHINE</p>
+      <div class="hero-wrapper">
+        <h1 class="hero-number" id="hero-number">10GB</h1>
+        <span class="vlm-badge" id="vlm-badge">VLM</span>
+      </div>
+      <p class="hero-subtitle" id="hero-subtitle">Any receipt. Any invoice. Perfect accuracy.</p>
+    </div>
+  </div>
+
+  <div id="hud"></div>
+
+  <script type="module">
+    import { animate, stagger } from "https://cdn.jsdelivr.net/npm/motion@12/+esm";
+    import { BeatTimeline, createFixedBeats } from "../scaffolding/js/beat-sync.js";
+    import { initScene } from "../scaffolding/js/scene-controller.js";
+    import { initHUD } from "../scaffolding/js/hud.js";
+    import { scrambleText } from "../scaffolding/js/animations/text-scramble.js";
+    import { fadeSlide } from "../scaffolding/js/animations/fade-slide.js";
+
+    const scene = initScene({ name: 'The Claim', duration: 8 });
+    const beats = createFixedBeats({ bpm: 99.4, duration: scene.duration });
+    const timeline = new BeatTimeline(beats);
+    initHUD(scene, timeline);
+
+    const preTitle = document.getElementById('pre-title');
+    const heroNumber = document.getElementById('hero-number');
+    const vlmBadge = document.getElementById('vlm-badge');
+    const heroSubtitle = document.getElementById('hero-subtitle');
+    const particleField = document.getElementById('particle-field');
+
+    let scramble1;
+
+    function spawnParticles() {
+      const count = 25;
+      for (let i = 0; i < count; i++) {
+        const p = document.createElement('div');
+        p.className = 'particle';
+        p.style.left = Math.random() * 100 + '%';
+        p.style.top = (40 + Math.random() * 60) + '%';
+        particleField.appendChild(p);
+
+        animate(p, {
+          opacity: [0, 0.2 + Math.random() * 0.3, 0.2 + Math.random() * 0.2],
+          y: [0, -(30 + Math.random() * 60)],
+        }, {
+          duration: 4 + Math.random() * 3,
+          delay: Math.random() * 2,
+          ease: 'linear',
+        });
+      }
+    }
+
+    function launchParticles() {
+      const particles = particleField.querySelectorAll('.particle');
+      animate(particles, {
+        y: [null, -150],
+        opacity: [null, 0],
+      }, {
+        duration: 1.2,
+        ease: 'easeIn',
+      });
+    }
+
+    scene.onPlay(() => {
+      timeline.play();
+
+      // Beat 0 (0.0s): Spawn ambient particles
+      timeline.at(0, () => {
+        spawnParticles();
+      });
+
+      // Beat 2 (1.2s): Pre-title fades in slowly
+      timeline.at(2, () => {
+        fadeSlide(preTitle, { direction: 'up', duration: 1.2, distance: 20 }, animate);
+      });
+
+      // Beat 5 (3.0s): Hero "10GB" scrambles in with scale settle
+      timeline.at(5, () => {
+        heroNumber.style.opacity = '1';
+        scramble1 = scrambleText(heroNumber, {
+          text: '10GB',
+          duration: 1800,
+          characters: '0123456789GBMTK',
+        });
+        scramble1.play();
+
+        animate(heroNumber, {
+          scale: [1.15, 1],
+        }, {
+          duration: 1.8,
+          ease: 'easeOut',
+        });
+      });
+
+      // Beat 7 (4.2s): VLM badge fades in at bottom-right of 10GB
+      timeline.at(7, () => {
+        animate(vlmBadge, {
+          opacity: [0, 1],
+          y: [10, 0],
+        }, { duration: 0.6, ease: 'easeOut' });
+      });
+
+      // Beat 9 (5.4s): Subtitle fades up
+      timeline.at(9, () => {
+        fadeSlide(heroSubtitle, { direction: 'up', duration: 0.8 }, animate);
+      });
+
+      // Beat 11 (6.6s): Particles accelerate and fade
+      timeline.at(11, () => {
+        launchParticles();
+      });
+    });
+
+    scene.onRestart(() => {
+      timeline.restart();
+      scramble1?.cancel();
+
+      heroNumber.textContent = '10GB';
+      preTitle.style.opacity = '0';
+      preTitle.style.transform = '';
+      heroNumber.style.opacity = '0';
+      heroNumber.style.transform = '';
+      vlmBadge.style.opacity = '0';
+      vlmBadge.style.transform = '';
+      heroSubtitle.style.opacity = '0';
+      heroSubtitle.style.transform = '';
+
+      // Remove particles
+      particleField.querySelectorAll('.particle').forEach(el => el.remove());
+    });
+  </script>
+</body>
+</html>
