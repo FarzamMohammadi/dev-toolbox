@@ -455,8 +455,16 @@ async function recordScene(browser, sceneFile, outputDir, label, progress) {
   }
   await page.evaluate(() => window.__recording.waitForRender());
 
-  // Hide HUD
-  await page.keyboard.press("KeyH");
+  // Hide HUD instantly (bypass the 0.3s CSS transition)
+  await page.evaluate(() => {
+    const hud = document.querySelector('.hud');
+    if (hud) {
+      hud.style.transition = 'none';
+      hud.classList.add('hud--hidden');
+    }
+    const hint = document.querySelector('.hud-hint');
+    if (hint) hint.style.display = 'none';
+  });
   await page.evaluate(() => window.__recording.advanceFrame());
   await page.evaluate(() => window.__recording.waitForRender());
 
