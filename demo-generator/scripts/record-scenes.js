@@ -299,11 +299,11 @@ async function recordScene(browser, sceneFile, outputDir) {
   const { proc: ffmpeg, stderr: getStderr } = spawnFFmpeg(outputPath);
 
   const ffmpegDone = new Promise((resolve, reject) => {
-    ffmpeg.proc.on("close", (code) => {
+    ffmpeg.on("close", (code) => {
       if (code === 0) resolve();
       else reject(new Error(`ffmpeg exited with code ${code}\n${getStderr()}`));
     });
-    ffmpeg.proc.on("error", reject);
+    ffmpeg.on("error", reject);
   });
 
   // Frame capture loop
@@ -316,9 +316,9 @@ async function recordScene(browser, sceneFile, outputDir) {
     const screenshot = await page.screenshot({ type: "png", omitBackground: false });
 
     // Write to ffmpeg stdin
-    const canWrite = ffmpeg.proc.stdin.write(screenshot);
+    const canWrite = ffmpeg.stdin.write(screenshot);
     if (!canWrite) {
-      await new Promise((r) => ffmpeg.proc.stdin.once("drain", r));
+      await new Promise((r) => ffmpeg.stdin.once("drain", r));
     }
 
     // Progress indicator (every 60 frames = ~1 second of video)
@@ -330,7 +330,7 @@ async function recordScene(browser, sceneFile, outputDir) {
   }
 
   // Close ffmpeg stdin and wait for encoding to finish
-  ffmpeg.proc.stdin.end();
+  ffmpeg.stdin.end();
   await ffmpegDone;
 
   const wallTime = ((Date.now() - startTime) / 1000).toFixed(1);
