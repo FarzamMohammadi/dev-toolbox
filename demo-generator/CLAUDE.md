@@ -75,6 +75,13 @@ Once selected, place in `audio/` and proceed to Phase 2.
    - Suggested scene boundaries based on musical sections
    - Total duration
 
+5. **Recommend duration and sections**: Analyze the detected sections and suggest which portions of the track work best for common demo lengths. For example:
+   - "The intro + verse (0s–30s) give you a punchy 30s demo"
+   - "Intro through chorus (0s–62s) is a natural 60s arc with a strong climax"
+   - "The full intro→chorus→bridge (0s–95s) works for a 90s deep dive"
+
+   Highlight which sections have the most energy, the best build-ups, and natural ending points. Then ask the user to pick their target duration. This decision carries forward into Phase 3 (Intake) and Phase 4 (Scene Design).
+
 ### If No Music
 
 Create fixed beats. The scenes will use `createFixedBeats()` from `beat-sync.js`:
@@ -98,7 +105,7 @@ Ask the user for:
 3. **Target audience**: Developers? General public? Decision-makers?
 4. **Key messages**: What 3-5 things must the viewer take away?
 5. **Tone**: Professional, playful, dramatic, minimal, cyberpunk, elegant? The music mood from Phase 1 can inform this.
-6. **Duration target**: 30s, 60s, 90s? This should align with the music track duration from Phase 1.
+6. **Duration target**: Already chosen in Phase 2 after beat analysis. Confirm it still works given the content scope. Adjust if needed.
 
 ### Read and Extract
 
