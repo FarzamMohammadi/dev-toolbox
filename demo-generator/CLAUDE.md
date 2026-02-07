@@ -323,13 +323,26 @@ Use the automated recorder as the default. It renders each scene to a determinis
 ### Run
 
 ```bash
-npm run record                     # record all scenes
-npm run record -- --scene 01       # record a single scene
-npm run record -- --fps 30         # lower fps (faster, smaller files)
+npm run record                          # record all scenes (final quality)
+npm run record -- --fast                # all optimizations: JPEG, HW encoder, parallel
+npm run record -- --scene 01            # record a single scene
+npm run record -- --fps 30              # lower fps (faster, smaller files)
+npm run record -- --quality draft       # JPEG capture + fast encoder
+npm run record -- --parallel 4          # 4 scenes simultaneously
 npm run record -- --width 1920 --height 1080  # custom resolution
 ```
 
 Output MP4s land in `output/` alongside the HTML files (e.g. `output/01-hook.mp4`).
+
+### Performance Flags
+
+| Flag | Default | --fast | Effect |
+|------|---------|--------|--------|
+| `--quality` | `final` | `draft` | final = PNG + slow encoder, draft = JPEG + fast/HW encoder |
+| `--parallel` | `1` | `3` | Number of browser instances recording simultaneously |
+| `--fast` | off | - | Shortcut: sets draft quality + 3 parallel workers |
+
+On machines with Apple Silicon, `--fast` auto-detects and uses the `h264_videotoolbox` hardware encoder. The recorder also enables Metal rendering via `--use-angle=metal` on macOS automatically.
 
 ### How It Works
 

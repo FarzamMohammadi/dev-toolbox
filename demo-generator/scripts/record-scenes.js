@@ -9,14 +9,17 @@
  * 3. Capturing screenshots frame-by-frame and piping to ffmpeg
  *
  * Usage:
- *   npm run record                     # record all scenes
- *   npm run record -- --scene 01       # record a single scene
- *   npm run record -- --fps 30         # lower fps (faster, smaller)
+ *   npm run record                          # record all scenes (final quality)
+ *   npm run record -- --fast                # all optimizations: JPEG, HW encoder, parallel
+ *   npm run record -- --scene 01            # record a single scene
+ *   npm run record -- --fps 30              # lower fps
+ *   npm run record -- --quality draft       # JPEG capture + fast encoder
+ *   npm run record -- --parallel 4          # 4 scenes simultaneously
  *   npm run record -- --width 1920 --height 1080
  */
 
 import { launch } from "puppeteer";
-import { spawn } from "node:child_process";
+import { spawn, execSync } from "node:child_process";
 import { readdir, readFile } from "node:fs/promises";
 import { resolve, basename } from "node:path";
 
@@ -28,25 +31,54 @@ const args = process.argv.slice(2);
 
 function flag(name, fallback) {
   const idx = args.indexOf(`--${name}`);
-  return idx !== -1 && args[idx + 1] ? args[idx + 1] : fallback;
+  return idx !== -1 && args[idx + 1] && !args[idx + 1].startsWith("--")
+    ? args[idx + 1]
+    : fallback;
 }
 
+function hasFlag(name) {
+  return args.includes(`--${name}`);
+}
+
+const FAST = hasFlag("fast");
 const FPS = parseInt(flag("fps", "60"), 10);
 const WIDTH = parseInt(flag("width", "1920"), 10);
 const HEIGHT = parseInt(flag("height", "1080"), 10);
-const SCENE_FILTER = flag("scene", null); // e.g. "01" or "03-solution"
-const EXTRA_SECONDS = 0.5; // extra capture time after scene duration
+const SCENE_FILTER = flag("scene", null);
+const QUALITY = FAST ? "draft" : flag("quality", "final"); // draft | final
+const PARALLEL = parseInt(flag("parallel", FAST ? "3" : "1"), 10);
+const EXTRA_SECONDS = 0.5;
 const BASE_URL = "http://localhost:3000";
+
+// Derived config
+const USE_JPEG = QUALITY === "draft";
+
+// ---------------------------------------------------------------------------
+// Hardware detection
+// ---------------------------------------------------------------------------
+
+function detectHWEncoder() {
+  try {
+    const out = execSync("ffmpeg -hide_banner -encoders 2>/dev/null", { encoding: "utf-8" });
+    return out.includes("h264_videotoolbox");
+  } catch {
+    return false;
+  }
+}
+
+const HW_ENCODER_AVAILABLE = detectHWEncoder();
+const USE_HW_ENCODER = USE_JPEG && HW_ENCODER_AVAILABLE;
 
 // ---------------------------------------------------------------------------
 // Time-virtualization injection script (runs in page context BEFORE any JS)
 // ---------------------------------------------------------------------------
 
-const INJECTION_SCRIPT = /* js */ `
+function buildInjectionScript(fps) {
+  return /* js */ `
 (() => {
   // ---- Virtual clock state ----
   let virtualTime = 0;            // ms
-  let frameMs = ${(1000 / FPS).toFixed(6)};
+  let frameMs = ${(1000 / fps).toFixed(6)};
 
   // ---- rAF virtualization ----
   const rafQueue = [];            // current-frame callbacks
@@ -118,13 +150,8 @@ const INJECTION_SCRIPT = /* js */ `
   // Prevent Motion.dev from calling .play() and resuming real-time playback
   const _origPlay = Animation.prototype.play;
   Animation.prototype.play = function () {
-    // Check if this is a tracked (intercepted) animation
     const tracked = trackedAnimations.find(t => t.animation === this);
-    if (tracked) {
-      // No-op: we manage its time via currentTime
-      return;
-    }
-    // Untracked animations (e.g. CSS blink cursor) can play normally
+    if (tracked) return; // No-op: we manage its time via currentTime
     return _origPlay.call(this);
   };
 
@@ -147,7 +174,6 @@ const INJECTION_SCRIPT = /* js */ `
     }
 
     // 2. Fire due timers
-    // Sort by fireAt so we process in order
     const due = [];
     for (let i = timerQueue.length - 1; i >= 0; i--) {
       const t = timerQueue[i];
@@ -155,7 +181,6 @@ const INJECTION_SCRIPT = /* js */ `
       if (virtualTime >= t.fireAt) {
         due.push(t);
         if (t.interval > 0) {
-          // Reschedule interval
           t.fireAt += t.interval;
         } else {
           timerQueue.splice(i, 1);
@@ -179,7 +204,6 @@ const INJECTION_SCRIPT = /* js */ `
       try {
         animation.currentTime = localTime;
       } catch {
-        // Animation may have been cancelled/removed
         trackedAnimations.splice(i, 1);
       }
     }
@@ -188,6 +212,9 @@ const INJECTION_SCRIPT = /* js */ `
   window.__recording = { advanceFrame, getTime: () => virtualTime };
 })();
 `;
+}
+
+const INJECTION_SCRIPT = buildInjectionScript(FPS);
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -216,21 +243,28 @@ async function discoverScenes(outputDir) {
 
 async function extractDuration(filePath) {
   const html = await readFile(filePath, "utf-8");
-  // Match initScene({ ... duration: N ... })
   const match = html.match(/initScene\s*\(\s*\{[^}]*duration\s*:\s*(\d+(?:\.\d+)?)/s);
   return match ? parseFloat(match[1]) : 10;
 }
 
 function spawnFFmpeg(outputPath) {
+  const inputArgs = USE_JPEG
+    ? ["-f", "image2pipe", "-vcodec", "mjpeg"]
+    : ["-f", "image2pipe", "-vcodec", "png"];
+
+  const encoderArgs = USE_HW_ENCODER
+    ? ["-c:v", "h264_videotoolbox", "-q:v", "68", "-profile:v", "high"]
+    : QUALITY === "draft"
+      ? ["-c:v", "libx264", "-preset", "fast", "-crf", "18"]
+      : ["-c:v", "libx264", "-preset", "slow", "-crf", "18"];
+
   const ffmpegArgs = [
     "-y",
-    "-f", "image2pipe",
+    ...inputArgs,
     "-framerate", String(FPS),
     "-i", "pipe:0",
-    "-c:v", "libx264",
+    ...encoderArgs,
     "-pix_fmt", "yuv420p",
-    "-preset", "slow",
-    "-crf", "18",
     outputPath,
   ];
 
@@ -238,7 +272,6 @@ function spawnFFmpeg(outputPath) {
     stdio: ["pipe", "pipe", "pipe"],
   });
 
-  // Collect stderr for error reporting
   let stderr = "";
   proc.stderr.on("data", (chunk) => { stderr += chunk.toString(); });
 
@@ -251,11 +284,50 @@ function formatTime(seconds) {
   return m > 0 ? `${m}m ${s}s` : `${s}s`;
 }
 
+function buildLaunchArgs() {
+  const launchArgs = [
+    `--window-size=${WIDTH},${HEIGHT}`,
+    "--no-sandbox",
+    "--disable-setuid-sandbox",
+    "--force-device-scale-factor=1",
+  ];
+
+  // Use Metal rendering on macOS for GPU acceleration
+  if (process.platform === "darwin") {
+    launchArgs.push("--use-angle=metal", "--enable-gpu", "--use-gl=angle");
+  } else {
+    launchArgs.push("--disable-gpu-compositing");
+  }
+
+  return launchArgs;
+}
+
 // ---------------------------------------------------------------------------
-// Main recording loop
+// Frame capture
 // ---------------------------------------------------------------------------
 
-async function recordScene(browser, sceneFile, outputDir) {
+async function captureFrame(cdp) {
+  if (USE_JPEG) {
+    // CDP direct: faster, bypasses Puppeteer's screenshot queue
+    const { data } = await cdp.send("Page.captureScreenshot", {
+      format: "jpeg",
+      quality: 90,
+      optimizeForSpeed: true,
+    });
+    return Buffer.from(data, "base64");
+  }
+  // For final quality, CDP with PNG (no optimizeForSpeed for best quality)
+  const { data } = await cdp.send("Page.captureScreenshot", {
+    format: "png",
+  });
+  return Buffer.from(data, "base64");
+}
+
+// ---------------------------------------------------------------------------
+// Scene recording
+// ---------------------------------------------------------------------------
+
+async function recordScene(browser, sceneFile, outputDir, label) {
   const sceneName = basename(sceneFile, ".html");
   const filePath = resolve(outputDir, sceneFile);
   const outputPath = resolve(outputDir, `${sceneName}.mp4`);
@@ -264,10 +336,9 @@ async function recordScene(browser, sceneFile, outputDir) {
   const duration = await extractDuration(filePath);
   const totalFrames = Math.ceil((duration + EXTRA_SECONDS) * FPS);
 
-  console.log(`\n  Recording: ${sceneName}`);
-  console.log(`  Duration:  ${duration}s (+${EXTRA_SECONDS}s padding)`);
-  console.log(`  Frames:    ${totalFrames} @ ${FPS}fps`);
-  console.log(`  Output:    ${outputPath}`);
+  console.log(`\n  ${label}Recording: ${sceneName}`);
+  console.log(`  ${label}Duration:  ${duration}s (+${EXTRA_SECONDS}s padding)`);
+  console.log(`  ${label}Frames:    ${totalFrames} @ ${FPS}fps`);
 
   const page = await browser.newPage();
   await page.setViewport({ width: WIDTH, height: HEIGHT, deviceScaleFactor: 1 });
@@ -279,7 +350,6 @@ async function recordScene(browser, sceneFile, outputDir) {
   await page.goto(url, { waitUntil: "networkidle0", timeout: 30000 });
   await page.evaluate(() => document.fonts.ready);
 
-  // Give a moment for module imports to settle
   // Advance a few frames to let initial JS execute
   for (let i = 0; i < 3; i++) {
     await page.evaluate(() => window.__recording.advanceFrame());
@@ -287,13 +357,14 @@ async function recordScene(browser, sceneFile, outputDir) {
 
   // Hide HUD
   await page.keyboard.press("KeyH");
-  // One more frame to apply the HUD hide transition
   await page.evaluate(() => window.__recording.advanceFrame());
 
-  // Trigger play (Space key)
+  // Trigger play
   await page.keyboard.press("Space");
-  // Advance one frame so onPlay callbacks fire
   await page.evaluate(() => window.__recording.advanceFrame());
+
+  // Open CDP session for direct screenshot capture
+  const cdp = await page.createCDPSession();
 
   // Start ffmpeg
   const { proc: ffmpeg, stderr: getStderr } = spawnFFmpeg(outputPath);
@@ -309,41 +380,66 @@ async function recordScene(browser, sceneFile, outputDir) {
   // Frame capture loop
   const startTime = Date.now();
   for (let frame = 0; frame < totalFrames; frame++) {
-    // Advance virtual time
     await page.evaluate(() => window.__recording.advanceFrame());
 
-    // Capture screenshot as PNG buffer
-    const screenshot = await page.screenshot({ type: "png", omitBackground: false });
+    const screenshot = await captureFrame(cdp);
 
-    // Write to ffmpeg stdin
     const canWrite = ffmpeg.stdin.write(screenshot);
     if (!canWrite) {
       await new Promise((r) => ffmpeg.stdin.once("drain", r));
     }
 
-    // Progress indicator (every 60 frames = ~1 second of video)
     if ((frame + 1) % FPS === 0 || frame === totalFrames - 1) {
       const pct = Math.round(((frame + 1) / totalFrames) * 100);
       const elapsed = ((Date.now() - startTime) / 1000).toFixed(1);
-      process.stdout.write(`\r  Progress:  ${pct}% (${frame + 1}/${totalFrames} frames, ${elapsed}s elapsed)`);
+      process.stdout.write(`\r  ${label}Progress:  ${pct}% (${frame + 1}/${totalFrames} frames, ${elapsed}s elapsed)`);
     }
   }
 
-  // Close ffmpeg stdin and wait for encoding to finish
   ffmpeg.stdin.end();
   await ffmpegDone;
 
   const wallTime = ((Date.now() - startTime) / 1000).toFixed(1);
-  console.log(`\n  Done:      ${wallTime}s wall time → ${outputPath}`);
+  console.log(`\n  ${label}Done:      ${wallTime}s → ${sceneName}.mp4`);
 
+  await cdp.detach();
   await page.close();
   return { sceneName, outputPath, duration, wallTime: parseFloat(wallTime) };
 }
+
+// ---------------------------------------------------------------------------
+// Parallel recording helpers
+// ---------------------------------------------------------------------------
+
+function distributeScenes(scenes, numWorkers) {
+  const chunks = Array.from({ length: numWorkers }, () => []);
+  scenes.forEach((scene, i) => {
+    chunks[i % numWorkers].push(scene);
+  });
+  return chunks.filter((c) => c.length > 0);
+}
+
+async function recordChunk(browser, sceneFiles, outputDir, workerLabel) {
+  const results = [];
+  for (const sceneFile of sceneFiles) {
+    const result = await recordScene(browser, sceneFile, outputDir, workerLabel);
+    results.push(result);
+  }
+  return results;
+}
+
+// ---------------------------------------------------------------------------
+// Main
+// ---------------------------------------------------------------------------
 
 async function main() {
   console.log("Demo Generator — Automated Scene Recorder");
   console.log("==========================================");
   console.log(`  Resolution: ${WIDTH}x${HEIGHT} @ ${FPS}fps`);
+  console.log(`  Quality:    ${QUALITY}${FAST ? " (--fast)" : ""}`);
+  console.log(`  Capture:    ${USE_JPEG ? "JPEG q90 + optimizeForSpeed via CDP" : "PNG via CDP"}`);
+  console.log(`  Encoder:    ${USE_HW_ENCODER ? "h264_videotoolbox (hardware)" : QUALITY === "draft" ? "libx264 (fast preset)" : "libx264 (slow preset)"}`);
+  console.log(`  Parallel:   ${PARALLEL} browser instance${PARALLEL > 1 ? "s" : ""}`);
 
   // Check dev server
   const serverUp = await checkServer();
@@ -355,7 +451,6 @@ async function main() {
 
   // Check ffmpeg
   try {
-    const { execSync } = await import("node:child_process");
     execSync("ffmpeg -version", { stdio: "ignore" });
   } catch {
     console.error("\n  Error: ffmpeg not found in PATH");
@@ -376,38 +471,59 @@ async function main() {
   console.log(`  Scenes:    ${scenes.length} found`);
   scenes.forEach((s) => console.log(`             - ${s}`));
 
-  // Launch browser
-  const browser = await launch({
-    headless: true,
-    args: [
-      `--window-size=${WIDTH},${HEIGHT}`,
-      "--no-sandbox",
-      "--disable-setuid-sandbox",
-      "--disable-gpu-compositing",
-      "--force-device-scale-factor=1",
-    ],
-  });
+  const launchArgs = buildLaunchArgs();
+  const launchOpts = { headless: true, args: launchArgs };
 
-  const results = [];
-  try {
-    for (const sceneFile of scenes) {
-      const result = await recordScene(browser, sceneFile, outputDir);
-      results.push(result);
+  let results;
+
+  if (PARALLEL > 1 && scenes.length > 1) {
+    // Parallel: launch N browser instances, distribute scenes
+    const workerCount = Math.min(PARALLEL, scenes.length);
+    const chunks = distributeScenes(scenes, workerCount);
+
+    console.log(`\n  Launching ${workerCount} parallel workers...`);
+
+    const browsers = await Promise.all(
+      Array.from({ length: workerCount }, () => launch(launchOpts))
+    );
+
+    try {
+      const chunkResults = await Promise.all(
+        chunks.map((chunk, i) =>
+          recordChunk(browsers[i], chunk, outputDir, `[W${i + 1}] `)
+        )
+      );
+      results = chunkResults.flat();
+    } finally {
+      await Promise.all(browsers.map((b) => b.close()));
     }
-  } finally {
-    await browser.close();
+
+    // Sort results back into scene order
+    results.sort((a, b) => a.sceneName.localeCompare(b.sceneName));
+  } else {
+    // Sequential: single browser
+    const browser = await launch(launchOpts);
+    results = [];
+    try {
+      for (const sceneFile of scenes) {
+        const result = await recordScene(browser, sceneFile, outputDir, "");
+        results.push(result);
+      }
+    } finally {
+      await browser.close();
+    }
   }
 
   // Summary
   console.log("\n==========================================");
   console.log("Recording complete!\n");
   const totalDuration = results.reduce((s, r) => s + r.duration, 0);
-  const totalWall = results.reduce((s, r) => s + r.wallTime, 0);
+  const totalWall = Math.max(...results.map((r) => r.wallTime)); // parallel = max, not sum
   results.forEach((r) => {
     console.log(`  ${r.sceneName}.mp4  (${formatTime(r.duration)})`);
   });
   console.log(`\n  Total video:  ${formatTime(totalDuration)}`);
-  console.log(`  Total time:   ${formatTime(totalWall)}`);
+  console.log(`  Wall time:    ${formatTime(PARALLEL > 1 ? totalWall : results.reduce((s, r) => s + r.wallTime, 0))}`);
   console.log(`\n  Files are in: output/`);
 }
 

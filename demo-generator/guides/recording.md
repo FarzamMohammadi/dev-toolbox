@@ -12,9 +12,12 @@ The project includes a headless recorder that renders each scene to a determinis
 ### Usage
 
 ```bash
-npm run record                     # record all scenes
-npm run record -- --scene 01       # record a single scene
-npm run record -- --fps 30         # lower fps (faster, smaller files)
+npm run record                          # record all scenes (final quality)
+npm run record -- --fast                # all optimizations: JPEG, HW encoder, parallel
+npm run record -- --scene 01            # record a single scene
+npm run record -- --fps 30              # lower fps (faster, smaller files)
+npm run record -- --quality draft       # JPEG capture + fast encoder
+npm run record -- --parallel 4          # 4 scenes simultaneously
 npm run record -- --width 1920 --height 1080  # custom resolution (default)
 ```
 
@@ -25,12 +28,25 @@ Output MP4s land in `output/` alongside the HTML files (e.g. `output/01-hook.mp4
 2. Extracts each scene's duration from `initScene({ duration: N })`
 3. Launches headless Chromium, injects a virtual clock that overrides `performance.now`, `requestAnimationFrame`, `setTimeout`, `setInterval`, and `Element.prototype.animate` (WAAPI)
 4. Hides the HUD, presses play, then advances one virtual frame at a time
-5. Screenshots each frame as PNG and pipes to ffmpeg for H.264 encoding
+5. Screenshots each frame (PNG or JPEG depending on quality mode) via CDP and pipes to ffmpeg
 6. Outputs `output/NN-name.mp4` per scene
 
+### Performance
+
+| Flag | Default | `--fast` | Effect |
+|------|---------|----------|--------|
+| `--quality` | `final` | `draft` | final = lossless PNG + slow encoder, draft = JPEG + fast/HW encoder |
+| `--parallel` | `1` | `3` | Number of browser instances recording simultaneously |
+| `--fast` | off | - | Shortcut: sets draft quality + 3 parallel workers |
+
+On Apple Silicon Macs, `--fast` auto-detects and uses the `h264_videotoolbox` hardware encoder. Metal GPU rendering is enabled automatically on macOS.
+
+**Typical speedup with `--fast`**: ~5-6x faster (10+ minutes → ~2 minutes for 6 scenes).
+
 ### Tips
+- Use `--fast` for iteration, default for final output
 - If a single scene needs re-recording, use `--scene NN` instead of re-recording everything
-- Use `--fps 30` for faster iteration when checking timing; switch to 60 for final output
+- Use `--fps 30` for even faster iteration; switch to 60 for final output
 - The extra 0.5s of padding at the end captures any settling animations
 
 ---
