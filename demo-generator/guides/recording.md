@@ -94,3 +94,15 @@ If the automated recorder doesn't work for a particular scene (e.g. a scene uses
 | OBS Studio | All | Free | More control, can set exact resolution/fps |
 | ScreenFlow | macOS | $169 | Best quality, also a video editor |
 | Kap | macOS | Free | Lightweight, exports to GIF too |
+
+---
+
+## After Recording
+
+Once all scenes are recorded, assemble the final video:
+
+```bash
+npm run assemble
+```
+
+This concatenates all scene MP4s and overlays the music track from `audio/`. See `guides/assembly.md` for details and manual fallback options.

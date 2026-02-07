@@ -3,7 +3,29 @@
 ## Overview
 After recording each scene, assemble them into a final video with music.
 
-## Steps
+## Automated Assembly (Recommended)
+
+The fastest way to assemble the final video:
+
+```bash
+npm run assemble                        # concatenate scenes + add music
+npm run assemble -- --no-audio          # video only, no music
+npm run assemble -- --audio path/to.wav # specify audio file
+npm run assemble -- --output custom.mp4 # custom output filename
+```
+
+This automatically:
+- Discovers all scene MP4s in `output/` (sorted by filename)
+- Finds the audio file in `audio/`
+- Concatenates videos without re-encoding (fast)
+- Overlays music, trimmed to match total video length
+- Outputs to `output/final-demo.mp4`
+
+If you need more control (custom transitions, color grading, multi-track audio), use the manual process below.
+
+---
+
+## Manual Assembly (Fallback)
 
 ### 1. Import Everything
 - Open your video editor (ScreenFlow, DaVinci Resolve, iMovie)

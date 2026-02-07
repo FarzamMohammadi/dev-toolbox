@@ -8,7 +8,8 @@
     "check": "bash setup/check-dependencies.sh",
     "beats": "uv run python scripts/analyze-beats.py",
     "clean": "rm -f output/*.html output/*.md output/*.json output/*.mp4",
-    "record": "node scripts/record-scenes.js"
+    "record": "node scripts/record-scenes.js",
+    "assemble": "node scripts/assemble.js"
   },
   "devDependencies": {
     "puppeteer": "^24.0.0",
