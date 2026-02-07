@@ -207,9 +207,16 @@ function buildInjectionScript(fps) {
         trackedAnimations.splice(i, 1);
       }
     }
+
+    // Force browser to mark WAAPI effects as dirty for the next paint
+    document.body.getAnimations({ subtree: true });
   }
 
-  window.__recording = { advanceFrame, getTime: () => virtualTime };
+  window.__recording = {
+    advanceFrame,
+    getTime: () => virtualTime,
+    waitForRender: () => new Promise(resolve => _origRAF(resolve)),
+  };
 })();
 `;
 }
@@ -312,7 +319,6 @@ async function captureFrame(cdp) {
     const { data } = await cdp.send("Page.captureScreenshot", {
       format: "jpeg",
       quality: 90,
-      optimizeForSpeed: true,
     });
     return Buffer.from(data, "base64");
   }
@@ -354,14 +360,17 @@ async function recordScene(browser, sceneFile, outputDir, label) {
   for (let i = 0; i < 3; i++) {
     await page.evaluate(() => window.__recording.advanceFrame());
   }
+  await page.evaluate(() => window.__recording.waitForRender());
 
   // Hide HUD
   await page.keyboard.press("KeyH");
   await page.evaluate(() => window.__recording.advanceFrame());
+  await page.evaluate(() => window.__recording.waitForRender());
 
   // Trigger play
   await page.keyboard.press("Space");
   await page.evaluate(() => window.__recording.advanceFrame());
+  await page.evaluate(() => window.__recording.waitForRender());
 
   // Open CDP session for direct screenshot capture
   const cdp = await page.createCDPSession();
@@ -381,6 +390,7 @@ async function recordScene(browser, sceneFile, outputDir, label) {
   const startTime = Date.now();
   for (let frame = 0; frame < totalFrames; frame++) {
     await page.evaluate(() => window.__recording.advanceFrame());
+    await page.evaluate(() => window.__recording.waitForRender());
 
     const screenshot = await captureFrame(cdp);
 
@@ -437,7 +447,7 @@ async function main() {
   console.log("==========================================");
   console.log(`  Resolution: ${WIDTH}x${HEIGHT} @ ${FPS}fps`);
   console.log(`  Quality:    ${QUALITY}${FAST ? " (--fast)" : ""}`);
-  console.log(`  Capture:    ${USE_JPEG ? "JPEG q90 + optimizeForSpeed via CDP" : "PNG via CDP"}`);
+  console.log(`  Capture:    ${USE_JPEG ? "JPEG q90 via CDP" : "PNG via CDP"}`);
   console.log(`  Encoder:    ${USE_HW_ENCODER ? "h264_videotoolbox (hardware)" : QUALITY === "draft" ? "libx264 (fast preset)" : "libx264 (slow preset)"}`);
   console.log(`  Parallel:   ${PARALLEL} browser instance${PARALLEL > 1 ? "s" : ""}`);
 
