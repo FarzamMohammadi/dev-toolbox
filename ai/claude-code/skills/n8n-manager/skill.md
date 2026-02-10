@@ -20,15 +20,17 @@ source ~/.zshrc 2>/dev/null || source ~/.bashrc 2>/dev/null; echo "N8N_URL: ${N8
 **If variables are missing**, guide the user to add them to `~/.zshrc`:
 
 ```bash
+# Appends to ~/.zshrc
 printf '\nexport N8N_URL="https://n8n.example.com"\nexport N8N_API_KEY="your-api-key"\n' >> ~/.zshrc && source ~/.zshrc
 ```
 
 Do NOT ask users to paste credentials directly—the key should stay in their shell profile.
 
-## First-Time Setup
+## Data Storage
 
-Create data cache directory:
+API responses are saved to `.claude/skills/n8n-manager/data/` for reliable parsing (n8n responses are large and get truncated when piped).
 
+**First-time setup** (creates directory + gitignore):
 ```bash
 mkdir -p .claude/skills/n8n-manager/data && echo '*' > .claude/skills/n8n-manager/data/.gitignore
 ```
