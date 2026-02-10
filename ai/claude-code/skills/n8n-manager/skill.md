@@ -215,6 +215,15 @@ Check responses for error fields. Common issues:
 | 429 | Rate Limited | Wait and retry |
 | 500 | Server Error | Retry later, check n8n instance health |
 
+## API Reference
+
+The full OpenAPI spec is bundled at `openapi.json` in this skill directory. **Only read it** when:
+- The user needs an operation not covered above (credentials, variables, users, data tables, source control, projects)
+- You need exact query parameters, request body schemas, or response shapes
+- The user asks about an endpoint you're unsure of
+
+Do NOT load the spec for routine workflow/execution/tag operations—use the examples above instead.
+
 ## Output Guidelines
 
 1. **Be concise**: Show key fields, not raw JSON
