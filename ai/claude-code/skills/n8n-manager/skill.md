@@ -113,9 +113,34 @@ To inspect individual nodes, read the cached JSON file directly.
 
 ### Update Workflow
 
+**Be extremely surgical.** n8n workflows are complex JSON structures—modifying the wrong node, connection, or setting can silently break a workflow. Before editing:
+1. Identify the **exact** node(s) or field(s) that need to change
+2. Edit **only** those fields—do not reformat, reorder, or touch anything else
+3. Never regenerate the full workflow JSON from scratch; always modify the fetched copy in-place
+
 Push a modified workflow JSON back to n8n. The JSON file must contain the full workflow body (`name`, `nodes`, `connections`, `settings`).
 
-**Step 1: Update**
+**Step 0: Snapshot before editing**
+
+Before making any edits, save a copy of the original fetched workflow for later comparison:
+```bash
+cp .claude/skills/n8n-manager/data/workflow-WORKFLOW_ID.json \
+   .claude/skills/n8n-manager/data/workflow-WORKFLOW_ID-before.json
+```
+
+Then make your surgical edits to `workflow-WORKFLOW_ID.json`.
+
+**Step 1: Pre-push diff — confirm only intended changes**
+
+Before pushing, diff the original against your modified version to verify nothing unexpected changed:
+```bash
+diff <(jq --sort-keys . .claude/skills/n8n-manager/data/workflow-WORKFLOW_ID-before.json) \
+     <(jq --sort-keys . .claude/skills/n8n-manager/data/workflow-WORKFLOW_ID.json)
+```
+
+Review the diff carefully. If **any** unintended changes appear, fix them before proceeding. Do NOT push until the diff shows only the intended modifications.
+
+**Step 2: Push update**
 ```bash
 curl -s -X PUT \
   -H "X-N8N-API-KEY: $N8N_API_KEY" \
@@ -125,11 +150,20 @@ curl -s -X PUT \
   -o .claude/skills/n8n-manager/data/workflow-WORKFLOW_ID-updated.json
 ```
 
-**Step 2: Verify**
+**Step 3: Post-push verification — pull and compare**
+
+Re-fetch the workflow from n8n and diff against the pre-edit snapshot to confirm only intended changes landed:
 ```bash
-jq '{id: .id, name: .name, active: .active, updatedAt: .updatedAt}' \
-  .claude/skills/n8n-manager/data/workflow-WORKFLOW_ID-updated.json
+curl -s -H "X-N8N-API-KEY: $N8N_API_KEY" \
+  "$N8N_URL/api/v1/workflows/WORKFLOW_ID" \
+  -o .claude/skills/n8n-manager/data/workflow-WORKFLOW_ID-verify.json
 ```
+```bash
+diff <(jq --sort-keys 'del(.updatedAt, .versionId)' .claude/skills/n8n-manager/data/workflow-WORKFLOW_ID-before.json) \
+     <(jq --sort-keys 'del(.updatedAt, .versionId)' .claude/skills/n8n-manager/data/workflow-WORKFLOW_ID-verify.json)
+```
+
+Report the diff to the user. The only differences should be the fields you intentionally changed (plus server-managed fields like `updatedAt` and `versionId` which are excluded above). If unexpected changes appear, investigate immediately.
 
 If the workflow is published, the updated version is automatically re-published.
 
