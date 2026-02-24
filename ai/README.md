@@ -1,6 +1,6 @@
 # ai/
 
-Centralized AI tooling, prompts, and resources.
+Context-engineered AI assets for Claude-based workflows. Organized by type — drop in what you need.
 
 ---
 
@@ -8,40 +8,38 @@ Centralized AI tooling, prompts, and resources.
 
 ```
 ai/
-├── toolkits/           # Complex multi-file orchestrated systems
-│   └── writing/        # 10-layer writing pipeline (blogs, books, docs)
+├── toolkits/               # Multi-agent orchestrated systems
+│   ├── writing/            # Blog, book, and docs writing pipeline
+│   ├── research/           # Multi-agent research with source evaluation
+│   └── research-doc-refiner/  # Refine research output into polished docs
 │
-├── prompts/            # Standalone prompts (simple, single-purpose)
-│   └── leetcode-tutor/ # Algorithm tutoring prompt (v1-v4)
+├── personas/               # Reusable AI personas
+│   ├── roles/              # Identity personas (session-long)
+│   ├── tasks/              # Task personas (short-lived)
+│   └── philosophies.md     # Shared foundations all personas inherit from
 │
-├── agents/             # Standalone agents (not part of toolkits)
-│   └── context-relay-agent.md
+├── claude-code/            # Claude Code specific assets
+│   └── skills/             # Skills for extending Claude Code workflows
 │
-├── memory/             # Global persistent context
-│   ├── learnings.md    # Cross-session learnings
-│   ├── decisions.md    # Key decisions made
-│   └── session-history.md
+├── context-engineering/    # Versioned standalone prompts
+│   └── prompts/
+│       ├── leetcode-tutor/ # Algorithm tutoring (v1–v4)
+│       ├── plan-starter/   # Role-specific planning kickstarters
+│       └── rpi/            # Researcher / Planner / Implementer prompts
 │
-├── plans/              # Roadmaps, master plans
-│   ├── ultimate-directory-master-plan.md
-│   └── implementation-phases.md
-│
-└── handoffs/           # Session continuity
-    └── handoff-prompt.md
+└── workflow-optimization-plan/  # Internal planning docs and session memory
 ```
 
 ---
 
 ## What Goes Where
 
-| Folder | What It's For | Example |
+| Folder | What it's for | Example |
 |--------|---------------|---------|
-| `toolkits/` | Complex systems with multiple files, agents, templates | Writing toolkit (35+ files) |
-| `prompts/` | Simple standalone prompts | LeetCode tutor, interview prep |
-| `agents/` | Standalone agents not part of a toolkit | Context relay agent |
-| `memory/` | Persistent context across sessions | Learnings, decisions |
-| `plans/` | Documentation, roadmaps, master plans | Implementation phases |
-| `handoffs/` | Session continuity prompts | Handoff templates |
+| `toolkits/` | Complex systems with multiple agents, templates, and commands | Writing pipeline (10+ agents) |
+| `personas/` | Reusable Claude identity and task personas | Backend engineer role, PR reviewer task |
+| `claude-code/skills/` | Claude Code skills for specialized workflows | Commit, review-pr, wrap-session |
+| `context-engineering/` | Standalone versioned prompts | LeetCode tutor v1–v4 |
 
 ---
 
@@ -51,39 +49,25 @@ ai/
 
 | Toolkit | Purpose | Entry Point |
 |---------|---------|-------------|
-| [writing](toolkits/writing/) | Blog, book, docs creation | `toolkits/writing/readme.md` |
+| [writing](toolkits/writing/) | Blog, book, docs creation pipeline | `toolkits/writing/readme.md` |
+| [research](toolkits/research/) | Multi-agent research and synthesis | `toolkits/research/README.md` |
+| [research-doc-refiner](toolkits/research-doc-refiner/) | Refine research into polished documents | `toolkits/research-doc-refiner/README.md` |
+
+### Personas
+
+| Type | Contents |
+|------|---------|
+| [roles/](personas/roles/) | backend-engineer, frontend-engineer, technical-architect, designer, product-manager, devops-engineer, business-strategist |
+| [tasks/](personas/tasks/) | pr-reviewer, code-scrutinizer |
+
+### Skills
+
+See [`claude-code/skills/README.md`](claude-code/skills/README.md) for the full directory and deployment instructions.
 
 ### Prompts
 
 | Prompt | Purpose |
 |--------|---------|
-| [leetcode-tutor](prompts/leetcode-tutor/) | Algorithm problem tutoring |
-
----
-
-## Adding New Content
-
-### New Toolkit
-```
-ai/toolkits/[name]/
-├── readme.md           # How to use
-├── commands/           # Entry points
-├── agents/             # Specialized agents
-├── philosophy/         # Rules and mandates
-├── templates/          # Document templates
-├── skills/             # Reusable capabilities
-└── memory/             # Toolkit-specific memory
-```
-
-### New Prompt
-```
-ai/prompts/[name]/
-├── v1.md               # Version 1
-├── v2.md               # Version 2 (iterate)
-└── ...
-```
-
-### New Standalone Agent
-```
-ai/agents/[name]-agent.md
-```
+| [leetcode-tutor](context-engineering/prompts/leetcode-tutor/) | Algorithm problem tutoring (v1–v4) |
+| [plan-starter](context-engineering/prompts/plan-starter/) | Planning kickstarters for specific roles |
+| [rpi](context-engineering/prompts/rpi/) | Researcher / Planner / Implementer orchestration |
