@@ -1,110 +1,66 @@
 ---
 name: summarize
-description: Distill files, URLs, and videos into thorough summaries that preserve every valuable detail. Use when user wants to summarize, digest, or extract key points from any source.
+description: Distill files, URLs, and videos into thorough summaries that preserve every valuable detail while cutting fluff. Use when user wants to summarize, get a tl;dr, extract key takeaways, digest, break down, or understand the main points of any content — even if they just say "what does this say" or paste a link.
 allowed-tools: Read, Bash, WebFetch, WebSearch
 argument-hint: <file-path-or-url>
 ---
 
 # Summarize
 
-Distill content to its essence. Preserve every valuable detail. Eliminate only true fluff.
+Your job is to be a brilliant reader who distills content down to pure signal — keeping every insight, data point, and useful detail while stripping away only what adds no value. Someone reading your summary should walk away with the same understanding and ability to act as someone who read the original.
 
-**This is NOT "make it short." This is "extract all value, lose nothing important."**
-
----
-
-## Step 1: Detect Input Type
-
-Classify the argument:
-
-| Pattern | Type | Method |
-|---------|------|--------|
-| `youtube.com` or `youtu.be` URL | Video | WebFetch the page for transcript/description. If thin, WebSearch for `"[video title]" transcript` |
-| `http://` or `https://` URL | Web | WebFetch the URL. If content is thin (< 200 words), WebSearch for the page title to find a fuller source |
-| File path | Local file | Read the file. Use `file [path]` to detect binary vs text if extension is ambiguous |
-
-If no argument provided, ask the user what to summarize.
+This matters because people summarize things to make decisions, learn faster, and share knowledge. A summary that drops important details is worse than useless — it creates false confidence. A summary that's just shorter without being denser is a waste of time.
 
 ---
 
-## Step 2: Ingest Fully
+## Step 1: Get the Content
 
-Read the ENTIRE source. Do not skim. Do not sample.
+| Input | Method |
+|-------|--------|
+| `youtube.com` / `youtu.be` URL | WebFetch the page. If the transcript is thin, WebSearch for `"[video title]" transcript` |
+| Other URL | WebFetch. If content is under ~200 words (paywall, JS-heavy), WebSearch the page title for a fuller source |
+| File path | Read the file. For PDFs, use page ranges and process all pages |
+| No argument | Ask what to summarize |
 
-- **Long files:** Read all sections. Do not skip middle content.
-- **Web pages:** If paginated or truncated, fetch remaining pages.
-- **Videos:** Get the full transcript. Partial transcripts produce partial summaries.
-- **PDFs:** Use Read with page ranges. Process all pages.
-
-After ingestion, note:
-- Total length (word count or duration)
-- Structure (sections, chapters, segments)
-- Content type (tutorial, argument, narrative, reference, discussion, announcement)
+If a file has an ambiguous extension, run `file [path]` to check. If it's binary (image, compiled), say so and stop.
 
 ---
 
-## Step 3: Deep Comprehension
+## Step 2: Read Everything, Then Think
 
-Before writing anything, build a mental model:
+Read the full source — all of it. The middle sections of long content are where authors often put their most substantive points, and skimming misses them.
 
-1. **Central thesis or purpose** — What is this content fundamentally about?
-2. **Structural skeleton** — How is the argument or narrative organized?
-3. **Key claims and evidence** — What does the author assert and what supports it?
-4. **Relationships between ideas** — What depends on what? What contrasts with what?
-5. **Unique contributions** — What here is novel, surprising, or non-obvious?
+After reading, pause and build understanding before writing anything:
+- What is this fundamentally about? What's the author's core argument or purpose?
+- How is it structured? What depends on what?
+- What here is genuinely novel or surprising — not just restated conventional wisdom?
+- What specific evidence, data, or examples support the key claims?
 
----
-
-## Step 4: Extract All Value
-
-Systematically capture every category of value present:
-
-- **Core arguments and conclusions**
-- **Supporting evidence** — data, statistics, research citations
-- **Concrete examples** — specific cases, stories, demonstrations
-- **Techniques, methods, steps** — actionable how-to content
-- **Definitions and mental models** — new vocabulary or frameworks introduced
-- **Warnings, caveats, edge cases** — "watch out for X" content
-- **Quotes that carry meaning** — preserve phrasing when the exact words matter
-- **Code snippets** — preserve any code that demonstrates a concept
-- **Links and references** — notable external resources mentioned
+This comprehension step is what separates a good summary from a shallow one. The goal is to understand the content well enough that you could explain it to someone in conversation, not just parrot back the headings.
 
 ---
 
-## Step 5: Eliminate Only True Fluff
+## Step 3: Write the Summary
 
-Remove ONLY these:
-- Filler phrases ("basically," "you know," "so yeah")
-- Redundant re-explanations of the same point
-- Promotional/self-referential content ("subscribe," "like and share," "in my last post")
-- Padding transitions that add no meaning
-- Throat-clearing introductions ("In this article, we will discuss...")
+Compose the summary following the output format below. As you write, hold two principles in tension:
 
-**Do NOT cut:**
-- Context that aids understanding
-- Examples that illuminate abstract points
-- Nuances and qualifications
-- Author's reasoning process when it reveals how to think about the topic
-- Counterarguments or minority opinions presented
+**Cut aggressively:** Filler phrases, redundant re-explanations, promotional content ("subscribe!", "in my last post..."), padding transitions, throat-clearing intros. These add zero value.
 
----
+**Preserve generously:** This is the harder skill and what makes a great summary. Keep:
+- Context that makes other points comprehensible — removing it saves words but destroys meaning
+- Examples that illuminate abstract ideas — an example often teaches better than the principle it illustrates
+- Nuances, qualifications, and caveats — "X works except when Y" is a completely different insight than "X works"
+- The author's reasoning chain, not just conclusions — understanding *why* something is true is often more valuable than knowing *that* it's true
+- Counterarguments or tensions the author raises — these show intellectual honesty and help the reader think critically
+- All specific numbers, names, citations, code, and data points — these are the first casualties of lazy summarization and often the most useful parts
 
-## Step 6: Compose the Summary
-
-Use the output format below. Adapt section depth to content — a 500-word blog needs fewer sections than a 2-hour lecture.
+Adapt the depth to the source. A 500-word blog post might need just a core message and a few key points. A dense 10,000-word paper needs full section-by-section treatment. Match the weight of your summary to the weight of the content.
 
 ---
 
-## Step 7: Density Check
+## Step 4: Verify Completeness
 
-Before delivering, verify:
-
-- Could someone who reads ONLY this summary make the same decisions or take the same actions as someone who consumed the original?
-- Are all specific numbers, names, and data points preserved?
-- Are relationships between ideas clear (not just a flat list of points)?
-- Did any section of the original get zero representation? If so, was it truly pure fluff?
-
-If any check fails, go back and fill the gap.
+Before delivering, mentally walk through the original's structure. Did any section get zero representation? If so, was it genuinely pure fluff, or did you accidentally drop something? Could someone reading only your summary make the same decisions as someone who read the original?
 
 ---
 
@@ -115,61 +71,49 @@ If any check fails, go back and fill the gap.
 
 **Source:** [file path or URL]
 **Type:** [article / tutorial / video / documentation / paper / discussion]
-**Length:** [original word count or duration] -> [summary word count] ([X]% density)
+**Original length:** [word count or duration] | **Summary:** [word count]
 
 ---
 
 ### Core Message
 
-[2-4 sentences capturing the fundamental thesis, purpose, or takeaway. This is the "if you read nothing else" paragraph.]
+[2-4 sentences capturing the fundamental thesis or takeaway. If someone reads nothing else, this paragraph should give them the essential understanding.]
 
 ---
 
 ### Key Points
 
-[Organized by the source's own structure. Use subheadings that reflect the original's organization. Each point gets enough context to stand alone.]
+[Organized to reflect the source's own structure. Use subheadings when the source has clear sections. Each point should carry enough context to stand on its own — don't write orphan bullets that only make sense if you've read the original.]
 
-#### [Section/Topic 1]
+#### [Section/Topic]
 
-- [Key point with sufficient context]
-- [Supporting detail, data, or example]
+- [Key point with context]
+- [Supporting evidence or example]
 
-#### [Section/Topic 2]
-
-- [Key point]
-- [Key point]
-
-[Continue for all major sections]
+[Continue for all substantive sections]
 
 ---
 
 ### Specifics Worth Preserving
 
-[Numbers, quotes, code, references, and concrete details that would be lost in a generic summary. Omit this section if the source lacks such specifics.]
-
-- **[Category]:** [specific detail]
-- **[Category]:** [specific detail]
+[Concrete details — numbers, quotes, code snippets, references, formulas — that a generic summary would lose. Skip this section entirely if the source doesn't contain such specifics.]
 
 ---
 
 ### Actionable Takeaways
 
-[If the content suggests actions, decisions, or next steps. Omit for purely informational content.]
-
-1. [Specific action or decision point]
-2. [Specific action or decision point]
+[Only if the content implies actions or decisions. Skip for purely informational content.]
 ```
 
 ---
 
 ## Edge Cases
 
-| Situation | Handling |
+| Situation | Response |
 |-----------|----------|
-| Binary/unsupported file (image, compiled) | Report: "Cannot summarize binary file [path]. Supported: text, markdown, code, PDF." |
-| Empty file or 404 URL | Report: "Source is empty or unreachable. Verify the path/URL." |
-| Very short source (< 100 words) | Summarize anyway, note: "Source is brief ([N] words). Summary preserves full content." |
-| Very long source (> 10,000 words) | Proceed fully — thoroughness is the point. Use Step 3 comprehension to organize. |
-| Paywalled or login-required URL | Report what was accessible. Suggest: "Content appears paywalled. Provide the text directly or try a cached version." |
-| Non-English content | Summarize in the same language as the source, unless user requests otherwise. |
-| Code files | Focus on: purpose, architecture, key functions, algorithms, dependencies, notable patterns. |
+| Binary file (image, compiled) | "Cannot summarize binary file [path]. Supported: text, markdown, code, PDF." |
+| Empty file or 404 | "Source is empty or unreachable. Verify the path/URL." |
+| Very short (< 100 words) | Summarize anyway, note the brevity |
+| Paywalled / login-required | Report what's accessible, suggest providing the text directly |
+| Non-English | Summarize in the source language unless asked otherwise |
+| Code files | Focus on purpose, architecture, key functions, algorithms, notable patterns |
