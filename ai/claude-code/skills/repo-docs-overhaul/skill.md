@@ -17,11 +17,12 @@ This skill transforms a repo's documentation layer so that anyone in the world c
 
 ## Principles
 
-- **Specific over generic** — "Sorting algorithms in C++ (bubble, merge, quick)" not "Algorithm implementations"
+- **Never repeat what the reader already knows** — if the folder name or parent README says it, don't say it again. Every word must add new information
+- **No README is better than a redundant README** — section READMEs only exist when they add info the root doesn't
+- **Specific over generic** — "Sorting and searching in C++" not "Algorithm implementations"
 - **Tables for structured references** — not paragraphs listing items
 - **Adapt to the repo** — discover existing conventions, don't impose a template
 - **Ask when unsure** — use `AskUserQuestion` for grouping decisions, naming choices, structural ambiguity
-- **Concise is kind** — a 3-line README is better than no README; don't over-document thin sections
 
 ---
 
@@ -86,30 +87,27 @@ For each vague filename, determine the right name based on content:
 
 Use `git mv` to preserve history. Fix case mismatches in the same pass.
 
-### Step 5: Create Section READMEs
+### Step 5: Create Section READMEs (only where needed)
 
-Add a README.md to every top-level content directory that lacks one.
+**Most sections don't need a README.** The root README already describes each section. A section README should only exist when it adds information the root doesn't — naming conventions, file format explanations, organizational patterns unique to that section.
 
-**Template** (adapt to section size):
+**Anti-patterns — never do these:**
+- Restating what the folder name already says ("This section contains videos" in `videos/`)
+- Repeating what the root README already describes for that section
+- Listing individual files, articles, or implementations (unmaintainable, duplicates the filesystem)
+
+**When a section README IS warranted:**
 
 ```markdown
 # [Section Name]
 
-[One sentence: what this section contains and at what depth.]
-
-## Contents
-
-| [File/Directory] | [Description] |
-|-------------------|--------------|
-| [item](./path/) | [Specific description of what's inside] |
+[ONLY information not available from the folder name or root README — conventions, format explanations, organizational logic.]
 ```
 
-**Guidelines:**
-- One-liner must describe actual content, not category names
-- Table descriptions should be specific enough to skip clicking
-- Thin sections (1-2 files) get 3-5 lines total — don't pad
-- Match the repo's existing formatting conventions (heading style, link format)
-- If a section already has its own documentation system (like a CLAUDE.md), don't create a competing README
+Examples of genuinely new info that justifies a README:
+- "Files follow PascalCase per C++ convention" (algorithms)
+- "Each topic contains either full write-ups or `reading-list.md` files with links" (articles)
+- "Prompts are versioned as they evolve" (prompts)
 
 ### Step 6: Rewrite Root README
 
@@ -137,7 +135,8 @@ Replace the root README with a sharp, scannable entry point.
 
 **Rules:**
 - Hook line must mention concrete things (languages, topics, tools) — not abstract categories
-- Table descriptions: specific enough that a reader knows whether to click
+- Table descriptions: describe the *kind* of content and how it's grouped, not individual items
+- Do NOT list specific file names, article titles, or implementation names in the table — that's unmaintainable
 - No "Overview" section with generic bullet lists
 - No fluff sentences ("This repository contains..." → just describe what it contains)
 
