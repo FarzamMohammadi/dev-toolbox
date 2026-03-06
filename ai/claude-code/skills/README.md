@@ -17,6 +17,7 @@ Claude Code skills for extending agent capabilities with specialized workflows.
 | `modularize-document/` | Transform monolithic markdown into modular index + detail files |
 | `refactor-code/` | Review git diffs against refactoring principles |
 | `review-pr/` | Find bugs in branch changes — races, logic errors, security holes |
+| `summarize/` | Distill files, URLs, and videos into thorough value-preserving summaries |
 | `work-diary/` | Create work diary entries from session context |
 | `wrap-session/` | Capture session context and generate continuation prompt |
 
