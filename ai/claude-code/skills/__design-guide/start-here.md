@@ -59,7 +59,7 @@ Exact format:
 
 **Deploy command:**
 ```bash
-cp ai/skills/my-skill/skill.md .claude/skills/my-skill/SKILL.md
+cp ai/claude-code/skills/my-skill/skill.md .claude/skills/my-skill/SKILL.md
 ```
 
 ---
@@ -106,7 +106,7 @@ One skill = one job. If you're writing "and" in the description, consider splitt
 ## Directory Structure
 
 ```
-ai/skills/
+ai/claude-code/skills/
 ├── __design-guide/           # You are here
 │   ├── start-here.md         # This file
 │   ├── specification.md      # Technical spec

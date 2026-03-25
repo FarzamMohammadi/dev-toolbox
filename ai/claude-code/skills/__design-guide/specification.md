@@ -186,7 +186,7 @@ model: haiku                            # Override model selection
 ### Development Structure (this repo)
 
 ```
-ai/skills/
+ai/claude-code/skills/
 ├── __design-guide/         # Documentation
 ├── skill-name/
 │   ├── skill.md            # Main file (lowercase, our convention)

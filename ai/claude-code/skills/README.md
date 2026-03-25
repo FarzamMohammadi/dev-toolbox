@@ -8,6 +8,7 @@ Claude Code skills for extending agent capabilities with specialized workflows.
 |------|---------|
 | `__design-guide/` | Skill creation reference (start here for authoring) |
 | `commit/` | Git commit workflow with smart grouping |
+| `expert-panel-review/` | Run code through a panel of world-class engineering perspectives |
 | `finalize-changes/` | Holistic review of completed work to elevate quality |
 | `glab-mr-manager/` | GitLab MR lifecycle management |
 | `handoff/` | Session context handoff for continuity |
@@ -15,9 +16,12 @@ Claude Code skills for extending agent capabilities with specialized workflows.
 | `jira-ticket-manager/` | Jira ticket management via REST API |
 | `literary-editor/` | Transform drafts into polished English |
 | `modularize-document/` | Transform monolithic markdown into modular index + detail files |
+| `n8n-manager/` | Manage n8n workflows via REST API — list, fetch, update, activate, debug |
 | `refactor-code/` | Review git diffs against refactoring principles |
+| `repo-docs-overhaul/` | Overhaul repo documentation for clarity, navigability, and OSS-readiness |
 | `review-pr/` | Find bugs in branch changes — races, logic errors, security holes |
 | `summarize/` | Distill files, URLs, and videos into thorough value-preserving summaries |
+| `system-layer-extraction/` | Deep architectural investigation — extract and map every system in a codebase |
 | `work-diary/` | Create work diary entries from session context |
 | `wrap-session/` | Capture session context and generate continuation prompt |
 
