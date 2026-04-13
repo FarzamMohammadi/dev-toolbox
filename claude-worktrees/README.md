@@ -5,14 +5,11 @@ Find and resume Claude Code worktree sessions that don't show up in `claude --re
 ## Quick Start
 
 ```bash
-# Make executable
-chmod +x claude-worktrees.py
-
 # Browse all worktree sessions
-./claude-worktrees.py
+python3 claude-worktrees.py
 
 # Filter by repo or branch name
-./claude-worktrees.py the-engineer
+python3 claude-worktrees.py the-engineer
 ```
 
 ## Controls
