@@ -12,7 +12,7 @@ Standalone tools, each with its own README covering setup and usage.
 
 | Tool | What it does |
 |------|--------------|
-| [claude-worktrees](./claude-worktrees/README.md) | Find and resume Claude Code worktree sessions that don't show up in `--resume` |
+| [claude-sessions](./claude-sessions/README.md) | Browse and resume all Claude Code sessions with usage stats — including worktree sessions hidden from `--resume` |
 | [demo-generator](./demo-generator/README.md) | Build beat-synced animated web demos with Claude, then screen-record into polished demo videos |
 | [directory-tree-printer](./directory-tree-printer/README.md) | Print directory structure to terminal and file, respecting .gitignore |
 | [docker-cleanser](./docker-cleanser/README.md) | Nuke and reset Docker environment — containers, images, volumes, networks |
