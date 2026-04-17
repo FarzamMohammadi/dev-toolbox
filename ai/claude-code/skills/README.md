@@ -8,6 +8,7 @@ Claude Code skills for extending agent capabilities with specialized workflows.
 |------|---------|
 | `__design-guide/` | Skill creation reference (start here for authoring) |
 | `commit/` | Git commit workflow with smart grouping |
+| `excalidraw/` | Generate `.excalidraw` JSON diagrams from prompts (small architecture flows) |
 | `expert-panel-review/` | Run code through a panel of world-class engineering perspectives |
 | `finalize-changes/` | Holistic review of completed work to elevate quality |
 | `glab-mr-manager/` | GitLab MR lifecycle management |
