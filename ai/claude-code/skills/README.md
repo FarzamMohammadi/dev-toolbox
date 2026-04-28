@@ -8,6 +8,7 @@ Claude Code skills for extending agent capabilities with specialized workflows.
 |------|---------|
 | `__design-guide/` | Skill creation reference (start here for authoring) |
 | `commit/` | Git commit workflow with smart grouping |
+| `create-plan/` | Phased implementation planning with expert panel review |
 | `excalidraw/` | Generate `.excalidraw` JSON diagrams from prompts (small architecture flows) |
 | `expert-panel-review/` | Run code through a panel of world-class engineering perspectives |
 | `finalize-changes/` | Holistic review of completed work to elevate quality |
@@ -19,6 +20,9 @@ Claude Code skills for extending agent capabilities with specialized workflows.
 | `modularize-document/` | Transform monolithic markdown into modular index + detail files |
 | `n8n-manager/` | Manage n8n workflows via REST API — list, fetch, update, activate, debug |
 | `refactor-code/` | Review git diffs against refactoring principles |
+| `requirements-gathering/` | Structured requirements extraction through sequential questioning |
+| `research/` | Deep codebase and domain research with parallel sub-agents |
+| `review/` | Post-implementation verification — tests, lint, coverage, local testing prep |
 | `repo-docs-overhaul/` | Overhaul repo documentation for clarity, navigability, and OSS-readiness |
 | `review-pr/` | Find bugs in branch changes — races, logic errors, security holes |
 | `summarize/` | Distill files, URLs, and videos into thorough value-preserving summaries |
