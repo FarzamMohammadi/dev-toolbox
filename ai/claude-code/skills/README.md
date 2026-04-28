@@ -13,6 +13,7 @@ Claude Code skills for extending agent capabilities with specialized workflows.
 | `expert-panel-review/` | Run code through a panel of world-class engineering perspectives |
 | `finalize-changes/` | Holistic review of completed work to elevate quality |
 | `glab-mr-manager/` | GitLab MR lifecycle management |
+| `gws/` | Google Workspace operations — Gmail, Docs, Sheets, Drive via gws CLI |
 | `handoff/` | Session context handoff for continuity |
 | `improve-skill/` | Reflect on a skill's performance and iterate on improvements |
 | `jira-ticket-manager/` | Jira ticket management via REST API |
