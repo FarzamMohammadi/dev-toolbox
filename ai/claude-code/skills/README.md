@@ -2,15 +2,38 @@
 
 Claude Code skills for extending agent capabilities with specialized workflows.
 
-## Directory
+## RRPIR Workflow
+
+**Requirements → Research → Plan → Implement → Review**
+
+A structured development workflow that adds Requirements Gathering before and Review after the
+standard RPI cycle. Each phase has a dedicated skill, and together they form a complete pipeline
+from "what are we building?" to "is it ready to ship?"
+
+| Phase | Skill | Purpose |
+|-------|-------|---------|
+| **R** — Requirements | [`rrpir/requirements-gathering/`](rrpir/requirements-gathering/) | Extract intent, constraints, edge cases through sequential questioning |
+| **R** — Research | [`rrpir/research/`](rrpir/research/) | Investigate codebases with facts-before-opinions discipline |
+| **P** — Plan | [`rrpir/create-plan/`](rrpir/create-plan/) | Design decisions + tasks, stakes-calibrated, stress-tested by expert panel |
+| **I** — Implement | *(use Claude Code directly, then `/commit`)* | Execute the plan, commit with `/commit` |
+| **R** — Review | [`rrpir/review/`](rrpir/review/) | Automated checks, coverage analysis, bug verification, manual testing prep |
+
+**Supporting skills used within RRPIR:**
+
+| Skill | Used by | Purpose |
+|-------|---------|---------|
+| [`expert-panel-review/`](expert-panel-review/) | `/create-plan` | Multi-perspective critique from independent panelists |
+| [`review-pr/`](review-pr/) | `/review` | Bug hunting in branch diffs — races, logic errors, security holes |
+| [`commit/`](commit/) | Implement phase | Git commits with smart grouping and clear descriptions |
+
+Artifacts are stored in `.claude/temp/<skill_name>/` — project-local, grouped per skill,
+gitignore-friendly.
+
+## Other Skills
 
 | Path | Purpose |
 |------|---------|
-| `__design-guide/` | Skill creation reference (start here for authoring) |
-| `commit/` | Git commit workflow with smart grouping |
-| `create-plan/` | Phased implementation planning with expert panel review |
-| `excalidraw/` | Generate `.excalidraw` JSON diagrams from prompts (small architecture flows) |
-| `expert-panel-review/` | Run code through a panel of world-class engineering perspectives |
+| `excalidraw/` | Generate `.excalidraw` JSON diagrams from prompts |
 | `finalize-changes/` | Holistic review of completed work to elevate quality |
 | `glab-mr-manager/` | GitLab MR lifecycle management |
 | `gws/` | Google Workspace operations — Gmail, Docs, Sheets, Drive via gws CLI |
@@ -21,11 +44,7 @@ Claude Code skills for extending agent capabilities with specialized workflows.
 | `modularize-document/` | Transform monolithic markdown into modular index + detail files |
 | `n8n-manager/` | Manage n8n workflows via REST API — list, fetch, update, activate, debug |
 | `refactor-code/` | Review git diffs against refactoring principles |
-| `requirements-gathering/` | Structured requirements extraction through sequential questioning |
-| `research/` | Deep codebase and domain research with parallel sub-agents |
-| `review/` | Post-implementation verification — tests, lint, coverage, local testing prep |
 | `repo-docs-overhaul/` | Overhaul repo documentation for clarity, navigability, and OSS-readiness |
-| `review-pr/` | Find bugs in branch changes — races, logic errors, security holes |
 | `summarize/` | Distill files, URLs, and videos into thorough value-preserving summaries |
 | `system-layer-extraction/` | Deep architectural investigation — extract and map every system in a codebase |
 | `work-diary/` | Create work diary entries from session context |
