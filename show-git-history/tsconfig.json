@@ -1,0 +1,21 @@
+{
+	"compilerOptions": {
+		"target": "ES2022",
+		"module": "NodeNext",
+		"moduleDetection": "force",
+		"lib": ["ES2022"],
+		"verbatimModuleSyntax": true,
+		"rewriteRelativeImportExtensions": true,
+		"jsx": "react-jsx",
+		"jsxImportSource": "@opentui/react",
+		"strict": true,
+		"exactOptionalPropertyTypes": true,
+		"noUnusedLocals": true,
+		"noImplicitOverride": true,
+		"noFallthroughCasesInSwitch": true,
+		"noUncheckedIndexedAccess": true,
+		"skipLibCheck": true,
+		"types": ["bun-types"]
+	},
+	"include": ["src/**/*.ts", "src/**/*.tsx"]
+}

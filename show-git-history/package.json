@@ -1,0 +1,25 @@
+{
+  "name": "show-git-history",
+  "version": "0.1.0",
+  "type": "module",
+  "bin": {
+    "show-git-history": "bin/show-git-history.js"
+  },
+  "scripts": {
+    "dev": "bun --watch src/index.tsx",
+    "start": "bun run src/index.tsx",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@effect/atom-react": "4.0.0-beta.47",
+    "@opentui/core": "0.1.97",
+    "@opentui/react": "0.1.97",
+    "effect": "4.0.0-beta.47",
+    "react": "19.2.5"
+  },
+  "devDependencies": {
+    "@types/bun": "1.3.12",
+    "@types/react": "19.2.14",
+    "typescript": "6.0.2"
+  }
+}

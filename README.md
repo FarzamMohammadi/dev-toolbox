@@ -18,6 +18,7 @@ Standalone tools, each with its own README covering setup and usage.
 | [docker-cleanser](./docker-cleanser/README.md) | Nuke and reset Docker environment — containers, images, volumes, networks |
 | [repo-analyzer](./repo-analyzer/README.md) | Code statistics, git history analysis, dependency graphs, and LLM-generated architecture docs |
 | [repo-content-aggregator](./repo-content-aggregator/README.md) | Dump an entire repo into a single text file for LLM ingestion, respecting .gitignore |
+| [show-git-history](./show-git-history/README.md) | Terminal git history/diff viewer — browse branches, commits, file history, and diffs offline |
 | [tui-markdown-browser](./tui-markdown-browser/README.md) | Terminal markdown browser — keyboard navigation, live preview, mouse scroll |
 
 ---
