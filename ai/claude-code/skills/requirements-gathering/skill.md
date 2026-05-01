@@ -88,7 +88,13 @@ Cross-reference what you find with what the user said. If there's a mismatch, su
 Once you've gathered enough (the user will signal this, or you'll run out of meaningful questions),
 produce a structured requirements summary.
 
-Write it to a temp file: `/tmp/requirements-<ticket-or-name>.md`
+Ensure the output directory exists, then write:
+
+```bash
+mkdir -p .claude/temp/requirements-gathering
+```
+
+Write to: `.claude/temp/requirements-gathering/<ticket-or-name>.md`
 
 **Format:**
 
