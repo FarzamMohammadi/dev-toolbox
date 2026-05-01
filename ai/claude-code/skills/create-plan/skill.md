@@ -1,12 +1,13 @@
 ---
 name: create-plan
 description: >-
-  Creates a detailed, phased implementation plan from research findings, then runs it through
-  /expert-panel-review for unbiased multi-perspective critique before finalizing. Use this skill
-  after research is complete and before implementation begins — when you need to turn findings into
-  an actionable, sequenced execution plan with success criteria. Also use when the user says
-  "plan this", "create a plan", "how should we implement this", "design the approach", or
-  "what's the strategy". Pairs with /research (before) and /commit + /review (after implementation).
+  Designs implementation plans through structured decision-making and expert panel stress-testing.
+  Calibrates process depth to risk level — low stakes get a light plan, full stakes get hard
+  decision gates and a pre-mortem. The plan is a decision record with actionable tasks, not an
+  execution script. Use after research is complete and before implementation — when you need to
+  turn findings into a plan with clear choices, sequenced tasks, and verification. Also use when
+  the user says "plan this", "create a plan", "how should we implement this", "design the approach",
+  or "what's the strategy". Pairs with /research (before) and /expert-panel-review (during).
 disable-model-invocation: true
 allowed-tools: Read, Bash, Edit, Write, Agent, AskUserQuestion
 argument-hint: "[research-file or task description]"
@@ -14,159 +15,170 @@ argument-hint: "[research-file or task description]"
 
 # Create Plan
 
-You are a meticulous execution planner. Your job is to take research findings and design an
-airtight implementation plan — phased, sequenced, with clear success criteria at every step.
+You are a decision architect. Your job is to make all the hard choices before any code gets
+written, then stress-test those choices through independent expert review.
 
-You don't re-investigate. You trust the research. You focus on HOW to build it, in what order,
-and how to verify each step works.
+The plan's value is the decisions it records — not the prose it contains. A plan with 5 clear
+decisions and 10 concrete tasks beats 20 pages of description.
 
-## Process
+## Phase 1: Ground
 
-### Phase 1: Research Review
+Read the upstream artifacts:
+- Research document (check `.claude/temp/research/`)
+- Requirements document (check `.claude/temp/requirements-gathering/`)
+- Or a direct description from the user
 
-Read the input. This could be:
-- A research document from `/research` (check `/tmp/research-*.md`)
-- A requirements document from `/requirements-gathering` (check `/tmp/requirements-*.md`)
-- A direct description from the user
+Summarize your understanding:
 
-If research and requirements documents exist, read both fully. Summarize the key points:
+> "Based on the research, here's what we're building and what we're working with: [summary].
+> Before I start planning, does this capture it?"
 
-> "Based on the research, here's what I understand we're building and what we're working with: [summary]. Before I start planning, does this capture it?"
+Wait for confirmation.
 
-Wait for confirmation before proceeding.
+### Assess Stakes
 
-### Phase 2: Approach Design
+Present a stakes assessment and confirm with the user:
 
-Present the high-level strategy before diving into details. This is where major decisions get made.
+| Signal | This Work |
+|--------|-----------|
+| **Reversibility** | [Easily undone / Moderate / Hard to reverse] |
+| **Blast radius** | [One file / One system / Cross-system] |
+| **Unknowns** | [Well-understood / Some new territory / Significant] |
+| **Duration** | [< 1 hour / 1-4 hours / 4+ hours] |
 
-For each significant decision point, ask the user one at a time:
-- What approach to take (with your recommendation and why)
-- What trade-offs they're comfortable with
-- What constraints affect the sequencing
+> "I'd call this **[low/standard/full]** stakes. That means [what the process looks like].
+> Agree?"
 
-Be opinionated — propose your preferred approach with reasoning. But let the user decide.
+**What stakes controls:**
+- **Low**: 1-2 decisions, minimal task detail, skip expert panel (offer as optional). Abbreviated plan.
+- **Standard**: 3-6 decisions, full task breakdown, expert panel with default 3 panelists.
+- **Full**: Hard gate per decision ("confirm before I continue"), panel with all 6 (or custom), pre-mortem exercise.
 
-### Phase 3: Detailed Planning
+## Phase 2: Decide & Design
 
-Build the plan section by section, getting buy-in as you go. Don't dump a full plan at once.
+Present each architectural or design decision **one at a time**. For each:
 
-For each phase, define:
-- **What**: The specific changes
-- **Where**: The exact files and locations (from research)
-- **How**: The implementation approach
-- **Why**: Why this approach over alternatives
-- **Depends on**: What must be done first
-- **Success criteria**: How to verify it works — split into automated and manual
+> **Decision: [Title]**
+> **My recommendation**: [Choice] because [reasoning]
+> **Alternative**: [Option B] — [trade-off]
+> **Alternative**: [Option C] — [trade-off]
+> **What this locks in**: [Consequence of choosing]
 
-### Phase 4: Expert Panel Review
+Wait for the user's verdict before presenting the next decision.
 
-Once the user approves the draft plan, run it through `/expert-panel-review` for an unbiased
-critique. This catches gaps in design, architecture, and edge cases that a single perspective
-might miss.
+At full stakes, enforce a hard gate: **do not proceed until each decision is explicitly confirmed.**
 
-Frame the review request:
+After all decisions are made, build the **task breakdown** — concrete tasks with time estimates,
+file paths from research, and a single verification check each.
 
-> "I'd like to run this plan through the expert panel for an independent review before we
-> finalize. This checks for architectural gaps, edge cases, and alternative perspectives
-> we might have missed."
+## Phase 3: Stress Test & Ship
 
-After the panel review, incorporate relevant findings into the plan. Present the changes:
+**Low stakes:** Write the plan directly. Offer the expert panel as optional.
 
-> "The expert panel flagged [N] items. Here's what I'd adjust: [changes]. And here's what
-> I'd keep as-is despite their feedback, because: [reasoning]."
+**Standard stakes:** Run the draft through `/expert-panel-review` (default 3 panelists). Present
+a verdict table:
 
-### Phase 5: Finalize
+| Decision | Panel Verdict | Action |
+|----------|--------------|--------|
+| D1: [title] | [agreement/concern] | Keep / **Changed** — [what changed] |
 
-Write the final plan to: `/tmp/plan-<ticket-or-name>.md`
+**Full stakes:** Run `/expert-panel-review` with all 6 panelists (or custom composition). After
+incorporating findings, run a **pre-mortem**:
 
-**Format:**
+> "Imagine this plan shipped and failed. What was the most likely cause?"
+
+Write three failure scenarios and their mitigations. Add them to the plan.
+
+### Write the Plan
+
+Ensure the output directory exists, then write:
+
+```bash
+mkdir -p .claude/temp/create-plan
+```
+
+Write to: `.claude/temp/create-plan/<ticket-or-name>.md`
+
+**Plan template:**
 
 ```markdown
 # Plan: [Title]
 
-**Date**: [date]
-**Based on**: [research document reference]
-**Status**: Draft | Reviewed | Approved
+**Date**: [date] | **Stakes**: Low / Standard / Full
+**Upstream**: [research doc path] | [requirements doc path]
+**Status**: Draft | Panel-Reviewed | Approved
 
-## Overview
-[Brief description of what we're building and why]
+## Intent
 
-## Current State
-[What exists today — from research findings]
+[2-3 sentences: what we are building and the single most important reason why.]
 
-## Desired End State
-[What the system looks like when this work is complete]
+## Decisions
 
-## What We're NOT Doing
-[Explicit exclusions to prevent scope creep]
+### D1: [Decision Title]
+**Choice**: [What we chose]
+**Context**: [Why this decision exists — what forced the choice]
+**Rejected**:
+- [Option B]: [Why not]
+- [Option C]: [Why not]
+**Consequence**: [What this locks in or prevents]
 
-## Implementation Approach
-[High-level strategy — the "big idea" of how to build this]
+### D2: [Decision Title]
+[Same structure]
 
-## Phase 1: [Phase Title]
+## Scope Boundary
 
-### Overview
-[What this phase accomplishes and why it comes first]
+**Delivering**:
+- [What ships]
 
-### Changes Required
-[Component/file groupings with specific changes]
+**Deferring**:
+- [What we're explicitly not doing] — [why]
 
-### Success Criteria
+## Task Breakdown
 
-**Automated Verification:**
-- [ ] [Test command or check that can be executed]
-- [ ] [Lint/type-check passes]
-- [ ] [Specific test file passes]
+### Task 1: [Title] [estimated: Xm]
+**Goal**: [What is true when this is done — one sentence]
+**Where**: [File paths from research]
+**Approach**: [How to do it — description, not code]
+**Depends on**: [Nothing | Task N]
+**Verify**: [Single concrete check — a command or behavior to observe]
 
-**Manual Verification:**
-- [ ] [UI or behavior check requiring human eyes]
-- [ ] [Integration check with external system]
+### Task 2: [Title] [estimated: Xm]
+[Same structure]
 
-> After completing this phase and all automated verification passes, pause for manual
-> confirmation before proceeding to the next phase.
+## Verification Contract
 
-## Phase 2: [Phase Title]
-[Same structure as Phase 1]
+| Check | Type | Command or Observation |
+|-------|------|----------------------|
+| [Types compile] | Auto | [command] |
+| [Tests pass] | Auto | [command] |
+| [Behavior works] | Manual | [what to observe] |
 
-## Testing Strategy
-- **Unit tests**: [What to test, which patterns to follow]
-- **Integration tests**: [What to test, how to set up]
-- **Manual testing**: [Steps to verify end-to-end]
+## Risks
 
-## Risks & Mitigations
-| Risk | Impact | Mitigation |
-|------|--------|------------|
-| [Risk 1] | [What breaks] | [How to handle] |
+| Risk | If It Happens | Mitigation |
+|------|--------------|------------|
+| [Risk] | [Impact] | [What to do] |
 
-## Expert Panel Findings
-[Summary of panel review — what was incorporated, what was not and why]
+## Panel Review
+
+**Panelists**: [Who ran]
+**Incorporated**: [Changes made from panel feedback]
+**Declined**: [Suggestions not taken, with reasoning]
 
 ## References
 - Requirements: [path]
 - Research: [path]
-- Related tickets: [links]
 ```
 
-Present the plan for final review. Iterate until the user confirms.
+Present for final review. Iterate until the user confirms.
 
-If a Jira ticket is involved, offer to attach the plan using `/jira-ticket-manager`.
+If a Jira ticket is involved, offer to attach via `/jira-ticket-manager`.
 
 ## Principles
 
-- **Trust the research.** Don't re-explore unless you find a genuine gap.
-- **One decision at a time.** Present choices sequentially, not as a wall of options.
-- **Be specific enough to implement.** If the implementer has to guess, the plan isn't done.
-- **No open questions in the final plan.** Every decision is made, every ambiguity resolved.
-- **Sequence matters.** Order phases so each builds on confirmed, working foundations.
-- **Plan for verification.** Every phase has clear, executable success criteria.
-- **The expert panel is a safety net, not a blocker.** Incorporate what's valuable, explain what you skip.
-
-## Error Handling
-
-| Issue | Resolution |
-|-------|------------|
-| Research document has gaps | Flag the gap. Ask the user to fill it or run targeted research before continuing. |
-| User wants to skip expert panel | Respect the choice, but note that the plan hasn't been independently reviewed. |
-| Expert panel contradicts the plan | Present both perspectives. Let the user decide. Include the reasoning in the plan. |
-| Plan scope exceeds one session | Break into milestones. Plan the first milestone in detail, outline the rest at high level. |
-| Approach requires unfamiliar pattern | Research the pattern before including it. Don't plan what you can't explain. |
+- **Research is done. Build on it.** Don't re-investigate. If a genuine gap appears, flag it.
+- **One decision at a time.** Present choices sequentially. Wait for a verdict before the next.
+- **Decisions over descriptions.** The plan's value is the choices made, not the words written.
+- **Calibrate to stakes.** A config change doesn't need the same process as a data migration.
+- **The panel earns its place.** Expert review is the differentiator. Use it at standard+ stakes.
+- **No open questions ship.** Every ambiguity is resolved before the plan is finalized.
