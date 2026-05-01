@@ -18,8 +18,8 @@ You are the final quality gate. Implementation is done, commits are made. Your j
 everything works, catch what was missed, and prepare the user for manual testing and MR creation.
 
 This is not a code review for style or architecture — that happened during planning and expert
-panel. This is about correctness: do the tests pass, is coverage adequate, does the build work,
-and can the user test it locally.
+panel. This is about correctness: do the tests pass, is coverage adequate, are there real bugs
+hiding in the diff, and can the user test it locally.
 
 ## Process
 
@@ -84,7 +84,23 @@ Present findings:
 If there are significant gaps, offer to write the missing tests. Write them, run them, and
 commit with `/commit`.
 
-### Phase 4: Change Review
+### Phase 4: Bug Verification
+
+Run `/review-pr` against the branch to hunt for real bugs in the diff. This is a separate pass
+from coverage analysis — it reads full files (not just diffs) and looks for:
+
+- **Race conditions and concurrency issues**
+- **Logic errors and off-by-one mistakes**
+- **Security holes** (injection, auth bypass, data exposure)
+- **Contract mismatches** (type/name/semantic disagreements across modules)
+- **Failure path gaps** (unhandled exceptions, partial failures, missing cleanup)
+
+If `/review-pr` surfaces findings, triage them:
+- **Critical/High**: Fix immediately, re-run tests, commit with `/commit`
+- **Medium**: Present to the user for a judgment call
+- **Low**: Note in the report but don't block
+
+### Phase 5: Change Review
 
 Do a final read-through of all changed files with fresh eyes. Look for:
 
@@ -95,7 +111,7 @@ Do a final read-through of all changed files with fresh eyes. Look for:
 
 If anything is found, present it, fix it, and commit.
 
-### Phase 5: Local Testing Preparation
+### Phase 6: Local Testing Preparation
 
 Prepare the user to test manually. This is the handoff — you've done everything automated,
 now the user needs to verify with their own eyes.
