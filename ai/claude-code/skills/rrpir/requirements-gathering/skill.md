@@ -51,7 +51,46 @@ Summarize back to the user what you understand so far in 2-3 sentences. Then ask
 
 > "Is this a fair summary, or am I missing something?"
 
-### Phase 2: Intent Extraction
+### Phase 2: Codebase Grounding
+
+Before you ask a single question, read the code. Tickets, descriptions, and conversations are
+written by humans, and humans make mistakes, forget details, and work from stale mental models.
+The code is self-documenting. The codebase is the blueprint. It is the single most reliable source
+of truth for what exists today, how it works, and what constraints are real.
+
+Read everything you can: source code, tests, docs, configs, schemas, types, enums, constants,
+error messages, comments, READMEs. Tests are especially valuable because they encode expected
+behavior explicitly. Docs capture intent. Types and schemas reveal data shapes the ticket may
+not mention. More is always better than less here.
+
+Spawn an Explore agent if the codebase is large. Read the files that this work touches or extends.
+
+Look for:
+- Existing patterns, data structures, enums, and options that the ticket may not mention
+- Related code that will be affected or that this work must be compatible with
+- Edge cases visible in the code but absent from the ticket
+- Anything that contradicts, extends, or adds nuance to the ticket's description
+- Test cases that reveal behaviors and scenarios nobody documented
+- Configuration and feature flags that change runtime behavior
+
+Cross-reference what you find with what the ticket says. When the code reveals options, behaviors,
+or constraints the ticket doesn't mention, those become questions you MUST ask. The code is the
+source of truth for what exists today. The user is the source of truth for what should exist tomorrow.
+
+> "The ticket says X, but looking at the code I see Y. Which is the current truth?"
+
+> "The code has options A, B, C, and D. The ticket only mentions A and B. Should we support C and D too, or explicitly exclude them?"
+
+Do NOT move to questioning until you've grounded yourself in the codebase. Skipping this step is
+how you end up asking surface-level questions from the ticket and missing what the code would have
+told you.
+
+Note: the research phase will go deeper into implementation patterns and architecture. Don't hold
+back here out of fear of duplicating research. Requirements grounding focuses on what exists and
+what's ambiguous. Research focuses on how to build. Some overlap is expected and welcome. Catching
+something twice is far better than catching it zero times.
+
+### Phase 3: Intent Extraction
 
 The literal request is rarely the full picture. Dig into the **why**.
 
@@ -117,21 +156,6 @@ When this happens:
 If the feature involves an AI agent interacting with users, the conversation quality is not a
 polish step — it's a core requirement. Probe for: What should the agent say at each step? How
 much detail in confirmations? What feedback does the user need to feel confident? What tone?
-
-### Phase 3: Codebase Grounding
-
-If this task involves an existing codebase, explore it to validate and enrich what the user told you.
-Spawn an Explore agent if the codebase is large.
-
-Look for:
-- Existing patterns that this work should follow
-- Related code that will be affected
-- Test patterns already in place
-- Configuration or infrastructure implications
-
-Cross-reference what you find with what the user said. If there's a mismatch, surface it:
-
-> "You mentioned X, but looking at the code I see Y. Which is the current truth?"
 
 ### Phase 4: Requirements Document
 
