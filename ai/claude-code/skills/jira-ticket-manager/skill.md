@@ -26,11 +26,11 @@ Do NOT ask users to paste credentials directly—the token should stay in their 
 
 ## Data Storage
 
-API responses are saved to `.claude/skills/jira-ticket-manager/tickets/` for reliable parsing (Jira responses are 30KB+ and get truncated when piped).
+API responses are saved to `.claude/temp/jira-ticket-manager/` for reliable parsing (Jira responses are 30KB+ and get truncated when piped).
 
-**First-time setup** (creates directory + gitignore):
+**First-time setup:**
 ```bash
-mkdir -p .claude/skills/jira-ticket-manager/tickets && echo '*' > .claude/skills/jira-ticket-manager/tickets/.gitignore
+mkdir -p .claude/temp/jira-ticket-manager
 ```
 
 **Files stored:**
@@ -38,7 +38,7 @@ mkdir -p .claude/skills/jira-ticket-manager/tickets && echo '*' > .claude/skills
 - `search-latest.json` - Most recent search results
 - `my-tickets.json` - Current user's tickets
 
-Users can delete the `tickets/` folder anytime to clear cached data.
+Users can delete the folder anytime to clear cached data.
 
 ## Command Pattern
 
@@ -56,7 +56,7 @@ All examples below omit this prefix for brevity—**always include it**.
 
 **Step 1: Fetch and save**
 ```bash
-curl -s -u "$JIRA_USER:$JIRA_TOKEN" "$JIRA_URL/rest/api/2/issue/PROJ-123" -o .claude/skills/jira-ticket-manager/tickets/PROJ-123.json
+curl -s -u "$JIRA_USER:$JIRA_TOKEN" "$JIRA_URL/rest/api/2/issue/PROJ-123" -o .claude/temp/jira-ticket-manager/PROJ-123.json
 ```
 
 **Step 2: Parse**
@@ -74,7 +74,7 @@ jq '{
   description: .fields.description,
   parent_key: .fields.parent.key,
   parent_summary: .fields.parent.fields.summary
-}' .claude/skills/jira-ticket-manager/tickets/PROJ-123.json
+}' .claude/temp/jira-ticket-manager/PROJ-123.json
 ```
 
 **Output format:**
@@ -97,12 +97,12 @@ curl -s -u "$JIRA_USER:$JIRA_TOKEN" -G \
   --data-urlencode 'jql=project = PROJ AND status = Open' \
   --data-urlencode 'maxResults=20' \
   --data-urlencode 'fields=key,summary,status,assignee,priority' \
-  "$JIRA_URL/rest/api/2/search" -o .claude/skills/jira-ticket-manager/tickets/search-latest.json
+  "$JIRA_URL/rest/api/2/search" -o .claude/temp/jira-ticket-manager/search-latest.json
 ```
 
 **Step 2: Parse**
 ```bash
-jq '.issues[] | {key: .key, summary: .fields.summary, status: .fields.status.name, assignee: .fields.assignee.displayName, priority: .fields.priority.name}' .claude/skills/jira-ticket-manager/tickets/search-latest.json
+jq '.issues[] | {key: .key, summary: .fields.summary, status: .fields.status.name, assignee: .fields.assignee.displayName, priority: .fields.priority.name}' .claude/temp/jira-ticket-manager/search-latest.json
 ```
 
 Output as a table for user.
@@ -115,12 +115,12 @@ curl -s -u "$JIRA_USER:$JIRA_TOKEN" -G \
   --data-urlencode 'jql=assignee = currentUser() AND status != Done ORDER BY updated DESC' \
   --data-urlencode 'maxResults=20' \
   --data-urlencode 'fields=key,summary,status,priority,updated' \
-  "$JIRA_URL/rest/api/2/search" -o .claude/skills/jira-ticket-manager/tickets/my-tickets.json
+  "$JIRA_URL/rest/api/2/search" -o .claude/temp/jira-ticket-manager/my-tickets.json
 ```
 
 **Step 2: Parse**
 ```bash
-jq '.issues[] | {key: .key, summary: .fields.summary, status: .fields.status.name, priority: .fields.priority.name, updated: .fields.updated[0:10]}' .claude/skills/jira-ticket-manager/tickets/my-tickets.json
+jq '.issues[] | {key: .key, summary: .fields.summary, status: .fields.status.name, priority: .fields.priority.name, updated: .fields.updated[0:10]}' .claude/temp/jira-ticket-manager/my-tickets.json
 ```
 
 ### Create Ticket
