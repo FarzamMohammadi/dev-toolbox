@@ -117,10 +117,10 @@ when the answer space is wide.
 - Suggest an answer when you have a reasonable hypothesis — "I'd guess X based on Y, is that right?"
 
 **Probe what seems decided but might not be:**
-- Scope boundaries that are mentioned but not specified ("supports leave types" — which ones?)
-- Granularity assumptions ("time off" — full days only? half days? hourly?)
-- Edge cases hiding behind simple requirements ("submit a request" — what if it overlaps? what if balance goes negative?)
-- Interface contracts between systems ("delegates to the tool" — what does the tool return? what errors are possible?)
+- Scope boundaries that are mentioned but not specified ("supports multiple types" — which ones exactly?)
+- Granularity assumptions ("handles requests" — what units? what precision? what range?)
+- Edge cases hiding behind simple requirements ("creates a record" — what if it conflicts? what if a limit is exceeded?)
+- Interface contracts between systems ("calls the service" — what does it return? what errors are possible?)
 
 **When to stop asking:**
 - You've covered every category in "What to extract" above

@@ -28,8 +28,14 @@ Read the input:
 - A direct research question from the user
 - A ticket reference — use `/jira-ticket-manager` to fetch it if needed
 
-If a requirements document exists, read it fully. Your research should answer the questions it
-raises and validate the assumptions it makes.
+**Read upstream artifacts FIRST, before doing anything else.** If a requirements document exists,
+read it fully and absorb it before you investigate or spawn any agents. The requirements document
+contains scope decisions, constraints, edge cases, and open questions that directly shape what
+you should be looking for. Research without requirements context produces generic findings instead
+of targeted answers.
+
+Your research should answer the questions the requirements raise and validate the assumptions
+they make.
 
 Confirm scope with an opinionated investigation plan:
 
@@ -40,8 +46,11 @@ Wait for confirmation before investigating.
 ## Investigation
 
 Explore the codebase. Spawn Explore agents for independent areas — each with a single focused
-question, not a broad mandate. Use WebSearch/WebFetch when you need to verify external APIs,
-libraries, or patterns.
+question, not a broad mandate. **Include relevant context from upstream artifacts in each agent's
+prompt** — scope decisions, constraints, what's in/out, key requirements. Agents without context
+produce shallow, generic findings. Agents with context produce targeted, useful answers.
+
+Use WebSearch/WebFetch when you need to verify external APIs, libraries, or patterns.
 
 Record facts as you find them. What exists, how it works, what connects to what. **No conclusions
 yet.** If you catch yourself writing "this means we should..." — stop. That belongs in synthesis.
