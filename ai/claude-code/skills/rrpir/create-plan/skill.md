@@ -1,88 +1,70 @@
 ---
 name: create-plan
 description: >-
-  Designs implementation plans through structured decision-making and expert panel stress-testing.
-  Calibrates process depth to risk level — low stakes get a light plan, full stakes get hard
-  decision gates and a pre-mortem. The plan is a decision record with actionable tasks, not an
-  execution script. Use after research is complete and before implementation — when you need to
-  turn findings into a plan with clear choices, sequenced tasks, and verification. Also use when
-  the user says "plan this", "create a plan", "how should we implement this", "design the approach",
-  or "what's the strategy". Pairs with /research (before) and /expert-panel-review (during).
+  Synthesizes requirements and research into robust implementation plans through structured
+  decision-making and expert panel stress-testing. Calibrates process depth to risk level — low
+  stakes get a light plan, full stakes get hard decision gates and a pre-mortem. The plan is a
+  decision record with actionable tasks, not an execution script. Use when you need to turn
+  accumulated findings into a plan with clear choices, sequenced tasks, and verification. Also
+  use when the user says "plan this", "create a plan", "how should we implement this", "design
+  the approach", or "what's the strategy".
 allowed-tools: Read, Bash, Edit, Write, Agent, AskUserQuestion
 argument-hint: "[research-file or task description]"
 ---
 
 # Create Plan
 
-You are a decision architect. Your job is to make all the hard choices before any code gets
-written, then stress-test those choices through independent expert review.
+You own the plan. Requirements gathered intent. Research mapped the codebase. Now you synthesize
+everything into a plan that produces the highest quality, most robust implementation possible.
 
-The plan's value is the decisions it records — not the prose it contains. A plan with 5 clear
-decisions and 10 concrete tasks beats 20 pages of description.
+Take full ownership. Previous phases did their best, but they may have missed things. You are
+the last line of defense before code gets written. Be diligent. Be meticulous. Cover gaps that
+earlier phases might have overlooked. The plan's value is the decisions it records and the
+confidence it creates — not the prose it contains.
 
-## Phase 1: Ground
+## Phase 1: Absorb
 
-Read the upstream artifacts:
-- Research document (check `.claude/temp/research/`)
+Read ALL upstream artifacts fully before designing anything:
 - Requirements document (check `.claude/temp/requirements-gathering/`)
-- Or a direct description from the user
+- Research document (check `.claude/temp/research/`)
+- Any other referenced files, tickets, or context
 
-Summarize your understanding:
+Absorb everything. Cross-reference requirements against research findings. Look for:
+- Requirements that research findings complicate or contradict
+- Research findings that requirements didn't account for (especially cross-cutting concerns)
+- Gaps that neither phase caught — things you can see now with both documents side by side
+- Edge cases, error paths, and failure modes that need explicit handling in the plan
 
-> "Based on the research, here's what we're building and what we're working with: [summary].
-> Before I start planning, does this capture it?"
+Surface anything you find. This is your diligence step.
 
-Wait for confirmation.
+## Phase 2: Design
 
-### Assess Stakes
+Synthesize all accumulated context into a complete plan draft. Design for robustness, quality,
+and correctness — not just the happy path. Consider error handling, edge cases, testing coverage,
+maintainability, and the cross-cutting concerns from research.
 
-Present a stakes assessment and confirm with the user:
-
-| Signal | This Work |
-|--------|-----------|
-| **Reversibility** | [Easily undone / Moderate / Hard to reverse] |
-| **Blast radius** | [One file / One system / Cross-system] |
-| **Unknowns** | [Well-understood / Some new territory / Significant] |
-| **Duration** | [< 1 hour / 1-4 hours / 4+ hours] |
-
-> "I'd call this **[low/standard/full]** stakes. That means [what the process looks like].
-> Agree?"
-
-**What stakes controls:**
-- **Low**: 1-2 decisions, minimal task detail, skip expert panel (offer as optional). Abbreviated plan.
-- **Standard**: 3-6 decisions, full task breakdown, expert panel with default 3 panelists.
-- **Full**: Hard gate per decision ("confirm before I continue"), panel with all 6 (or custom), pre-mortem exercise.
-
-## Phase 2: Decide & Design
-
-Present each architectural or design decision **one at a time**. For each:
+Present the full draft to the user. Walk through the key decisions with your reasoning:
 
 > **Decision: [Title]**
-> **My recommendation**: [Choice] because [reasoning]
+> **My recommendation**: [Choice] because [reasoning from research]
 > **Alternative**: [Option B] — [trade-off]
-> **Alternative**: [Option C] — [trade-off]
 > **What this locks in**: [Consequence of choosing]
 
-Wait for the user's verdict before presenting the next decision.
+Iterate with the user until aligned on all decisions. If genuine ambiguities remain that upstream
+phases didn't resolve, surface them — but don't re-ask what's already been answered.
 
-At full stakes, enforce a hard gate: **do not proceed until each decision is explicitly confirmed.**
+## Phase 3: Stress Test
 
-After all decisions are made, build the **task breakdown** — concrete tasks with time estimates,
-file paths from research, and a single verification check each.
+Run the plan through `/expert-panel-review`. This is not optional — the panel is what catches
+blind spots that a single perspective misses.
 
-## Phase 3: Stress Test & Ship
-
-**Low stakes:** Write the plan directly. Offer the expert panel as optional.
-
-**Standard stakes:** Run the draft through `/expert-panel-review` (default 3 panelists). Present
-a verdict table:
+Incorporate panel findings. Present what changed and what was declined (with reasoning):
 
 | Decision | Panel Verdict | Action |
 |----------|--------------|--------|
 | D1: [title] | [agreement/concern] | Keep / **Changed** — [what changed] |
 
-**Full stakes:** Run `/expert-panel-review` with all 6 panelists (or custom composition). After
-incorporating findings, run a **pre-mortem**:
+For high-stakes work, run a **pre-mortem** after the panel:
 
 > "Imagine this plan shipped and failed. What was the most likely cause?"
 
@@ -140,9 +122,13 @@ Write to: `.claude/temp/create-plan/<ticket-or-name>.md`
 **Approach**: [How to do it — description, not code]
 **Depends on**: [Nothing | Task N]
 **Verify**: [Single concrete check — a command or behavior to observe]
+**Commit**: [Use `/commit` after verification passes]
 
 ### Task 2: [Title] [estimated: Xm]
 [Same structure]
+
+Use `/commit` after each task or logical group of tasks passes verification. Each commit should
+capture a coherent, working increment — not a big bang at the end.
 
 ## Verification Contract
 
@@ -175,9 +161,10 @@ If a Jira ticket is involved, offer to attach via `/jira-ticket-manager`.
 
 ## Principles
 
-- **Research is done. Build on it.** Don't re-investigate. If a genuine gap appears, flag it.
-- **One decision at a time.** Present choices sequentially. Wait for a verdict before the next.
+- **Own it completely.** Previous phases did their best. You do yours. Cross-reference, challenge,
+  and fill gaps as if you're the last person who will look before implementation starts.
+- **Design for robustness.** The plan should produce the highest quality outcome. Consider error
+  handling, edge cases, testing coverage, and maintainability — not just the happy path.
 - **Decisions over descriptions.** The plan's value is the choices made, not the words written.
-- **Calibrate to stakes.** A config change doesn't need the same process as a data migration.
-- **The panel earns its place.** Expert review is the differentiator. Use it at standard+ stakes.
+- **The panel is mandatory.** Expert review catches what a single perspective misses. Always run it.
 - **No open questions ship.** Every ambiguity is resolved before the plan is finalized.
