@@ -1,7 +1,6 @@
 ---
 name: improve-skill
 description: Reflect on a skill's performance and iterate on improvements. Use after running any skill to identify gaps and refine it.
-disable-model-invocation: true
 argument-hint: [skill-name]
 allowed-tools: Read, Write, Edit, AskUserQuestion
 ---

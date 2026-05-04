@@ -8,7 +8,6 @@ description: >-
   turn findings into a plan with clear choices, sequenced tasks, and verification. Also use when
   the user says "plan this", "create a plan", "how should we implement this", "design the approach",
   or "what's the strategy". Pairs with /research (before) and /expert-panel-review (during).
-disable-model-invocation: true
 allowed-tools: Read, Bash, Edit, Write, Agent, AskUserQuestion
 argument-hint: "[research-file or task description]"
 ---

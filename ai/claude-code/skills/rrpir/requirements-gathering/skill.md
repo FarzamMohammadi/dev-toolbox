@@ -8,7 +8,6 @@ description: >-
   been fully scoped yet. Also use when the user says "let's start", "new task", "I need to build",
   "requirements", "scope this", or "grill me" — even if they jump straight to implementation,
   redirect to requirements first.
-disable-model-invocation: true
 allowed-tools: Read, Bash, Edit, Write, AskUserQuestion, Agent
 argument-hint: "[ticket-id or task description]"
 ---

@@ -1,7 +1,6 @@
 ---
 name: wrap-session
 description: Wrap up a session by capturing context, decisions, and state into project-native documentation, then generate a continuation prompt for the next chat. Use when ending a session, switching context, or preparing a handoff.
-disable-model-invocation: true
 allowed-tools: Read, Write, Edit, Bash, Grep, Glob
 argument-hint: [optional focus or notes]
 ---

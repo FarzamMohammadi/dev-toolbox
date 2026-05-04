@@ -7,7 +7,6 @@ description: >-
   existing code, patterns, dependencies, and constraints. Also use when the user says "research
   this", "explore the codebase", "investigate", "what does this code do", or "understand the
   system".
-disable-model-invocation: true
 allowed-tools: Read, Bash, Edit, Write, Agent, WebSearch, WebFetch
 argument-hint: "[requirements-file or research question]"
 ---

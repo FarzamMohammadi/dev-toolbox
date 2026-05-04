@@ -7,7 +7,6 @@ description: >-
   implementation and commits are done — as the final quality gate before creating an MR. Also use
   when the user says "review this", "check my work", "run the checks", "verify everything",
   "is this ready", or "final review". Pairs with /commit (before) and /glab-mr-manager (after).
-disable-model-invocation: true
 allowed-tools: Read, Bash, Edit, Write, Agent
 argument-hint: "[branch-name or 'current']"
 ---

@@ -1,7 +1,6 @@
 ---
 name: handoff
 description: Prepare context handoff for next chat session
-disable-model-invocation: true
 argument-hint: [optional notes]
 allowed-tools: Read, Write, Edit, Bash
 ---
