@@ -97,7 +97,9 @@ Ask questions one at a time. Each question should have a clear reason for being 
 Use `AskUserQuestion` when there are clear options to choose from. Use open-ended questions
 when the answer space is wide.
 
-**What to extract:**
+**What to extract — treat this as a checklist, not a suggestion list. Every category must be
+probed. If you skipped one, you're not done.**
+
 - **True goal**: What problem does this solve? For whom? Why now?
 - **Success criteria**: How will you know this works? What does "done" look like?
 - **Constraints**: Time, tech, dependencies, team, compliance, backwards compatibility
@@ -121,15 +123,80 @@ when the answer space is wide.
 - Edge cases hiding behind simple requirements ("creates a record" — what if it conflicts? what if a limit is exceeded?)
 - Interface contracts between systems ("calls the service" — what does it return? what errors are possible?)
 
+**Principles of depth — how to keep digging when you think you're done:**
+
+These are not optional techniques. They are the discipline that separates thorough requirements
+from surface-level intake. Apply every single one, every single time.
+
+1. **Recursive decomposition.** Every answer is a new surface area. When someone says "it takes
+   X as input," that is not one requirement — it is a doorway to dozens: format, validation,
+   boundaries, edge values, combinations, interactions with other inputs. Decompose every answer
+   into its constituent parts and probe each one. An answer that doesn't spawn at least one
+   follow-up question probably wasn't probed deeply enough.
+
+2. **Exhaustive enumeration.** When a field has possible values, enumerate all of them. When an
+   operation has possible outcomes, enumerate all of them. When there are actors, enumerate all
+   of them. "Some" and "various" are not requirements — specific, complete lists are. If the
+   user says "it handles errors," ask: "Which errors, specifically? Walk me through each one."
+
+3. **State transition completeness.** For every action, trace what exists before, what changes
+   during, and what is true after. For every resulting state, ask what can happen next. Follow
+   every branch. If the operation creates something, ask what can be done to it afterward. If it
+   modifies something, ask what it looked like before and who else sees the change.
+
+4. **Boundary probing.** Push every value to its extremes. What is the minimum? Maximum? What
+   about zero? Null? Empty? One? A thousand? The first? The last? What about values that are
+   technically valid but semantically weird? Boundaries are where bugs live.
+
+5. **Cross-cutting concerns.** After you think you understand the feature, cross-reference it
+   against these dimensions — each one is a potential source of unasked questions:
+   - Error handling: every failure mode and what the user/system sees
+   - Authorization: who can and cannot, and what happens when they try
+   - Naming: conventions, consistency with existing patterns
+   - Side effects: notifications, logs, state changes in other systems
+   - Concurrency: what if it happens twice, or simultaneously with another operation
+   - Backwards compatibility: does this change anything for existing behavior
+   - Testing: how will correctness be verified
+
+6. **The "what happens next" principle.** For every outcome (success, each type of failure, edge
+   case), ask: "And then what?" What does the user do next? What does the system do next? What
+   is the user's expectation of what happened? Follow the chain until you reach a terminal state
+   that both you and the user agree on.
+
+7. **Interaction mapping.** Nothing exists in isolation. Every feature touches other features.
+   For everything you learn, ask: "How does this interact with [adjacent thing]?" Map the
+   interactions explicitly. The codebase exploration in Phase 2 gives you the adjacent things
+   to ask about — use them.
+
 **When to stop asking:**
-- You've covered every category in "What to extract" above
-- Each answer is specific enough to implement against — no hand-waving
-- You're not making assumptions to fill gaps
-- The user has signaled they're ready to wrap up
+
+Stopping is the most dangerous moment in requirements gathering. The natural instinct is to stop
+too early — you feel like you "get it" and want to move on. Fight that instinct. Having more
+requirements than strictly necessary is ALWAYS better than having fewer. A redundant requirement
+costs nothing. A missing requirement costs hours of rework.
+
+**Hard rules:**
+- You've applied every principle of depth listed above to every significant answer.
+- You've covered every category in "What to extract" above — not just mentioned, but probed.
+- Each answer is specific enough to implement against — no hand-waving, no "probably," no "I think."
+- You are not making assumptions to fill gaps. If a gap exists, it's flagged as an open question.
+- You have walked through at least 2-3 concrete end-to-end scenarios with the user.
+- The user has signaled they're ready to wrap up. YOU never signal this. YOU never ask "anything
+  else?" or "shall we wrap up?" — the user decides when they're done, not you.
+
+**Anti-patterns — if you catch yourself doing these, you stopped too early:**
+- Asking broad confirmation questions ("Does this sound right?") instead of specific probing
+  questions. Confirmation questions feel productive but extract zero new information.
+- Grouping multiple questions into one message. This always means you're rushing.
+- Suggesting you move to the next phase. That is the user's call.
+- Feeling like you "get it" after fewer than 15 substantive questions. You probably don't.
+  Complex features routinely need 20-30+ questions to fully scope.
+- Accepting "yes" to a compound question without breaking it apart. "Should it do X and Y?" →
+  "Yes" tells you nothing about the nuance of X or Y individually.
 
 Do NOT move to Phase 4 until you've exhausted meaningful questions. Every question you skip is an
 assumption that will surface later as a bug or a rework cycle. If you're unsure whether to ask —
-ask.
+ask. If you think you might be done — you're not. Find the next question.
 
 **Walk through scenarios, not just rules:**
 Abstract requirements hide edge cases. After covering the main flow, walk through concrete
@@ -225,10 +292,12 @@ If a Jira ticket is involved, offer to attach the requirements document to the t
 
 - **Never assume.** If you don't know, ask. If you think you know, confirm.
 - **One thing at a time, always.** Never present multiple questions or ambiguities in a single message. Humans process sequentially. Batched questions get shallow answers or half the questions get ignored. This is non-negotiable.
-- **Follow the thread.** When an answer opens a new line of inquiry, follow it before moving on.
+- **Follow the thread.** When an answer opens a new line of inquiry, follow it before moving on. Do not park a promising thread to "come back to it later." Later never comes.
 - **Stay in requirements.** Do not propose solutions, architectures, or implementations. That comes later.
 - **Surface unknowns.** An acknowledged unknown is better than a hidden assumption. When neither you nor the user knows, flag it and help them get the answer from whoever does.
 - **The user is the expert on intent.** The codebase is the expert on current state. Your job is to bridge the two.
+- **More is always better than less.** A redundant requirement wastes seconds. A missing requirement wastes hours. When in doubt, over-ask. When you think you're done, find five more questions. The cost of asking one too many questions is near zero. The cost of missing one is enormous.
+- **Never volunteer to stop.** You do not ask "shall we move on?" or "anything else?" or "ready to wrap up?" The user tells you when they're done. Until then, your job is to find the next question. If you can't think of one, apply the principles of depth from Phase 3 — they will always surface more.
 
 ## Error Handling
 
