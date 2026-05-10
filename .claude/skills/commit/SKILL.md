@@ -67,6 +67,7 @@ Write one sentence that:
 - `fix bug` (too vague)
 - `Updated the thing` (past tense, vague)
 - `Add feature, fix bug, update docs` (multiple things - split it)
+- `Add auth system — OAuth2 + JWT + session management` (details after dash belong in description, not title)
 
 ---
 
@@ -76,6 +77,7 @@ Write bullet points (or other clear format) that:
 - Go one level deeper than the title
 - Provide enough detail that reader fully understands WITHOUT looking at files
 - Stay concise - not overly verbose or exhaustive
+- Scale detail to change size. A mechanical 3-file rename needs 2 bullets. Save the full narrative for complex changes.
 - Complement the title, don't repeat it
 
 **Example:**
@@ -87,6 +89,17 @@ Add 8-step autonomous session protocol with cross-references
 - Create continuation-prompt-template.md for consistent session prompts
 - Update CHANGELOG with Phase 3 entries
 ```
+
+---
+
+## Step 3.5: Verify
+
+Before staging and committing, confirm:
+- Type checker passes on changed files
+- Linter passes on changed files (check the project's linter config if unsure what rules apply)
+- Tests pass
+
+Fix issues first. A commit that triggers a hook failure or needs a follow-up "fix lint" commit is not a clean commit.
 
 ---
 
@@ -116,5 +129,6 @@ If multiple commits, repeat for each in the planned sequence.
 ## Rules
 
 - **Never add Co-Authored-By** or other attribution lines - only the user is credited
+- **Never use `--no-verify`** - hooks exist to catch errors before CI does
 - **Never ask questions** - analyze and commit
 - **Match project style** - check recent commits for conventions
