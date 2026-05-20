@@ -1,6 +1,6 @@
 ---
 name: work-diary
-description: Create a work diary entry from session context. Use when user wants to document work, learnings, or decisions from a session.
+description: Write a work diary entry. Use when the user wants to document work, learnings, reflections, or decisions — any time they say "diary", "entry", "document this", or "write this up."
 argument-hint: [diary-path] [context sources] (e.g., "@../work-diary commits 8b8bf6b..2dfe130", "@../work-diary @thoughts/shared/")
 allowed-tools: Read, Write, Edit, Bash, AskUserQuestion
 context: fork
@@ -8,16 +8,17 @@ context: fork
 
 # Work Diary
 
-Create portable diary entries that capture your growth as an engineer—intentions, decisions, tools, and learnings—without proprietary or company-specific details.
+Write diary entries that capture the user's engineering life — what they built, why it mattered, what they learned, and how they felt about it. This is a personal archive: resume-ready raw material, a record to look back on in 5 years, and a defense against forgetting the cool things they did.
 
-## Core Principle: Signal Over Noise
+## Core Principles
 
-Your job is to **distill**, not document. Every line must earn its place.
+**Story over spec.** Write like you're telling a friend what happened — the problem, the journey, the decisions, the outcome. Not a technical report. Not a changelog.
 
-- **"So what?" test**: Every line should answer "why does this matter?"
-- **Outcomes over process**: "Improved X from A to B" not "First did X, then Y, then Z"
-- **Consolidate related work**: 3 commits toward one goal → 1 outcome statement
-- **Skip internal corrections**: If you added then removed something, just show the final state
+**Preserve the journey.** The debugging path, the wrong turns, the "aha" moment — that's what makes entries worth reading. Don't collapse the messy middle into a clean outcome statement.
+
+**Personal and honest.** This is a diary. Include the human side — what was frustrating, exciting, satisfying, or embarrassing. A diary entry that reads like a PR description has failed.
+
+**Every line earns its place.** Detail is good when it's story and insight. Detail is noise when it's function signatures, file paths, error code constants, or Prisma enum names. If a reader needs the codebase open to understand a line, cut it.
 
 ## Setup
 
@@ -31,102 +32,112 @@ mkdir -p "${YEAR}" && [ -f "${YEAR}/${MONTH}.md" ] || printf "# %s %s\n\n" "$(da
 
 ## Step 1: Gather Context
 
-Read context sources specified by user:
-- Current conversation (tickets, specs, research, implementation)
-- Files or paths they point to
-- Any context they provide directly
+Read everything the user points you at — conversation history, commits, files, whatever they provide. Read all sources before writing. For large contexts, consider launching parallel Explore agents.
 
-**For multiple sources** (tickets, commits, research docs):
-- Read all sources before writing—don't start the entry mid-research
-- Group by theme or outcome, not by ticket number (related work → one thematic entry)
-- For large contexts, consider launching parallel Explore agents to gather efficiently
+**Accept any input.** Current session context, commit ranges, files to read, verbal explanation. No single expected format.
 
-**Use AskUserQuestion when:**
-- Context sources are ambiguous or incomplete
-- Unsure what the main intention or goal was
-- Need clarification on which decisions were most significant
-- Want to capture something the user hasn't mentioned
+**Group by theme**, not by ticket or commit. If 5 commits serve one goal, that's one entry, not five.
 
-## Voice & Attribution
+## Step 2: Interview
 
-**Critical rule: Never speak for the user.**
+**Always ask questions before writing.** Every entry gets a short interview — even when context seems complete. Two purposes:
 
-- Only include content that exists in the provided context (documents, commits, conversation)
-- Never invent reflections, opinions, feelings, or personal statements
-- If it wasn't documented or explicitly stated by the user, don't include it
-- Omit sections entirely rather than filling them with invented content
+### Fill gaps in the technical story
+- What were you trying to accomplish and why?
+- What was the hardest part?
+- What surprised you?
+- Any key decisions that aren't obvious from the code?
 
-| Do This | Not This |
-|---------|----------|
-| "Improved defense rate from 80.2% to 99.6%" (factual, from docs) | "Strong onboarding experience" (invented feeling) |
-| "Open question documented: how to keep test suite current" (if in source) | "Open question: ..." (invented by Claude) |
-| Skip the Reflections section if nothing documented | Add reflections Claude thinks the user might have |
+### Draw out the personal side
+- How do you feel about this one?
+- What are you proud of? What frustrated you?
+- Anything you'd do differently?
+- Any moment that stands out — a breakthrough, a painful mistake, a turning point?
 
-**When in doubt**: Use AskUserQuestion to ask "Any reflections you want to capture?" rather than inventing them.
+**Keep it light.** 3-5 questions, not an interrogation. If the user waves off a question ("not much to say"), move on. The personal section is optional in the final entry — but the question should always be asked.
 
-## Step 2: Extract Portable Insights
+### Surface insights for confirmation
+When you see patterns, connections, or lessons in the context that the user hasn't mentioned, propose them:
+> "I noticed X pattern across these changes — is that a learning worth capturing, or am I reading into it?"
 
-Strip proprietary details. Keep what makes you a better engineer.
+Never silently include proposed insights. Always confirm before writing them in.
 
-| Keep (Transferable) | Omit (Company-Specific) |
-|---------------------|-------------------------|
-| Why you made decisions | Proprietary business logic |
-| Problem-solving approaches | Specific code implementations |
-| Tools & technologies used | Internal API/system details |
-| Patterns & techniques learned | Credentials, keys, secrets |
-| Challenges and how you overcame them | Customer/client information |
-| Skills developed | Internal process names |
+## Step 3: Write the Entry
 
-**Think**: "Could I put this on a resume, share it in a blog post, or discuss it in an interview?" If yes, include it.
+Target file: `YYYY/month.md` (e.g., `2026/may.md`). **Append** the entry.
 
-## Anti-Patterns: Process vs Outcomes
+### Adaptive Format
 
-| Don't Write (Process) | Write Instead (Outcome) |
-|-----------------------|-------------------------|
-| "Phase 1: Did X. Phase 2: Did Y. Phase 3: Did Z" | "Implemented X across the system" |
-| "Before XML: 59%. After XML: 64%. After Pydantic: 92%" | "Improved defense rate: 59% → 92%" |
-| "Removed defense from sub-agent (was incorrectly added)" | *(omit—internal correction, not insight)* |
-| "Used Pydantic `Field(max_length=250)`" | "Added input validation to constrain LLM outputs" |
-| "Changed `prompt.py`, `agent.py`, and `config.py`" | "Refactored prompt injection defense layer" |
-| 6 bullets listing each step taken | 2-3 bullets describing what changed |
+Pick the structure that fits the content. No rigid template. Here are two examples — use them as starting points, not rules.
 
-## Step 3: Write Entry
-
-Target file: `YYYY/month.md` (e.g., `2026/january.md`)
-
-**Append** entry to the month file using this format:
-
+**For a shipped project or feature:**
 ```markdown
 ---
 
-## [YYYY-MM-DD] - [Brief Title]
+## [YYYY-MM-DD] - [Title]
 
 ### Intention
-[What I set out to accomplish and why]
+[What I set out to build and why it mattered]
 
-### What Changed
-[Outcomes—what's different now? Not steps taken.]
+### The Journey
+[What actually happened — the problem, the approach, what broke, what worked.
+This is the story, not a list of commits.]
 
-### Decisions & Rationale
-[Key choices and reasoning - focus on the "why"]
+### Key Decisions
+[The choices that shaped the outcome and why I made them]
 
-### Tools & Techniques
-[Technologies, patterns, approaches used]
-
-### Learnings
-[New insights, skills, patterns discovered]
+### What I Learned
+[Insights, patterns, skills — things I'll carry forward]
 
 ### Reflections
-[Optional: challenges, open questions, next steps]
+[How I feel about it, what I'd do differently, what's next]
 ```
 
-**Guidelines**:
-- **Outcomes, not steps**: describe what changed, not what you did
-- Keep entries scannable (bullets over prose)
-- Multiple entries per day are fine - just append
+**For an insight, mistake, or career moment:**
+```markdown
+---
+
+## [YYYY-MM-DD] - [Title]
+
+### Context
+[What happened]
+
+### Insight
+[What I learned from it]
+
+### Going Forward
+[What I'll do differently]
+```
+
+**Guidelines:**
+- **Skip sections that don't apply** — never add filler
+- **Rename sections freely** — "The Journey" could be "What Happened", "The Debugging Saga", "How It Actually Went" — whatever reads best
+- **Add sections that fit** — Results tables, a "What Sucked" section, a "Proud Of" callout — if it belongs, add it
 - Title should capture the essence in 3-7 words
-- **Skip sections that don't apply** - never add filler or forced content
-- **Use creativity** - the template guides, it doesn't constrain. Add sections that fit, drop ones that don't, rephrase headings if it reads better
+- Multiple entries per day are fine
+- Bullets over prose for scannability, but prose is fine when telling a story
+
+### Detail Level
+
+| Write This (Story-Level) | Not This (Implementation-Level) |
+|---|---|
+| "Built server-side validation because AI agents kept fabricating IDs despite being told not to" | "Added `findInvalidId` helper in `utils/id-validation.ts` that detects fabricated IDs" |
+| "The auth flow had 5 layers, and I had to understand all of them before the write tool could mirror it correctly" | "`ensureUserCanUpdateRequestStatus` validates trusted callers, self-cancel, internal users, PTO managers, and company admins" |
+| "Improved defense rate from 59% to 92% through layered prompt hardening" | "Before XML: 59%. After XML: 64%. After Pydantic: 92%" |
+| "Used AsyncLocalStorage for per-request isolation after discovering the global singleton leaked auth between concurrent sessions" | "Request context via `AsyncLocalStorage` — each MCP message gets its own store" |
+| "Discovered the model was calling tools in parallel and fabricating IDs because the list result hadn't arrived yet" | "Docker logs showed Gemini calling list and update in the same parallel batch" |
+
+**The test:** Would this detail mean anything to someone (including future you) who doesn't have the codebase open? If yes, keep it. If it only makes sense with the code in front of you, elevate it to the story level or cut it.
+
+### Company-Specific Details
+
+Use judgment, not a blanket filter.
+
+**Keep:** Product names that are publicly known (Alfie, Athena), technologies and frameworks used, the nature of the problem and solution, team dynamics and collaboration moments, metrics and outcomes.
+
+**Omit:** Credentials, keys, secrets. Customer/client data. Internal DB schemas and auth flow internals. Proprietary business logic that's genuinely confidential.
+
+**The interview test still applies:** "Could I discuss this in an interview?" If yes, it's fine. If you'd hesitate, genericize it or cut it.
 
 ## Output
 
@@ -137,7 +148,3 @@ Entry added to YYYY/month.md
 ## [Date] - [Title]
 [First 2-3 lines of entry...]
 ```
-
-## Template Reference
-
-See [assets/template.md](assets/template.md) for detailed section guidance.
