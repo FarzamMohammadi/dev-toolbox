@@ -164,12 +164,39 @@ Scan the full visible content for:
 
 When you find repetition, propose a swap for ONE instance. Keep the stronger usage, change the weaker one.
 
-**The "implied word" test:**
-For every adjective and adverb, ask: is this already implied by context? If so, cut it.
-- "via a single SQL UNION retriever" → "single" is implied by the article "a"
-- "collapsing 3 overlapping agents" → "overlapping" is implied by "collapsing"
-- "3,360 automated tests" → "automated" is implied in an engineering context
-- "systematic prompt optimization" → "systematic" is filler; V1→V4 already shows the system
+**The taxonomy of cuttable words:**
+
+Words that don't earn their place fall into five recognizable categories. When pruning, scan for each — they're the highest-leverage cuts because removing them loses zero signal.
+
+**1. Implied by surrounding context.** The surrounding text already establishes the concept, so the word is redundant.
+- "defense-in-depth LLM prompt injection" → drop "LLM" (the AI context is already established)
+- "Google Drive and Notion ingestion through Abacus.AI vector retrieval" → "ingestion" is implied by the pipeline structure ("from X through Y")
+- "the platform's context layer" (inside a section about a specific platform) → drop "the platform's"
+- "XML input delimiting" → drop "input" (XML delimiting an LLM input is what XML delimiting means)
+
+**2. Implied by the metric itself.** A concrete number proves the thing happened, making the technical specifier redundant.
+- "content-based deduplication (933→438 documents)" → drop "content-based" (the 933→438 metric is the proof; the technical specifier adds nothing a reader cares about)
+- "systematic prompt optimization (V1→V4)" → drop "systematic" (V1→V4 already shows the systematic iteration)
+- The general rule: when a metric is doing the heavy lifting, the adjective in front of the noun becomes decoration.
+
+**3. Filler adjectives that pose as specificity.** Words that sound like they add precision but actually add nothing. These are the highest-payoff cuts because they look meaningful at a glance but disappear without consequence.
+- "granular context-measurement infrastructure" → drop "granular" (the rest of the sentence describes the granularity in detail)
+- "robust validation" → drop "robust" (every validation claims to be robust)
+- "comprehensive testing" → drop "comprehensive"
+- "scalable architecture" → drop "scalable" unless the bullet then proves it
+
+**4. Implied by a stronger word elsewhere in the same sentence.** A word does double-duty when another verb or adjective already carries the meaning.
+- "Pydantic validation layers" (when "defense-in-depth" appears earlier in the sentence) → drop "layers" (defense-in-depth already implies layered defense)
+- "collapsing 3 overlapping agents" → drop "overlapping" (collapsing 3 agents only makes sense if they overlapped)
+- "consolidated 5 different sources" → drop "different" (consolidation implies differentness)
+- "via a single SQL UNION retriever" → drop "single" (the article "a" already implies singularity)
+
+**5. Implied by field/genre defaults.** Words that describe the default state in the target reading context.
+- "3,360 automated tests" on an engineering resume → drop "automated" (manual testing wouldn't be reported as a count like this)
+- "successful project delivery" → drop "successful" (you wouldn't list a failed delivery)
+- "modern web framework" in a current-year resume → drop "modern" (it's the default expectation)
+
+**How to apply this:** When proposing a cut, name the category. "This is filler-adjective territory" or "the metric already proves this" gives the user the reasoning, not just the deletion. They learn the patterns and start spotting them themselves, which makes future passes faster.
 
 ---
 
@@ -178,7 +205,7 @@ For every adjective and adverb, ask: is this already implied by context? If so, 
 After content is locked, check how it renders on the actual page. Ask the user for a screenshot if needed.
 
 **Common problem: orphan words.**
-A bullet that's 1-2 words too long for a line creates an ugly orphan line. Fix by cutting implied words (see Phase 4 list).
+A bullet that's 1-2 words too long for a line creates an ugly orphan line. Fix by applying the taxonomy of cuttable words from Phase 4. Scan each category in order — implied by context, implied by the metric, filler adjectives, implied by a stronger word, implied by genre defaults — and propose the cleanest cut.
 
 **How to present visual trims:**
 Batch all trims together with explanations. The user approves as a set:
