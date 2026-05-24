@@ -45,6 +45,7 @@ gitignore-friendly.
 | `n8n-manager/` | Manage n8n workflows via REST API — list, fetch, update, activate, debug |
 | `refactor-code/` | Review git diffs against refactoring principles |
 | `repo-docs-overhaul/` | Overhaul repo documentation for clarity, navigability, and OSS-readiness |
+| `resume-builder/` | Collaborative puzzle-piece approach to refining resumes, LinkedIn bios, and professional content |
 | `summarize/` | Distill files, URLs, and videos into thorough value-preserving summaries |
 | `system-layer-extraction/` | Deep architectural investigation — extract and map every system in a codebase |
 | `work-diary/` | Create work diary entries from session context |
