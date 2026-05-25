@@ -1,22 +1,19 @@
 # Coding Standards
 
-Centralized, language-specific coding standards referenced from any repository.
+Centralized coding standards and refactoring approach, referenced from any repository.
 
 ## How to Use
 
-From any project, point your agent at the relevant language folder:
+Every session, start by pointing the agent at the refactor guide **first**, then the language standards:
 
 ```
-Refactor the files I changed based on:
-  ~/Documents/Repos/dev-toolbox/ai/coding-standards/typescript/coding-standards.md
-  ~/Documents/Repos/dev-toolbox/ai/coding-standards/typescript/anti-patterns.md
+Please read:
+  ~/Documents/Repos/dev-toolbox/ai/coding-standards/refactor-guide.md
+  ~/Documents/Repos/dev-toolbox/ai/coding-standards/python/coding-standards.md
+  ~/Documents/Repos/dev-toolbox/ai/coding-standards/python/anti-patterns.md
 ```
 
-Or reference the whole language folder:
-
-```
-Follow the conventions in ~/Documents/Repos/dev-toolbox/ai/coding-standards/python/
-```
+The refactor guide is the **mode** — how to work collaboratively, when to push back, what earns its place. The language files are the **patterns** — what good code looks like in that language. Without the guide, the standards become a mechanical checklist. With it, they become tools used with judgment.
 
 ## The Two-Step Rule
 

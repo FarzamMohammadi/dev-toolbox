@@ -30,6 +30,25 @@ Don't copy patterns without understanding why they exist in this codebase. A pat
 
 Expanding task scope without explicit user agreement is a violation of trust. If you discover adjacent work that needs doing, surface it — don't silently include it. The user decides whether to expand scope, defer it, or ignore it.
 
+## Compressing for Line Count
+
+Collapsing multiple clear lines into one dense expression because "it's shorter." Fewer lines is not a goal — clarity is. Compression earns its place **only** when the compressed form is *also* easier to read for someone new to the file. If the reader has to mentally unpack stacked idioms (`**` spread + `or {}` fallback + `dict.fromkeys`) on one line to understand what's happening, the verbose form wins.
+
+```python
+# Bad — three idioms stacked into one line
+merged = {**(maybe or {}), **dict.fromkeys(extras, "default")}
+
+# Good — each line says one thing
+merged = dict(maybe or {})
+for key in extras:
+    merged[key] = "default"
+```
+
+Related smells from this same instinct:
+- Walrus operators inside comprehension filters (`if (x := lookup(k)) is not None`)
+- Nested ternaries (`a if c1 else b if c2 else c`)
+- Reaching for a "clever" form to silence a lint rule (e.g. dict-comprehension → `dict.fromkeys` for `C420`) when the obvious form is what a reader would expect — leave the obvious form, add a `# noqa` if needed, or restructure honestly.
+
 ## Dogmatic Rule Following
 
 These standards are strong defaults, not absolute laws. When a specific case deliberately calls for deviation, deviate — but document why. The test: "Is this deviation intentional and justified, or am I being lazy?" The few invariants that *are* absolute should be called out as such by the project itself (e.g., a top-level architecture doc) — everything else is a default that judgment overrides when warranted.
@@ -37,6 +56,114 @@ These standards are strong defaults, not absolute laws. When a specific case del
 ## Silent Decisions
 
 Making decisions on behalf of the user without communicating them is the fastest way to lose alignment. Every non-trivial decision gets surfaced: what you chose, why, and what alternatives existed. The user is always the compass.
+
+## Documenting Invariants Instead of Encoding Them
+
+A comment that says *"every function below does X"* is a promise the next person has to verify by hand. If the language has a construct to make X true by construction — a decorator, a base class, a type — use it. The construct's name becomes the contract; the comment becomes redundant; a function missing it visibly doesn't obey the contract.
+
+```python
+# Bad — the comment is a promise nothing enforces
+# All handlers catch their own exceptions and record a metric on failure.
+def handle_signup(event): ...
+def handle_login(event): ...
+def handle_logout(event): ...
+
+# Good — the decorator is the contract; missing decorator is visibly wrong
+@safe_handler(metric="signup_failed")
+def handle_signup(event): ...
+
+@safe_handler(metric="login_failed")
+def handle_login(event): ...
+```
+
+The same pattern: type system over assertion comments, exhaustiveness checking over "remember to update all cases" comments, dataclass over "this dict always has these keys."
+
+## Silent Staleness
+
+When data is missing — an unrecognized currency, an absent feature-flag entry, a config that disappeared — the wrong fix is to *silently* default to a plausible value. The dashboard will show wrong-but-believable numbers forever and nobody will notice the gap.
+
+The right fix: **make the staleness visible.** Emit a sentinel (e.g. `0`, `null`, `"unknown"`) *and* flip a diagnostic flag so operators can filter for the gap and update the registry.
+
+```python
+# Bad — operator never notices the new currency isn't registered
+def get_exchange_rate(currency: str) -> float:
+    return RATES.get(currency, 1.0)  # ← silent default of 1.0 hides the gap
+
+# Good — gap is visible
+def get_exchange_rate(currency: str, rates: dict[str, float]) -> float | None:
+    return rates.get(currency)  # caller decides what 'None' means
+
+# at the call site:
+rate = get_exchange_rate(order.currency, RATES)
+if rate is None:
+    logger.debug(f"No rate registered for {order.currency!r}")
+    quote.conversion_status = "unknown"
+    quote.converted_total = 0
+```
+
+The principle: a defaulted-to-plausible-value is a bug that compounds over time. A visible-gap is a bug that gets fixed the next time someone looks at the dashboard.
+
+## Pass-through Parameters Without Use
+
+A function that takes parameters *only to forward them* to a downstream callee — without reading them itself — is a structural signal: those parameters belong together as a typed bundle, or the call chain is wrong.
+
+```python
+# Bad — process_order receives 3 params it never uses; just forwards to record_audit
+def process_order(
+    order,
+    customer_email,      # ← only used by audit
+    customer_tier,       # ← only used by audit
+    customer_region,     # ← only used by audit
+):
+    result = compute_total(order)
+    record_audit(
+        order, customer_email=customer_email,
+        customer_tier=customer_tier, customer_region=customer_region,
+    )
+
+# Good — bundle them into a named type at the source; the intermediary
+# carries one opaque object instead of three pieces it knows nothing about
+@dataclass(frozen=True)
+class AuditContext:
+    customer_email: str
+    customer_tier: str
+    customer_region: str
+
+def process_order(order, audit_context):
+    result = compute_total(order)
+    record_audit(order, audit_context=audit_context)
+```
+
+The bundle does three things at once: gives the cohesive concept a *name*, removes the intermediary's apparent dependency on what it doesn't use, and makes the call chain reveal *whose* concern each piece is.
+
+## Tuple Returns Often Hide Multiple Jobs
+
+A function returning a tuple of two unrelated things is often doing two jobs in one. The tuple is the smell; the fix is usually to split the responsibility.
+
+```python
+# Bad — build_client does two jobs: fetch the config AND build the client
+def build_client(account_id) -> tuple[Client, Config]:
+    config = fetch_config(account_id)
+    client = Client(endpoint=config.endpoint, timeout=config.timeout)
+    return client, config   # ← caller needs both halves
+
+# Good — caller sequences the steps; each function has one job
+config = fetch_config(account_id)
+client = build_client(config)
+metrics = init_metrics(config, account_id)
+```
+
+Exception: tuples are fine for *naturally paired* returns (e.g. `divmod(a, b) -> (quotient, remainder)`, an iterator returning `(key, value)`). The anti-pattern is the *unrelated* pair returned because a function was doing two jobs.
+
+## Reimplementing What the SDK Gives You
+
+Before writing a derivation, a registry, or a parsing helper to extract some piece of information, **ground in the SDK first.** Read the type definitions, inspect the object in a REPL, grep the library source. The thing you're about to build may already exist as a first-class field.
+
+Illustrative shape: a service hand-rolls a prefix-matching dict to attribute records to regions (`us-east-1 -> us`, `eu-west-2 -> eu`, etc.). The cloud SDK's response object already carries a `region_partition` field set directly by the API. The whole derivation is dead weight that also has to be maintained as new regions ship.
+
+The fix is mechanical (replace the derived value with the SDK field); the cost of not catching it is years of stale code that drifts with every upstream release.
+
+The general rule: if you're about to write code that maps from one shape to another, ask first whether the upstream already gives you the target shape.
 
 ---
 
@@ -200,6 +327,52 @@ The cache holds a reference to `self`, so the instance can never be garbage coll
 ### `asyncio.wait_for` in New Code
 
 `wait_for` is the pre-3.11 way to add timeouts. Modern code uses `asyncio.timeout()` (context manager) — it composes with `TaskGroup`, wraps blocks rather than single awaits, and avoids the extra wrapper task. Migrating existing `wait_for` calls is low priority; writing new ones is the anti-pattern.
+
+### Methods That Don't Use `self`
+
+If a method never references `self`, it's a free function pretending to be a method. The class membership misleads the reader about OO structure (suggests state coupling that isn't there) and forces tests to instantiate the class for no reason.
+
+```python
+# Bad — _normalize_record never touches self; lives on the class anyway
+class RecordProcessor:
+    def _normalize_record(self, record: dict) -> dict:
+        # ... cleans whitespace, lowercases keys, drops nulls ...
+        # nothing references self
+        return cleaned
+
+# Good — module-level free function in the module where it belongs
+def normalize_record(record: dict) -> dict:
+    return cleaned
+```
+
+Side benefit: free functions are testable without mocking an instance. Tests stop carrying `processor = RecordProcessor()` boilerplate that exists purely to call the method.
+
+The Python-flavored fix when you can't move it (e.g. you want to keep the namespace): `@staticmethod`. But ask first whether it should live on the class at all — usually the answer is no, and a module-level function is cleaner.
+
+### Class Docstrings That Enumerate Fields
+
+```python
+# Bad — list goes stale the moment someone adds a field, and they often do silently
+class CustomerProfile(BaseModel):
+    """Customer profile: name, email, tier, signup_date."""
+    name: str
+    email: str
+    tier: str
+    signup_date: datetime
+    region: str | None = None       # ← added later, docstring not updated
+    locale: str | None = None       # ← same
+```
+
+Either enumerate exhaustively (and accept the maintenance) or don't enumerate at all. The fields themselves are self-documenting via their names and types — the docstring should explain *what the class is for*, not duplicate the field list.
+
+```python
+# Good — the docstring carries the why; the fields carry the what
+class CustomerProfile(BaseModel):
+    """A customer's stored profile and preferences."""
+    ...
+```
+
+This generalizes: any docstring that duplicates information the code already conveys (field lists, method names, simple types) is a maintenance trap. Load-bearing docstrings explain purpose, invariants, and constraints — not field inventories.
 
 ### Overriding Without `@override` (3.12+)
 

@@ -77,6 +77,8 @@ def _decide_priority(input: CreateTaskInput) -> Priority:
 - **No vague -ER suffixes.** `TaskManager` (manages how?) and `DataProcessor` (processes into what?) are banned. `ConfigLoader` and `EventHandler` are fine when precise.
 - **No `utils`, `helpers`, `misc`, `common`.** These are junk drawers. Move functions to the concept they belong to.
 - **Domain language.** Names mirror the business domain (Ubiquitous Language). `TaskEngine`, `PipelineStage`, `TriggerEvent` — not `ItemProcessor`, `StepExecutor`, `IncomingData`.
+- **Variables are nouns; functions are verbs.** Variable names describe what the value *is*; function names describe what they *do*. `parsed_config` describes a process (the noun is "config"; "parsed" describes how it was produced). `settings` describes what it is. For variables, prefer the noun. Use the verb form on the function that produced it (`parse_config()`).
+- **Don't borrow framework names for domain variables.** If a framework's parameter is named one thing (say, `body=` in an HTTP client), that's the framework's vocabulary — not your domain's. Naming your variable `body` because that's where it gets passed couples your code to the framework's terms. Use the name that describes the *thing* in your domain (`payload`, `order_request`, whatever fits), then pass it across at the framework boundary (`http_client.post(url, body=payload)`).
 
 ---
 
@@ -102,6 +104,29 @@ def schedule_task(
 ) -> ScheduledTask:
     ...
 ```
+
+### Required Kwargs for Config; `None` Defaults for Data
+
+Distinguish two kinds of parameters:
+
+- **Configuration the caller must declare** — primary provider, registry, feature flag, target environment. The caller stating it explicitly is the whole point: it locates the decision at the call site, which is where someone editing the call would think about it. Make these **required** keyword-only — no default.
+- **Data that may not exist this call** — an optional message, a tool's output, a partial result. "Absence" is meaningful and the function handles it. `None` default is fine.
+
+```python
+# Good — config is required; data is optional
+def process_request(
+    *,
+    target_region: str,                  # required: caller declares
+    rate_limits: dict[str, int],         # required: caller declares
+    request_body: bytes | None = None,           # optional data
+    correlation_id: str | None = None,           # optional data
+    upstream_metadata: dict | None = None,       # optional data
+) -> Response: ...
+```
+
+Don't conflate the two. A `target_region = "us-east-1"` default hides a decision that the call site is the right place to make. A `correlation_id = None` default acknowledges that some requests don't have one — which is true.
+
+For tests that don't care about the required config, write a small fixture wrapper that fills the kwargs with sensible test defaults. That preserves "strict API, no boilerplate in tests" without weakening the production contract.
 
 ### No Mutable Default Arguments
 
@@ -585,6 +610,25 @@ from task_engine.state_machine import StateMachine  # Direct, not through __init
 
 If `package/__init__.py` re-exports `StateMachine` and you do `from package.state_machine import StateMachine` *inside* the package, you've created an import cycle risk. Internal code uses the direct path.
 
+### Module-Level `__all__` for Public Surface
+
+Within a *module* (`.py` file with both public and private names), declare the public API explicitly with `__all__`. Underscore-prefix on internal names is a convention; `__all__` is enforcement — ruff, type checkers, and IDEs all respect it.
+
+```python
+# at the top of pipeline.py
+__all__ = ["build_pipeline", "run_pipeline"]
+
+def run_pipeline(...): ...           # public
+def build_pipeline(...): ...         # public
+
+def _validate_stage(...): ...        # private (underscore + not in __all__)
+def _retry_with_backoff(...): ...    # private
+```
+
+The pair `__all__` + underscore-prefix reinforces the contract from two angles: `__all__` declares what's exported, the underscore-prefix marks what's not. Either alone is weaker than both together.
+
+Use this any time a module has more than 3-4 names, where "is this part of the API?" might be ambiguous to a reader.
+
 ---
 
 ## 7. Module Boundaries
@@ -760,6 +804,31 @@ Ruff (formatter + linter) and mypy/pyright handle formatting (88 or 120 char lin
 - **No arrow code.** If indentation exceeds 3 levels, refactor.
 - **f-strings only.** `f"{name}: {value}"` — never `%` or `.format()`.
 
+### Readability Over Line Count
+
+Readability and intuition come first. Compression earns its place **only** when it also improves clarity (and other considerations like correctness, debuggability, and onboarding cost). Fewer lines is not a goal — it is sometimes a side effect of a better expression of the same idea.
+
+The test: does the compressed form read as easily as the verbose form for a contributor who has never seen this file? If not, the verbose form wins. Two clear lines beat one clever line every time.
+
+```python
+# Bad — compressed but dense; reader must parse three idioms stacked together
+# (** spread, `or {}` fallback, `dict.fromkeys`) to understand what is happening
+merged_labels = {**(base_labels or {}), **dict.fromkeys(extra_keys, "default")}
+
+# Good — verbose but obvious; each line states one fact
+merged_labels = dict(base_labels or {})
+for key in extra_keys:
+    merged_labels[key] = "default"
+```
+
+Other patterns that trade clarity for line count and should be avoided when they cost readability:
+- **Walrus inside comprehension filters.** `if (x := lookup(k)) is not None` smuggles assignment into a conditional. Two lines (one to bind, one to filter) read more cleanly.
+- **Nested ternaries.** `a if cond1 else (b if cond2 else c)` — split into an `if` chain.
+- **One-liners that hide branching.** `result = work() if ready else default` is fine; `result = (work().transform() if ready and not skip else default if has_default else None)` is not.
+- **Stacked unpacking with conditional defaults.** `{**(maybe or {}), **{k: v for ...}}` — write the loop.
+
+The lint silencer is a red flag here. If you find yourself reaching for a more "clever" form to silence Ruff's `C420` or similar, the lint rule is suggesting a style — but the readable form is the right answer; add a `# noqa: <code>  # <why>` or just leave the obvious form (linters are guides, not architects).
+
 ---
 
 ## 11. Single Source of Truth
@@ -772,6 +841,30 @@ Define every value once. Derive everywhere else. A constant that appears in two 
 - **No duplicate constants.** If a value (a path, a magic number, a default) needs to appear in two modules, the second occurrence is an import — never a literal repeat.
 
 The test: when you change a value, do you have to remember every other place it lives? If yes, you have duplication. Centralize.
+
+### Co-Locate Registries with Their Producers
+
+When a registry (a dict, a list, a config) lives in a module other than where it's *consumed*, drift becomes invisible. The fix: put the registry next to where the thing being registered is *created* — not next to where it's *used*.
+
+Example shape: a per-region quota registry (`REGION_QUOTAS: dict[str, int]`) is consumed by the rate-limiting layer. But the obvious place to put it is **next to the region-config factories** (`build_us_region_config`, `build_eu_region_config`) — because that's the file someone editing the region lineup would touch. When they add a new region in that file, the quota registry is staring at them three lines below.
+
+```python
+# In regions.py — registry sits with the producers
+def build_us_region_config(name: str) -> RegionConfig: ...
+def build_eu_region_config(name: str) -> RegionConfig: ...
+
+REGION_QUOTAS: dict[str, int] = {
+    "us-east-1": 10_000,
+    "eu-west-2": 5_000,
+}
+
+# In rate_limit/limiter.py — consumer imports
+from regions import REGION_QUOTAS
+```
+
+The opposite anti-pattern: a registry buried in a consumer module that the producer-side editor never opens. Then the registry goes stale and the consumer silently degrades.
+
+The rule of thumb: **a registry lives where someone editing the registered thing would naturally look.** Not where it's queried.
 
 ---
 
