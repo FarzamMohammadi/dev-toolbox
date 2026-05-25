@@ -77,3 +77,16 @@ Wrapping a single library call in a "service" or "client" abstraction that adds 
 ### Util Junk Drawers
 
 Files named `utils.ts`, `helpers.ts`, `misc.ts`, `common.ts`. These attract unrelated code and become uncategorizable graveyards. Every function belongs to a concept — move it there. If you can't name the concept, the function probably shouldn't exist yet.
+
+### Deep Utility-Type Chains
+
+```typescript
+// Smell — the source type is the wrong shape for this use case
+type DraftTaskInput = Partial<Omit<Pick<Task, "title" | "repo" | "source" | "phase">, "phase">>;
+```
+
+One layer of `Pick`/`Omit`/`Partial` to derive a related shape is fine. Two or more layers means you're modeling a distinct concept poorly — give it a name and define it directly (or derive it from a schema). Chained utility types are a maintenance hazard: the chain says nothing about *what* the type represents, and changing the source type produces inscrutable downstream errors.
+
+### `as` to Silence Type Errors
+
+`as Foo` (and worse, `as unknown as Foo`) lies to the compiler. The runtime value may not match the asserted type. Reach for `satisfies` for literal validation, type predicates / `asserts` for narrowing, or a real parse step at the boundary. `as` is acceptable only when you genuinely know more than the compiler — and that should be rare and commented.

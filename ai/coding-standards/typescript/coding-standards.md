@@ -131,18 +131,106 @@ type UpdatableField = "phase" | "workspace" | "review";
 
 ### Branded Types
 
-Brand all domain IDs by default. Smart constructors are the only way to create them.
+Brand all domain IDs by default. Smart constructors are the only way to create them. Use a `unique symbol` for the brand key — it cannot be forged or collided on by another module that happens to declare the same `__brand` string.
 
 ```typescript
-type TaskId = string & { readonly __brand: "TaskId" };
-type SessionId = string & { readonly __brand: "SessionId" };
+declare const brand: unique symbol;
+type Brand<T, B extends string> = T & { readonly [brand]: B };
+
+type TaskId = Brand<string, "TaskId">;
+type SessionId = Brand<string, "SessionId">;
 
 function TaskId(raw: string): TaskId {
   return raw as TaskId;
 }
 ```
 
-This prevents passing a `SessionId` where a `TaskId` is expected — the compiler catches it.
+This prevents passing a `SessionId` where a `TaskId` is expected — the compiler catches it. The symbol-based brand is strictly stronger than the older `& { __brand: "X" }` string pattern, which is structurally duck-typeable.
+
+### `satisfies` over `as`
+
+Use `satisfies` to validate a value against a contract *without widening its inferred type*. Reach for `as` only when you genuinely need to assert across a boundary the compiler cannot prove — and even then, prefer `unknown` + a type predicate.
+
+```typescript
+// Good — checks shape, keeps literal-precise types
+const routes = {
+  home: { path: "/", auth: false },
+  admin: { path: "/admin", auth: true },
+} satisfies Record<string, RouteConfig>;
+// routes.home.auth is literal `false`, not widened to `boolean`
+
+// Bad — `as` lies; misspelled key would still pass
+const routes = { home: { path: "/", auth: false } } as Record<string, RouteConfig>;
+
+// Worse — annotation widens literals away
+const routes: Record<string, RouteConfig> = { home: { path: "/", auth: false } };
+```
+
+### Discriminated Unions & Exhaustiveness
+
+Standardize on `kind` as the discriminant. Always required, always a literal string union — never optional, never widened.
+
+```typescript
+type DomainEvent =
+  | { kind: "task.created"; taskId: TaskId; title: string }
+  | { kind: "task.updated"; taskId: TaskId; patch: TaskPatch }
+  | { kind: "task.deleted"; taskId: TaskId };
+```
+
+Pair every discriminated union with `assertNever` so adding a new variant becomes a compile-time TODO list everywhere it must be handled.
+
+```typescript
+function assertNever(x: never): never {
+  throw new InvariantError(`Unhandled variant: ${JSON.stringify(x)}`);
+}
+
+function handleEvent(event: DomainEvent): void {
+  switch (event.kind) {
+    case "task.created": return handleCreated(event);
+    case "task.updated": return handleUpdated(event);
+    case "task.deleted": return handleDeleted(event);
+    default: return assertNever(event);
+  }
+}
+```
+
+This is the highest-leverage type-system pattern for evolvability — the compiler points you at every site that needs updating when the union grows.
+
+### Type Predicates & Assertion Functions
+
+For runtime narrowing at boundaries, choose deliberately:
+
+- **Type predicate** (`value is T`): the function returns a boolean and narrows in the `true` branch. For simple predicates on TS 5.5+, inference handles it — no annotation needed.
+- **Assertion function** (`asserts value is T`): the function throws when the check fails, narrowing in the rest of the scope. Pair with the parse-don't-validate boundary.
+
+```typescript
+// TS 5.5+ infers `value is string` automatically
+function isNonEmpty(value: string | null) {
+  return value !== null && value.length > 0;
+}
+tasks.filter(isNonEmpty); // narrows to string[]
+
+// Assertion function — throws to narrow
+function assertTaskId(value: unknown): asserts value is TaskId {
+  if (typeof value !== "string") throw new ValidationError(`Expected TaskId, got "${typeof value}"`);
+}
+```
+
+Hand-write `value is T` only when the predicate is non-obvious (multi-property check, dispatch across a union). Otherwise let inference do it — keeps the predicate from drifting from its implementation.
+
+### Template Literal Types
+
+Use template literal types to enforce string conventions at compile time — event names, route patterns, channel topics. Cheap insurance against typos and drift between producer and consumer.
+
+```typescript
+type Resource = "task" | "session";
+type Action = "created" | "updated" | "deleted";
+type EventName = `${Resource}.${Action}`;
+
+function emit(name: EventName, payload: unknown): void { /* ... */ }
+emit("task.created", payload);  // ok
+emit("task.creatd", payload);   // type error
+```
 
 ### Schema-First (Zod)
 
@@ -161,6 +249,14 @@ type SafetyConfig = z.infer<typeof SafetyConfigSchema>;
 
 - Single-letter (`T`, `K`, `V`) for simple, obvious cases like `Array<T>` or `Map<K, V>`.
 - Descriptive with T-prefix (`TInput`, `TOutput`, `TError`) when the function has multiple generics or the meaning isn't obvious from context.
+- Use `NoInfer<T>` (TS 5.4+) when a secondary parameter must conform to a generic but should not influence its inference. Prevents call-site widening surprises.
+
+```typescript
+function withDefault<T>(values: T[], fallback: NoInfer<T>): T {
+  return values[0] ?? fallback;
+}
+withDefault(["pending", "active"] as const, "blocked");  // error — "blocked" cannot widen T
+```
 
 ### Return Type Annotations
 
@@ -580,6 +676,20 @@ try {
   releaseResources();
 }
 ```
+
+On TS 5.2+ with a runtime that supports it (Node 20+ or transpiled), prefer `using` / `await using` for explicit resource management. Cleanup runs on scope exit, even on throw — cannot be forgotten.
+
+```typescript
+{
+  using span = observer.startSpan("phase_transition", "execute", { taskId });
+  const result = await runPhase(task, phase);
+  span.end({ output: result });
+}  // span[Symbol.dispose]() runs here, even if runPhase threw
+
+await using conn = await pool.acquire();  // released on scope exit
+```
+
+For this to work, the resource implements `[Symbol.dispose]()` (sync) or `[Symbol.asyncDispose]()` (async). Adopt where the runtime allows it; otherwise stick with try/finally.
 
 ---
 
