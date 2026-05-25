@@ -156,6 +156,26 @@ These words appear on so many resumes that they carry zero signal. Challenge the
 - "synergy", "impactful", "cutting-edge" — same problem
 - "fluent" — this is for languages, not engineering. Use "hands-on", "spanning", "deep across"
 
+**Vanity metrics vs. signal metrics:**
+
+Not all numbers earn their place. Numbers fall into two camps:
+
+**Vanity metrics** are total volume measures that signal the writer thinks engineering quality scales linearly with output. These are junior tells — they betray a misunderstanding of what actually makes engineering work valuable. Cut them on sight:
+- "35K+ lines of code" — more code is often worse, not better
+- "550+ commits" — commit count measures activity, not progress
+- "114 test suites" — raw test count without context is noise
+- "X hours of focused work" — hours don't equal outcomes
+
+**Signal metrics** make a specific claim about an outcome, coverage, composition, or constraint. These earn their place:
+- **Outcome:** "raised perfect-score rate from 45% to 88%" — measures impact
+- **Coverage:** "3,360 tests spanning 14 attack types" — describes the surface tested
+- **Composition:** "test code outweighs source" — describes a discipline choice, not volume
+- **Constraint:** "max 3 self-review iterations before PR opens" — describes system behavior
+
+The test for any number: does it describe a *choice the engineer made*, an *outcome they delivered*, or *behavior of the system they built*? If yes, signal. If it's just "this big" or "this many," vanity — cut it.
+
+**Why this matters:** Recruiters skim for metrics, but engineering managers actually read them. A vanity metric on a senior engineer's resume signals junior thinking, which undercuts everything else on the page. The space the number takes costs more than the number gains.
+
 **Cross-text repetition:**
 Scan the full visible content for:
 - Same word appearing within ~15 words (e.g., "production systems" followed by "design through production")
@@ -282,3 +302,5 @@ These are the most common failure modes. Avoiding them is as important as follow
 **Lopsided claims:** If a section introduces two systems but only claims work on one, the reader wonders about the other. Watch for this and flag it.
 
 **Over-engineering a single bullet:** If a bullet keeps growing as the user adds context, consider splitting it into two self-contained bullets rather than cramming everything into one.
+
+**Vanity metrics:** Total volume measures (LOC, commit count, raw test count, hours worked) signal that the writer thinks more output equals better work. This is a junior tell that undercuts everything else on the page. Use only signal metrics: outcomes, coverage ratios, compositional ratios, behavioral constraints. See Phase 4 for the full distinction and examples.
