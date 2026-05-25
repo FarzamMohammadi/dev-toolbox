@@ -181,3 +181,26 @@ except asyncio.CancelledError:
 ### Module-Level Side Effects
 
 Running I/O, network calls, or other side effects at module import time. Imports should be free of observable effects — readers expect importing a module to be cheap and idempotent. Put side effects inside functions that the caller invokes explicitly.
+
+### `@lru_cache` / `@cache` on Instance Methods
+
+```python
+# Bad — every Client instance is kept alive forever by the cache
+class Client:
+    @lru_cache
+    def fetch(self, key: str) -> bytes: ...
+```
+
+The cache holds a reference to `self`, so the instance can never be garbage collected. Move the cached function to module level, or use `cachetools` with a weak-reference strategy if you genuinely need per-instance caching. Ruff's `B019` rule catches this — leave it on.
+
+### Bare `@cache` on Unbounded Input
+
+`@functools.cache` has no size limit. Used on a function whose input domain is unbounded (URLs, user IDs, request payloads), it leaks memory until the process dies. Use `@lru_cache(maxsize=N)` with a deliberate cap whenever the input domain isn't trivially small and bounded.
+
+### `asyncio.wait_for` in New Code
+
+`wait_for` is the pre-3.11 way to add timeouts. Modern code uses `asyncio.timeout()` (context manager) — it composes with `TaskGroup`, wraps blocks rather than single awaits, and avoids the extra wrapper task. Migrating existing `wait_for` calls is low priority; writing new ones is the anti-pattern.
+
+### Overriding Without `@override` (3.12+)
+
+In a 3.12+ project, every method that overrides a base-class method should carry `@typing.override`. Missing it means the day someone renames the parent's method, the child silently becomes an unrelated method instead of failing type-check. Enable `reportImplicitOverride = "error"` (pyright) or the mypy equivalent so the *absence* of `@override` is itself a type error.

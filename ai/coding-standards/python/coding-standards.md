@@ -151,6 +151,27 @@ async def advance_task(task_id: TaskId, db: Database, event_bus: EventBus) -> No
         await event_bus.publish("task.phase_changed", {"task_id": task_id, "phase": decision.next})
 ```
 
+### `match` for State Machines and Dispatch
+
+Use `match` when you're dispatching on the *shape* or *kind* of a value — state transitions, message handlers, AST walks. For simple equality checks an `if`/`elif` chain is fine; `match` earns its weight when patterns destructure or you need exhaustiveness.
+
+```python
+def transition(state: State, event: Event) -> State:
+    match (state, event):
+        case (Pending(), Start()):
+            return Running(started_at=event.at)
+        case (Running(), Complete(result=r)):
+            return Done(result=r)
+        case (Running(), Cancel()):
+            return Cancelled()
+        case (Done() | Cancelled(), _):
+            raise InvariantError(f"No transitions from terminal state {type(state).__name__}")
+        case _:
+            assert_never((state, event))
+```
+
+`assert_never` in the wildcard arm makes the state/event table a compile-time contract — adding a new state or event forces every transition table to be updated.
+
 ### Context Managers for Resources
 
 Anything that holds a resource — files, sockets, DB connections, locks, temp directories — uses `with` (sync) or `async with` (async). Never call `.close()` manually in code that could raise.
@@ -221,21 +242,108 @@ Reserve abstract base classes (`abc.ABC`) for shared *implementation*, not for p
 
 ### Generics
 
-Use `TypeVar` and PEP 695 generic syntax (3.12+) for generic functions and classes.
+On Python 3.12+, **PEP 695 generic syntax is the default.** Reach for legacy `TypeVar` only when the project must support 3.11.
 
 ```python
-# Python 3.12+
+# Good — 3.12+ default
 def first[T](items: list[T]) -> T | None:
     return items[0] if items else None
 
-# Pre-3.12
+class Repository[T]:
+    def get(self, id: str) -> T | None: ...
+
+# Fallback — pre-3.12 compatibility only
 from typing import TypeVar
 T = TypeVar("T")
 def first(items: list[T]) -> T | None:
     return items[0] if items else None
 ```
 
-`TypeVar` names are `PascalCase` and short for simple cases (`T`, `K`, `V`). Use descriptive names (`TInput`, `TOutput`) when a function has multiple type variables.
+Type-parameter names are `PascalCase` and short for simple cases (`T`, `K`, `V`). Use descriptive names (`TInput`, `TOutput`) when there are multiple parameters.
+
+### Exhaustiveness with `assert_never`
+
+Pair every discriminated union, enum, or `match` with `typing.assert_never` so adding a new variant becomes a *type-check* error everywhere it must be handled. This is the highest-leverage type-system pattern for evolvability — the checker points you at every site that needs updating when the union grows.
+
+```python
+from typing import assert_never
+
+def handle_event(event: TaskCreated | TaskUpdated | TaskDeleted) -> None:
+    match event:
+        case TaskCreated():
+            handle_created(event)
+        case TaskUpdated():
+            handle_updated(event)
+        case TaskDeleted():
+            handle_deleted(event)
+        case _:
+            assert_never(event)  # type error if a new variant is added
+```
+
+### `@override` for Inheritance Contracts (3.12+)
+
+Mark every method that overrides a base-class method with `@typing.override`. If the parent renames or removes the method, the child errors at type-check time instead of silently decoupling.
+
+```python
+from typing import override
+
+class JsonAdapter(Adapter):
+    @override
+    def serialize(self, value: object) -> bytes: ...
+```
+
+Enable the strict-checker setting (`reportImplicitOverride = "error"` in pyright, similar in mypy) so missing `@override` is itself a type error in projects on 3.12+.
+
+### `Self` for Fluent Builders and Factory Methods
+
+Use `typing.Self` (3.11+) for any method that returns "an instance of whatever class this is" — factory classmethods and fluent builders. Subclasses get the correct return type for free.
+
+```python
+from typing import Self
+
+@dataclass(frozen=True)
+class Task:
+    id: TaskId
+    priority: Priority
+
+    def with_priority(self, priority: Priority) -> Self:
+        return dataclasses.replace(self, priority=priority)
+
+    @classmethod
+    def from_dict(cls, data: dict[str, object]) -> Self:
+        return cls(...)
+```
+
+### `TypeIs` over `TypeGuard` (3.13+)
+
+For runtime narrowing, prefer `typing.TypeIs` over `TypeGuard`. `TypeIs` narrows in *both* branches (positive and negative); `TypeGuard` only narrows the positive branch — which is rarely what you want.
+
+```python
+from typing import TypeIs
+
+def is_task(value: object) -> TypeIs[Task]:
+    return isinstance(value, Task)
+```
+
+### Decorators: `ParamSpec` and `functools.wraps`
+
+Decorators that don't preserve the wrapped signature are bug factories — autocomplete dies, type checkers shrug. Always use `ParamSpec` for generic decorators, and always wrap with `functools.wraps`.
+
+```python
+from collections.abc import Callable
+from functools import wraps
+import logging
+
+def timed[**P, R](fn: Callable[P, R]) -> Callable[P, R]:
+    @wraps(fn)
+    def wrapper(*args: P.args, **kwargs: P.kwargs) -> R:
+        start = time.monotonic()
+        try:
+            return fn(*args, **kwargs)
+        finally:
+            logging.info("Call timed", extra={"fn": fn.__name__, "duration_ms": (time.monotonic() - start) * 1000})
+    return wrapper
+```
 
 ### Branded / Newtypes
 
@@ -254,20 +362,36 @@ session = SessionId("abc")
 get_task(session)  # type error
 ```
 
-### Schema-First (Pydantic)
+### Schema-First (Pydantic v2)
 
-For data crossing system boundaries (API requests, config files, external API responses), define a Pydantic model. The model is both validator and type — single source of truth.
+For data crossing system boundaries (API requests, config files, external API responses), define a Pydantic v2 model. The model is both validator and type — single source of truth.
 
 ```python
-from pydantic import BaseModel, Field
+from typing import Annotated
+from pydantic import BaseModel, Field, StringConstraints
+
+# Reusable constrained types — define once, compose everywhere
+PositiveInt = Annotated[int, Field(gt=0)]
+TaskName = Annotated[str, StringConstraints(min_length=1, max_length=80)]
 
 class SafetyConfig(BaseModel):
-    max_retries: int = Field(default=3, gt=0)
-    cost_limit_usd: float = Field(default=5.0, gt=0)
+    max_retries: PositiveInt = 3
+    cost_limit_usd: Annotated[float, Field(gt=0)] = 5.0
     model_config = {"frozen": True}  # immutable
 ```
 
-For internal data structures that don't cross a boundary, prefer `@dataclass(frozen=True, slots=True)` — lighter than Pydantic and faster.
+Prefer `Annotated[T, ...]` over keeping constraints on `Field(...)` defaults — the constraint travels with the type, is reusable across models, and replaces scattered `@field_validator` boilerplate.
+
+### Internal Data: dataclass vs attrs vs Pydantic
+
+Picking the right tool for internal types is a frequent source of confusion. The rule:
+
+- **Pydantic** — anything crossing a boundary (parse, validate, serialize). Pays for itself with validation and schema generation.
+- **`@dataclass(frozen=True, slots=True)`** — internal immutable values, zero deps preferred, no validation needed. The default for internal types.
+- **attrs** — internal values that need validators, converters, or `__slots__` features that dataclasses lack; or projects on Python < 3.10 where dataclass ergonomics are weaker.
+- **`TypedDict`** — when you're handed a `dict` shape from an untyped source and only need a typed view, not a class.
+
+Pick one tool for internal data and one for boundary data per project — and stay consistent. Mixing freely creates cognitive overhead with no payoff.
 
 ### Immutability by Default
 
@@ -651,7 +775,30 @@ The test: when you change a value, do you have to remember every other place it 
 
 ---
 
-## 12. Logging
+## 12. Caching
+
+Memoization is a sharp tool. Used wrong, it leaks memory or holds onto state that should be released.
+
+### Rules
+
+- **Never on instance methods.** `@functools.cache` and `@lru_cache` on a method hold a reference to `self` forever — the instance becomes uncollectable. Use a module-level function, or `cachetools` if you need per-instance caching. Ruff's `B019` enforces this.
+- **`@cache` only when the input domain is bounded.** Unbounded `@cache` is unbounded memory growth. For unbounded domains, use `@lru_cache(maxsize=N)` with a deliberate cap.
+- **Pure functions only.** Caching a function that does I/O caches a *moment in time* — stale results downstream. If the function has side effects, caching makes the bug worse.
+
+```python
+# Bad — leaks every Client instance forever
+class Client:
+    @lru_cache
+    def fetch(self, key: str) -> bytes: ...
+
+# Good — module-level cache, bounded
+@lru_cache(maxsize=1024)
+def lookup_country_code(alpha2: str) -> CountryCode: ...
+```
+
+---
+
+## 13. Logging
 
 ### Philosophy
 
@@ -686,7 +833,7 @@ logger.info("Task dispatched", extra={"task_id": task_id, "phase": phase, "prior
 
 ---
 
-## 13. Async Discipline
+## 14. Async Discipline
 
 A long-running service cannot tolerate loose async hygiene. `asyncio` is unforgiving — unawaited coroutines warn but don't fail loudly, and lost task references vanish silently.
 
@@ -731,6 +878,36 @@ results = await asyncio.gather(*(bounded(t) for t in all_tasks))
 results = await asyncio.gather(*(process_task(t) for t in all_tasks))
 ```
 
+### Timeouts: `asyncio.timeout()` over `wait_for()`
+
+On 3.11+, use `asyncio.timeout()` (context manager) — not `asyncio.wait_for()` (legacy). `timeout()` composes with `TaskGroup`, wraps blocks rather than single awaits, and avoids spawning an extra wrapper task.
+
+```python
+# Good — modern, composable
+async with asyncio.timeout(5):
+    result = await fetch(url)
+
+# Legacy — avoid in new code
+result = await asyncio.wait_for(fetch(url), timeout=5)
+```
+
+### Request-Scoped State: `contextvars.ContextVar`
+
+For per-request / per-task ambient state in async code (request ID, trace ID, current user), use `contextvars.ContextVar`. `threading.local` leaks across `asyncio` tasks; globals are worse. ContextVar is the only correct mechanism.
+
+```python
+from contextvars import ContextVar
+
+request_id: ContextVar[str] = ContextVar("request_id")
+
+async def handle_request(req: Request) -> Response:
+    token = request_id.set(req.id)
+    try:
+        return await process(req)
+    finally:
+        request_id.reset(token)  # always reset via the token
+```
+
 ### Cancellation and Cleanup
 
 Long-running operations must be cancellable. Trust `asyncio.CancelledError` to propagate — don't catch it unless you genuinely need to release a resource, and then re-raise.
@@ -756,7 +933,7 @@ Call `asyncio.run()` once, at the program's `main()`. Don't nest `asyncio.run()`
 
 ---
 
-## 14. Observability & Tracing
+## 15. Observability & Tracing
 
 Logging captures *reasoning*. Tracing captures *structure* — the shape of an operation, its duration, its nesting, and its outcome. Together they make any behavior diagnosable after the fact.
 
@@ -786,7 +963,7 @@ Non-obvious choices (retry vs. fail, plugin selection, safety verdicts) deserve 
 
 ---
 
-## 15. Graceful Degradation
+## 16. Graceful Degradation
 
 A long-running service must survive any single component failure. A dependency crash, a temporary DB lock, an external API timeout — none of these should take down the system.
 
