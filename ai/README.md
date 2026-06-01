@@ -19,7 +19,8 @@ ai/
 │   └── philosophies.md     # Shared foundations all personas inherit from
 │
 ├── claude-code/            # Claude Code specific assets
-│   └── skills/             # Skills for extending Claude Code workflows
+│   ├── skills/             # Skills for extending Claude Code workflows
+│   └── tools-analysis.md   # Guide to Skills vs Commands vs Agents
 │
 ├── context-engineering/    # Versioned standalone prompts
 │   └── prompts/
