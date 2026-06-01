@@ -49,7 +49,7 @@ ai/
 
 | Toolkit | Purpose | Entry Point |
 |---------|---------|-------------|
-| [writing](toolkits/writing/) | Blog, book, docs creation pipeline | `toolkits/writing/readme.md` |
+| [writing](toolkits/writing/) | Blog, book, docs creation pipeline | `toolkits/writing/README.md` |
 | [research](toolkits/research/) | Multi-agent research and synthesis | `toolkits/research/README.md` |
 | [research-doc-refiner](toolkits/research-doc-refiner/) | Refine research into polished documents | `toolkits/research-doc-refiner/README.md` |
 
