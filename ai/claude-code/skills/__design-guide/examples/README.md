@@ -12,7 +12,7 @@ Skills in this repository demonstrating different patterns:
 |-------|------------|---------|----------------|
 | [commit](../../commit/skill.md) | Medium | Git Operations | User approval gate, HEREDOC, multi-phase workflow |
 | [handoff](../../handoff/skill.md) | Simple | Session Memory | Idempotent setup, memory files, starter prompts |
-| [jira](../../jira/skill.md) | Complex | API Integration | Data caching, env vars, JQL queries, multiple operations |
+| [jira-ticket-manager](../../jira-ticket-manager/skill.md) | Complex | API Integration | Data caching, env vars, JQL queries, multiple operations |
 | [glab-mr-manager](../../glab-mr-manager/skill.md) | Complex | Multi-Operation | Full lifecycle management, CLI wrapper, 15+ operations |
 
 ---
@@ -32,7 +32,7 @@ Skills in this repository demonstrating different patterns:
   - HEREDOC for multi-line messages
 
 ### Complex Skills
-- **[jira](../../jira/skill.md)** - Jira REST API integration
+- **[jira-ticket-manager](../../jira-ticket-manager/skill.md)** - Jira REST API integration
   - 7+ operations (get, search, create, update, comment, transition)
   - Data caching to files
   - Environment variable authentication
@@ -120,7 +120,7 @@ Detailed breakdowns of selected skills:
 
 ### Intermediate
 1. Read [commit](../../commit/skill.md) - approval gate pattern
-2. Read [jira](../../jira/skill.md) - API integration pattern
+2. Read [jira-ticket-manager](../../jira-ticket-manager/skill.md) - API integration pattern
 3. Try creating an API skill from [templates/api-based.md](../templates/api-based.md)
 
 ### Advanced
@@ -142,7 +142,7 @@ Detailed breakdowns of selected skills:
 - Append-only updates to memory files
 - Generate starter prompts for next session
 
-### From `jira/`
+### From `jira-ticket-manager/`
 - Source shell profile before using env vars
 - Save API responses to files, then parse
 - Include error handling table
