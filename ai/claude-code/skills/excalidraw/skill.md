@@ -21,7 +21,7 @@ Confirm these quickly if the user hasn't already specified them:
 - **Orientation**: left-to-right (LR) or top-to-bottom (TB)
 - **Output path**: where to save (default `./diagram.excalidraw`)
 
-Skip the confirmation when the user has given an unambiguous spec (e.g. "3 boxes: User → Alfie → MCP Server, save to /tmp/test.excalidraw"). Don't ask for the sake of asking.
+Skip the confirmation when the user has given an unambiguous spec (e.g. "3 boxes: User → Agent → MCP Server, save to /tmp/test.excalidraw"). Don't ask for the sake of asking.
 
 ### 2. Plan the layout
 Pick a template based on node count and relationships:
@@ -33,7 +33,7 @@ Pick a template based on node count and relationships:
 | Fan-out | One source → multiple targets | 1 source, 2–6 targets |
 
 ### 3. Generate the JSON
-Use the Format Reference and Arrow Binding sections below, with coordinates from the chosen template. When in doubt, copy the structure from [`examples/user-alfie-mcp.excalidraw`](examples/user-alfie-mcp.excalidraw) and modify — it's a complete working file.
+Use the Format Reference and Arrow Binding sections below, with coordinates from the chosen template. When in doubt, copy the structure from [`examples/user-agent-mcp.excalidraw`](examples/user-agent-mcp.excalidraw) and modify — it's a complete working file.
 
 ### 4. Output
 After writing, tell the user:
@@ -216,7 +216,7 @@ Defaults for all templates: `strokeWidth: 2`, `fontSize: 20`, `fontFamily: 1`, b
 
 ## Worked Example
 
-[`examples/user-alfie-mcp.excalidraw`](examples/user-alfie-mcp.excalidraw) is a complete 3-box horizontal flow: User → Alfie → MCP Server. Use it as the reference implementation — copy and modify labels/positions for similar flows.
+[`examples/user-agent-mcp.excalidraw`](examples/user-agent-mcp.excalidraw) is a complete 3-box horizontal flow: User → Agent → MCP Server. Use it as the reference implementation — copy and modify labels/positions for similar flows.
 
 ---
 

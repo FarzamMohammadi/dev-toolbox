@@ -167,8 +167,8 @@ Not all numbers earn their place. Numbers fall into two camps:
 - "X hours of focused work" — hours don't equal outcomes
 
 **Signal metrics** make a specific claim about an outcome, coverage, composition, or constraint. These earn their place:
-- **Outcome:** "raised perfect-score rate from 45% to 88%" — measures impact
-- **Coverage:** "3,360 tests spanning 14 attack types" — describes the surface tested
+- **Outcome:** "raised perfect-score rate from 52% to 91%" — measures impact
+- **Coverage:** "1,800 tests spanning 12 attack types" — describes the surface tested
 - **Composition:** "test code outweighs source" — describes a discipline choice, not volume
 - **Constraint:** "max 3 self-review iterations before PR opens" — describes system behavior
 
@@ -190,17 +190,17 @@ Words that don't earn their place fall into five recognizable categories. When p
 
 **1. Implied by surrounding context.** The surrounding text already establishes the concept, so the word is redundant.
 - "defense-in-depth LLM prompt injection" → drop "LLM" (the AI context is already established)
-- "Google Drive and Notion ingestion through Abacus.AI vector retrieval" → "ingestion" is implied by the pipeline structure ("from X through Y")
+- "PDF and web ingestion through a managed vector retrieval service" → "ingestion" is implied by the pipeline structure ("from X through Y")
 - "the platform's context layer" (inside a section about a specific platform) → drop "the platform's"
 - "XML input delimiting" → drop "input" (XML delimiting an LLM input is what XML delimiting means)
 
 **2. Implied by the metric itself.** A concrete number proves the thing happened, making the technical specifier redundant.
-- "content-based deduplication (933→438 documents)" → drop "content-based" (the 933→438 metric is the proof; the technical specifier adds nothing a reader cares about)
-- "systematic prompt optimization (V1→V4)" → drop "systematic" (V1→V4 already shows the systematic iteration)
+- "content-based deduplication (1,200→540 documents)" → drop "content-based" (the 1,200→540 metric is the proof; the technical specifier adds nothing a reader cares about)
+- "systematic prompt optimization (v1→v3)" → drop "systematic" (v1→v3 already shows the systematic iteration)
 - The general rule: when a metric is doing the heavy lifting, the adjective in front of the noun becomes decoration.
 
 **3. Filler adjectives that pose as specificity.** Words that sound like they add precision but actually add nothing. These are the highest-payoff cuts because they look meaningful at a glance but disappear without consequence.
-- "granular context-measurement infrastructure" → drop "granular" (the rest of the sentence describes the granularity in detail)
+- "granular performance-monitoring instrumentation" → drop "granular" (the rest of the sentence describes the granularity in detail)
 - "robust validation" → drop "robust" (every validation claims to be robust)
 - "comprehensive testing" → drop "comprehensive"
 - "scalable architecture" → drop "scalable" unless the bullet then proves it
@@ -212,7 +212,7 @@ Words that don't earn their place fall into five recognizable categories. When p
 - "via a single SQL UNION retriever" → drop "single" (the article "a" already implies singularity)
 
 **5. Implied by field/genre defaults.** Words that describe the default state in the target reading context.
-- "3,360 automated tests" on an engineering resume → drop "automated" (manual testing wouldn't be reported as a count like this)
+- "1,800 automated tests" on an engineering resume → drop "automated" (manual testing wouldn't be reported as a count like this)
 - "successful project delivery" → drop "successful" (you wouldn't list a failed delivery)
 - "modern web framework" in a current-year resume → drop "modern" (it's the default expectation)
 
@@ -237,7 +237,7 @@ Batch all trims together with explanations. The user approves as a set:
 
 **Prompt injection (save ~3 words):**
 - "defense-in-depth LLM prompt injection" → "defense-in-depth prompt injection" — LLM is contextually implied
-- "3,360 automated tests" → "3,360 tests" — automated is implied
+- "1,800 automated tests" → "1,800 tests" — automated is implied
 
 Want me to apply all of these?
 ```
@@ -266,7 +266,7 @@ This is the most important rule. Users have deliberate reasons for their word ch
 - Every word must earn its place. If removing a word doesn't lose signal, remove it.
 - Each bullet must be self-contained (standalone test).
 - Summaries stay at altitude; bullets carry the specifics.
-- Push for concrete metrics when the user has them (45%→88%, 933→438 documents, 3,360 tests). Numbers are the most scannable, memorable, and credible elements on a resume.
+- Push for concrete metrics when the user has them (52%→91%, 1,200→540 documents, 1,800 tests). Numbers are the most scannable, memorable, and credible elements on a resume.
 - Never propose changes to content the user has explicitly locked.
 
 ### Interaction Style

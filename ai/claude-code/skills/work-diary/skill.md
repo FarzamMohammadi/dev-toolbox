@@ -121,11 +121,11 @@ This is the story, not a list of commits.]
 
 | Write This (Story-Level) | Not This (Implementation-Level) |
 |---|---|
-| "Built server-side validation because AI agents kept fabricating IDs despite being told not to" | "Added `findInvalidId` helper in `utils/id-validation.ts` that detects fabricated IDs" |
-| "The auth flow had 5 layers, and I had to understand all of them before the write tool could mirror it correctly" | "`ensureUserCanUpdateRequestStatus` validates trusted callers, self-cancel, internal users, PTO managers, and company admins" |
-| "Improved defense rate from 59% to 92% through layered prompt hardening" | "Before XML: 59%. After XML: 64%. After Pydantic: 92%" |
-| "Used AsyncLocalStorage for per-request isolation after discovering the global singleton leaked auth between concurrent sessions" | "Request context via `AsyncLocalStorage` — each MCP message gets its own store" |
-| "Discovered the model was calling tools in parallel and fabricating IDs because the list result hadn't arrived yet" | "Docker logs showed Gemini calling list and update in the same parallel batch" |
+| "Built server-side validation because AI agents kept fabricating IDs despite being told not to" | "Added a `validateId()` helper in `utils/validation.ts` that detects malformed IDs" |
+| "The auth flow had 5 layers, and I had to understand all of them before the write tool could mirror it correctly" | "`checkUpdatePermission()` validates service callers, self-service, internal users, team leads, and admins" |
+| "Improved defense rate from 61% to 94% through layered prompt hardening" | "Before delimiting: 61%. After delimiting: 66%. After schema validation: 94%" |
+| "Used per-request context isolation after discovering the global singleton leaked auth between concurrent sessions" | "Request context via async-local storage — each message gets its own isolated store" |
+| "Discovered the model was calling tools in parallel and fabricating IDs because the list result hadn't arrived yet" | "Logs showed the model calling list and update in the same parallel batch" |
 
 **The test:** Would this detail mean anything to someone (including future you) who doesn't have the codebase open? If yes, keep it. If it only makes sense with the code in front of you, elevate it to the story level or cut it.
 
@@ -133,7 +133,7 @@ This is the story, not a list of commits.]
 
 Use judgment, not a blanket filter.
 
-**Keep:** Product names that are publicly known (Alfie, Athena), technologies and frameworks used, the nature of the problem and solution, team dynamics and collaboration moments, metrics and outcomes.
+**Keep:** Product names (use your judgment on what's genuinely public), technologies and frameworks used, the nature of the problem and solution, team dynamics and collaboration moments, metrics and outcomes.
 
 **Omit:** Credentials, keys, secrets. Customer/client data. Internal DB schemas and auth flow internals. Proprietary business logic that's genuinely confidential.
 

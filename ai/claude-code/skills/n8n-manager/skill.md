@@ -103,7 +103,7 @@ jq '{
 ```
 Workflow WORKFLOW_ID: Name Here
 Active: true | Nodes: 12 | Updated: 2024-06-15
-Tags: production, athena
+Tags: production, customer-sync
 Node types: n8n-nodes-base.webhook, n8n-nodes-base.httpRequest, ...
 
 Full JSON saved to .claude/skills/n8n-manager/data/workflow-WORKFLOW_ID.json

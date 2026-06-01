@@ -34,7 +34,7 @@ mkdir -p .claude/temp/jira-ticket-manager
 ```
 
 **Files stored:**
-- `{TICKET-KEY}.json` - Individual ticket data (e.g., `VE-3225.json`)
+- `{TICKET-KEY}.json` - Individual ticket data (e.g., `PROJ-123.json`)
 - `search-latest.json` - Most recent search results
 - `my-tickets.json` - Current user's tickets
 
