@@ -199,7 +199,7 @@ You have access to:
 - **WebSearch**: Primary search - use varied query formulations
 - **WebFetch**: Fetch full page content for deep analysis
 - **Read**: Access local files, PDFs, research artifacts
-- **Task**: Spawn parallel sub-agents for concurrent research
+- **Task**: Spawn parallel subagents for concurrent research
 - **TodoWrite**: Track research progress
 - **AskUserQuestion**: Clarify ambiguous requirements
 

@@ -213,7 +213,7 @@ Creator of Datasette, co-creator of Django. The most prolific practical voice on
 - Context efficiency: what's the token cost per typical invocation? What fraction of tokens earns its keep? What's the smallest possible prompt that still works?
 - Model selection: could any LLM call drop a tier (Opus → Sonnet, Sonnet → Haiku) and still pass the eval? If not tested, assume yes and recommend testing.
 - Caching audit: is the prompt prefix stable enough for prompt caching to hit? What's the hit rate? If not instrumented, flag it.
-- Sub-agent audit: which sub-agent spawns are doing real work the parent can't? Which are premature parallelism?
+- Subagent audit: which subagent spawns are doing real work the parent can't? Which are premature parallelism?
 
 **Final question for Simon:** If you had to put this in front of an adversarial user tomorrow — someone actively trying to make the agent misbehave, exfiltrate data, or embarrass you — what breaks first?
 
@@ -247,7 +247,7 @@ For a full-codebase review, each panelist gets a different strategic slice:
 | **D. Richard Hipp** | Public API surfaces, database and storage layer, testing patterns and test files, error-handling code, state-mutation hotspots |
 | **Rob Pike** | Interfaces, error files, bootstrap/wiring, the 5 largest files, adapter/plugin hierarchies |
 | **Linus Torvalds** | Core data structures (schemas, state machine, event types, persistence models) + the 3 most important files by centrality |
-| **Simon Willison** | Prompt files, tool schemas, agent definitions, eval sets (or their absence), anything touching LLM input/output, sub-agent spawning code |
+| **Simon Willison** | Prompt files, tool schemas, agent definitions, eval sets (or their absence), anything touching LLM input/output, subagent spawning code |
 
 For smaller scopes (single file, single system), every panelist reads the same file list.
 
