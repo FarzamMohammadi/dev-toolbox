@@ -15,7 +15,7 @@ from "what are we building?" to "is it ready to ship?"
 | **R** — Requirements | [`rrpir/requirements-gathering/`](rrpir/requirements-gathering/) | Extract intent, constraints, edge cases through sequential questioning |
 | **R** — Research | [`rrpir/research/`](rrpir/research/) | Investigate codebases with facts-before-opinions discipline |
 | **P** — Plan | [`rrpir/create-plan/`](rrpir/create-plan/) | Design decisions + tasks, stakes-calibrated, stress-tested by expert panel |
-| **I** — Implement | *(use Claude Code directly, then `/commit`)* | Execute the plan, commit with `/commit` |
+| **I** — Implement | [`rrpir/implement/`](rrpir/implement/) | Orchestrate the build via agent workflows, then verify, hunt gaps, and close them as co-owner |
 | **R** — Review | [`rrpir/review/`](rrpir/review/) | Automated checks, coverage analysis, bug verification, manual testing prep |
 
 **Supporting skills used within RRPIR:**
@@ -23,8 +23,9 @@ from "what are we building?" to "is it ready to ship?"
 | Skill | Used by | Purpose |
 |-------|---------|---------|
 | [`expert-panel-review/`](expert-panel-review/) | `/create-plan` | Multi-perspective critique from independent panelists |
+| [`workflow-orchestrator/`](workflow-orchestrator/) | `/implement` | Orchestrate execution as focused parallel/sequential agent workflows |
 | [`review-pr/`](review-pr/) | `/review` | Bug hunting in branch diffs — races, logic errors, security holes |
-| [`commit/`](commit/) | Implement phase | Git commits with smart grouping and clear descriptions |
+| [`commit/`](commit/) | `/implement` | Git commits with smart grouping and clear descriptions |
 
 Artifacts are stored in `.claude/temp/<skill_name>/` — project-local, grouped per skill,
 gitignore-friendly.
