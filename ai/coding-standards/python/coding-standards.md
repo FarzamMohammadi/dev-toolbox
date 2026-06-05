@@ -684,7 +684,7 @@ tests/core/task_engine/conftest.py
 
 ### Philosophy
 
-Minimal. A comment earns its place only when the code cannot express the WHY — hidden constraints, non-obvious workarounds, "we tried X and it broke because Y."
+Cross-cutting — see [`../philosophy.md`](../philosophy.md) → **Comments**. Below is Python-specific mechanics only.
 
 ### Docstrings
 
@@ -1087,19 +1087,4 @@ When the failed dependency returns, the system resumes full capability without m
 
 ## Philosophical Foundations
 
-These are the mental models behind the standards. Internalize them before coding — they guide decisions the rules don't cover.
-
-- **Newspaper metaphor** (Uncle Bob) — A file reads top-to-bottom: headline first, details last. Caller above callee. The reader should never scroll up to understand what they just read.
-- **Deep modules** (Ousterhout) — A good module does a lot behind a simple interface. Don't split for the sake of splitting — splitting multiplies interfaces and forces readers to bounce. Pragmatic function length follows from this.
-- **Simple over easy** (Hickey) — Easy means familiar. Simple means fewer entanglements. Choose simple — even when it requires learning something new. Avoid complecting (braiding together) separate concerns.
-- **Functional Core / Imperative Shell** (Bernhardt) — Decisions are pure functions. Effects are thin wrappers. This makes the hard parts trivially testable and the effectful parts trivially simple.
-- **Parse, don't validate** (King) — Transform unstructured input into typed, branded values at the boundary. Once parsed, the type system guarantees correctness — no runtime checks needed downstream.
-- **Duplication over wrong abstraction** (Metz) — Three similar functions are better than one premature abstraction. Wait until the pattern is clear. The cost of the wrong abstraction compounds; duplication is cheap to fix later.
-- **Semantic compression** (Muratori) — Don't design abstractions upfront. Write the code, see the patterns emerge, then compress. Abstraction is the last step, not the first.
-- **Make the change easy, then make the easy change** (Beck) — Refactor first to make the feature trivial to add, then add it. Two small steps beat one complex step.
-- **Code as narrative** (Knuth) — Code is read far more than written. Ordering, naming, and structure serve the reader's comprehension, not the writer's convenience.
-- **Ubiquitous language** (DDD) — Names mirror the business domain. `TaskEngine`, `PipelineStage`, `TriggerEvent` — not `ItemProcessor`, `StepExecutor`, `IncomingData`.
-- **Do one thing well, compose** (Unix) — Small, focused modules with standard interfaces. Composition over inheritance. Pipelines over monoliths.
-- **Proximity and chunking** (Gestalt) — Related code stays together. Visual grouping (blank lines, sections) guides the eye. The reader's brain chunks what's close — use that.
-- **Explicit is better than implicit** (Zen of Python) — Be obvious. No magic. No clever metaclasses where a plain function works. If a reader has to guess, the code is unclear.
-- **Errors should never pass silently** (Zen of Python) — Catch what you can handle, let the rest bubble. Bare `except:` is a betrayal of this principle.
+Cross-cutting and shared across languages — see [`../philosophy.md`](../philosophy.md) → **Philosophical Foundations**.

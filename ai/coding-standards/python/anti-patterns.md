@@ -349,6 +349,29 @@ Side benefit: free functions are testable without mocking an instance. Tests sto
 
 The Python-flavored fix when you can't move it (e.g. you want to keep the namespace): `@staticmethod`. But ask first whether it should live on the class at all — usually the answer is no, and a module-level function is cleaner.
 
+### Transliterating Another Language's Idiom
+
+Porting a construct wholesale from the language you came from instead of using Python's natural form. The code works, but it reads as foreign, and a fluent Python reader pays a tax decoding why it's shaped that way.
+
+```python
+# Bad — a C#/Java "static class": a class that only ever holds stateless helpers
+class StringUtils:
+    @staticmethod
+    def slugify(value: str) -> str: ...
+
+    @staticmethod
+    def truncate(value: str, limit: int) -> str: ...
+
+# Good — in Python the namespace is the module; callers import the functions
+# string_utils.py
+def slugify(value: str) -> str: ...
+
+
+def truncate(value: str, limit: int) -> str: ...
+```
+
+The same tax shows up as a class of `@classmethod`s standing in for a static holder (use a module, or a frozen `@dataclass` when there is genuinely state), a sentinel object where `T | None` belongs, or hand-written getters/setters where a plain attribute or `@property` is idiomatic. The test: would someone who only ever wrote Python recognize it as natural? See [`../philosophy.md`](../philosophy.md) → **Idiom Over Transliteration**.
+
 ### Class Docstrings That Enumerate Fields
 
 ```python

@@ -247,7 +247,8 @@ The dial: the more judgment the task requires, the more this guide matters. The 
 ## Reading order for any session
 
 1. **This file** — `refactor-guide.md`.
-2. **The relevant language standards** — `<language>/coding-standards.md` and `<language>/anti-patterns.md`.
-3. **The project's own context** — `CLAUDE.md`, `README.md`, recent commits.
+2. **The cross-cutting values** — `philosophy.md`.
+3. **The relevant language standards** — `<language>/coding-standards.md` and `<language>/anti-patterns.md`.
+4. **The project's own context** — `CLAUDE.md`, `README.md`, recent commits.
 
 Then look at the code.
