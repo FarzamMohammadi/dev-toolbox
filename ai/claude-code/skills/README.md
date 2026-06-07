@@ -34,6 +34,7 @@ gitignore-friendly.
 
 | Path | Purpose |
 |------|---------|
+| `demo-video-creator/` | Produce a deterministic-yet-REAL automated product-demo video of a software system — real surfaces, true 4K/8K capture (never `recordVideo`), Remotion polish, orchestrate-and-verify. Fake only the LLM. Multi-file: `references/` + reusable `scripts/` |
 | `excalidraw/` | Generate `.excalidraw` JSON diagrams from prompts |
 | `finalize-changes/` | Holistic review of completed work to elevate quality |
 | `glab-mr-manager/` | GitLab MR lifecycle management |
