@@ -1,6 +1,7 @@
 ---
 name: n8n-manager
 description: Manage n8n workflows via REST API — list, fetch, update, activate, and debug executions. Use when user mentions n8n, workflows, automations, or workflow executions.
+model: sonnet
 allowed-tools: Bash, Read, Write
 argument-hint: [operation] [workflow-id] [--flags]
 ---

@@ -1,6 +1,7 @@
 ---
 name: jira-ticket-manager
 description: Manage Jira tickets - create, search, update, comment, and transition issues
+model: sonnet
 ---
 
 # Jira Ticket Manager Skill Instructions

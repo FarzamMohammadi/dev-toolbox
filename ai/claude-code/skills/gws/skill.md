@@ -1,6 +1,7 @@
 ---
 name: gws
 description: Unified interface for Google Workspace via the gws CLI. Send Gmail, create/read/append Google Docs and Sheets, upload and share Google Drive files, and convert markdown to formatted Docs. Use when the user mentions Gmail, Google Docs, Google Sheets, Google Drive, or Google Workspace tasks.
+model: sonnet
 ---
 
 # Google Workspace Skill

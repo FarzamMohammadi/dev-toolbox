@@ -1,6 +1,7 @@
 ---
 name: glab-mr-manager
 description: Manage GitLab Merge Requests - create, review, approve, merge, and full MR lifecycle
+model: sonnet
 ---
 
 # GitLab MR Manager Skill Instructions
