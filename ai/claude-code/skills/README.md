@@ -34,6 +34,7 @@ gitignore-friendly.
 
 | Path | Purpose |
 |------|---------|
+| `create-pr-description/` | Author a reviewer-ready PR/MR description from the current branch + session context, saved to `.claude/temp/`. Carries the *why* the diff can't — root cause, decisions, scope, tickets, multi-PR coordination. Structure emerges from the change; composes with `glab-mr-manager`/`gh` for posting |
 | `demo-video-creator/` | Produce a deterministic-yet-REAL automated product-demo video of a software system — real surfaces, true 4K/8K capture (never `recordVideo`), Remotion polish, orchestrate-and-verify. Fake only the LLM. Multi-file: `references/` + reusable `scripts/` |
 | `excalidraw/` | Generate `.excalidraw` JSON diagrams from prompts |
 | `finalize-changes/` | Holistic review of completed work to elevate quality |
