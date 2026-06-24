@@ -98,7 +98,7 @@ curl -s -u "$JIRA_USER:$JIRA_TOKEN" -G \
   --data-urlencode 'jql=project = PROJ AND status = Open' \
   --data-urlencode 'maxResults=20' \
   --data-urlencode 'fields=key,summary,status,assignee,priority' \
-  "$JIRA_URL/rest/api/2/search" -o .claude/temp/jira-ticket-manager/search-latest.json
+  "$JIRA_URL/rest/api/3/search/jql" -o .claude/temp/jira-ticket-manager/search-latest.json
 ```
 
 **Step 2: Parse**
@@ -116,7 +116,7 @@ curl -s -u "$JIRA_USER:$JIRA_TOKEN" -G \
   --data-urlencode 'jql=assignee = currentUser() AND status != Done ORDER BY updated DESC' \
   --data-urlencode 'maxResults=20' \
   --data-urlencode 'fields=key,summary,status,priority,updated' \
-  "$JIRA_URL/rest/api/2/search" -o .claude/temp/jira-ticket-manager/my-tickets.json
+  "$JIRA_URL/rest/api/3/search/jql" -o .claude/temp/jira-ticket-manager/my-tickets.json
 ```
 
 **Step 2: Parse**
