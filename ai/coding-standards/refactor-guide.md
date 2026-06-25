@@ -107,6 +107,44 @@ Three similar lines is better than a premature abstraction. Don't extract a help
 
 ---
 
+## Separate the signal from the noise
+
+Most functions have one load-bearing line — the `yield`, the `return`, the one real effect — surrounded by bookkeeping: logging, metrics, buffering, capture. When the bookkeeping drowns the main line, the reader can't see what the function is *for*. The move: **extract the noise into named, self-gating helpers, leaving the core as pure intent.**
+
+"Self-gating" is the key: each helper checks its own applicability and no-ops otherwise, so the call site carries no `if` clutter.
+
+```python
+# Before — the central action (yield) is buried in diagnostics
+for event in stream:
+    if isinstance(event, OrderPlaced):
+        logger.info(f"Order placed: {event.order_id}")
+        if event.order_id in priority_orders:
+            ...log priority handling...
+    if isinstance(event, OrderShipped) and needs_audit(event):
+        ...buffer the shipment for the audit log...
+    yield event
+
+# After — the loop reads as "log, capture, yield"; the noise lives in named helpers
+for event in stream:
+    _log_order_event(event, priority_orders)   # no-ops unless it's an order event
+    audit.capture(event)                        # no-ops unless the event needs auditing
+    yield event
+```
+
+Two companions to the same goal of "the main thing reads clearly":
+
+- **State-sharing bookkeeping → a small object, not out-params.** When the noise carries state across call sites (something captured in one place, read in another), wrap it in a tiny object that *owns* the state (`audit.capture(...)` / `audit.flush(...)`). Don't thread a mutable dict through helper params — that's an out-param, and mutating a caller's argument is the smell `coding-standards.md` warns against.
+- **Compose the result from named pieces; gate variation in one place.** Build a value from self-describing parts so construction reads declaratively: `pipeline = [*core_stages(config), *optional_stages(config)]`. And when behavior is conditional, start from an empty baseline and *add* — the empty case IS the "off" state, so no `else` is needed and the on/off distinction lives in exactly one spot:
+
+  ```python
+  middlewares, error_handlers = [], []
+  if debug_mode:          # the whole on/off decision, in one place
+      middlewares.append(profiler())
+      error_handlers.append(verbose_reporter())
+  ```
+
+The test for all three: can a reader see the function's *point* — and the one place behavior forks — without wading through the plumbing?
+
 ## Encode contracts in code, not comments
 
 If a comment says *"every function below does X,"* there's almost always a way to make X true *by construction* — a decorator, a base class, a type. The contract becomes the code; the comment becomes redundant; future-you can't forget it because the convention enforces itself.

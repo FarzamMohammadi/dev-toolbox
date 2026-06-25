@@ -28,6 +28,7 @@ Doesn't:
 - Explains something meaningful only to "us, right now, in this conversation."
 - Speculates about future requirements ("kept this way so we can add siblings later").
 - Names the ticket or PR that introduced the code.
+- **Invents a justification the code doesn't need, or states cause and effect backwards.** A made-up rationale is worse than no comment — it misleads. For example, `# the email channel is enabled, so it's added here` reverses cause and effect — the channel *becomes* enabled *because* it's added to the list. The honest version states the line's actual effect: `# only channels added here are enabled`. If an effect isn't obvious, say plainly what the line *does* or *enables*; never reverse-engineer a story to make it sound intentional. A wrong comment costs more than a missing one.
 
 ```text
 # Bad — narrates the what

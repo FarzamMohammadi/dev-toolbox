@@ -251,9 +251,47 @@ class Task:
 def process(task: Task) -> ProcessResult: ...
 ```
 
+### Terse Loop & Binding Variables
+
+Single- or double-letter loop variables (`o`, `inv`, `e`, or `i` for a domain item) force the reader to re-derive what the variable holds every time it appears. "It's a small scope" is not an excuse — name the iteration variable for the singular of the collection.
+
+```python
+# Bad
+for o in orders: ...
+for inv in invoices: ...
+async for e in stream(source): yield e
+results = [r for r in fetch()]
+
+# Good
+for order in orders: ...
+for invoice in invoices: ...
+async for event in stream(source): yield event
+results = [result for result in fetch()]
+```
+
+The only exceptions: a deliberately-unused binding (`_`), and conventional `i`/`j` for a pure numeric `range()` with no domain meaning. See [`coding-standards.md`](coding-standards.md) → **Naming**.
+
 ### `*args, **kwargs` as Default
 
 Variadic arguments are powerful and almost always wrong. They erase the type signature — readers and tools can't see what's accepted. Use explicit parameters unless you're genuinely writing a passthrough wrapper or a true variadic function (`max`, `print`).
+
+### Building a kwargs dict to splat into a constructor/call
+
+Assembling arguments in a `dict` and `**`-splatting them — usually to make one argument conditional — throws away type checking. The checker can't validate `**kwargs` against the signature, so a wrong or unsupported key only blows up at runtime. Pass arguments explicitly; gate the optional one.
+
+```python
+# Bad — type checking is blind to this; an unsupported key fails only at runtime
+client_kwargs = {"base_url": url, "timeout": 30, "retries": 3}
+if use_cache:
+    client_kwargs["cache"] = cache
+client = HttpClient(**client_kwargs)
+
+# Good — explicit call, every arg checked; the conditional value is computed, not the kwarg
+cache = build_cache() if use_cache else None
+client = HttpClient(base_url=url, timeout=30, retries=3, cache=cache)
+```
+
+If a kwarg must be *omitted* (not just empty) on some versions/paths, that's a real case for a small conditional `**({"k": v} if cond else {})` — but reach for it only when omission and "empty value" genuinely differ. Default to the explicit call.
 
 ### Monkey-Patching
 
