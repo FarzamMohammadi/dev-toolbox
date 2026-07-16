@@ -44,6 +44,7 @@ gitignore-friendly.
 | `improve-skill/` | Reflect on a skill's performance and iterate on improvements |
 | `jira-ticket-manager/` | Jira ticket management via REST API |
 | `literary-editor/` | Transform drafts into polished English |
+| `md-to-confluence/` | Upload a `.md` file to a Confluence Cloud page — converts to storage format, renders mermaid diagrams to attachments, adds a TOC. Tables/diagrams render without copy-paste or wording changes. Bundles `convert.py` + `publish.py`; reads Confluence creds from env vars |
 | `modularize-document/` | Transform monolithic markdown into modular index + detail files |
 | `n8n-manager/` | Manage n8n workflows via REST API — list, fetch, update, activate, debug |
 | `refactor-code/` | Review git diffs against refactoring principles |
