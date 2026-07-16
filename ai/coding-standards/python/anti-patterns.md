@@ -49,6 +49,35 @@ Related smells from this same instinct:
 - Nested ternaries (`a if c1 else b if c2 else c`)
 - Reaching for a "clever" form to silence a lint rule (e.g. dict-comprehension → `dict.fromkeys` for `C420`) when the obvious form is what a reader would expect — leave the obvious form, add a `# noqa` if needed, or restructure honestly.
 
+A comprehension that stacks multiple `for`/`if` clauses is the same instinct in loop form. It reads worse than a named helper with an explicit, typed loop — and the helper gets a name and a return type the comprehension can't carry:
+
+```python
+# Bad — two `for`s and an `if` packed into one comprehension
+ids = [item.id for order in orders for item in order.line_items if item.in_stock]
+
+# Good — a named helper, one clause per line, return type stated
+def in_stock_item_ids(orders: list[Order]) -> list[ItemId]:
+    ids: list[ItemId] = []
+    for order in orders:
+        for item in order.line_items:
+            if item.in_stock:
+                ids.append(item.id)
+    return ids
+```
+
+## Half-Applied Rename
+
+Renaming a symbol but leaving some references on the old name. A rename is finished only when *every* call site, test, and docstring uses the new name. A half-applied rename is worse than none: two names for one thing imply they're *different* things, and the next reader burns time hunting for a distinction that isn't there.
+
+```python
+# Bad — the parameter was renamed to `dry_run`, but a caller still passes the old name
+def schedule(task: Task, *, dry_run: bool = False) -> None: ...
+
+schedule(task, preview=True)   # ← stale name: silently wrong, or a TypeError at runtime
+```
+
+Treat the rename and its propagation as one atomic change — grep for the old name before you call it done. A strict type checker and a full test run catch the references your eyes miss.
+
 ## Dogmatic Rule Following
 
 These standards are strong defaults, not absolute laws. When a specific case deliberately calls for deviation, deviate — but document why. The test: "Is this deviation intentional and justified, or am I being lazy?" The few invariants that *are* absolute should be called out as such by the project itself (e.g., a top-level architecture doc) — everything else is a default that judgment overrides when warranted.
@@ -186,6 +215,18 @@ except Exception:
 ```
 
 Catch the specific exceptions you can handle. `except Exception:` is acceptable only at the outermost boundary, with a comment explaining why, and always with `logger.exception(...)` so the traceback survives.
+
+When that boundary catch *is* warranted, mark its justification with a `Boundary:` prefix. The marker makes a legitimate broad `except` — the deliberate external-I/O edge that must not crash the caller — visibly different from a lazy catch-all that's hiding bugs. A reader scanning for swallowed errors learns which ones are intentional.
+
+```python
+try:
+    deliver(payload)
+except Exception:
+    # Boundary: a malformed payload or a transient sink failure must not abort the
+    # batch — log it and move to the next item.
+    logger.exception("Delivery failed for item %s", item_id)
+    return
+```
 
 ### Mutable Default Arguments
 

@@ -39,6 +39,8 @@ def _decide_priority(input: CreateTaskInput) -> Priority:
 
 **Section dividers** (`# ── Name ──────────`) are used sparingly — only when a module has 3+ distinct logical sections. They are navigation landmarks, not documentation.
 
+**Two-tier helper placement.** Split helpers by what they touch. A helper that is a *pure function of its arguments* becomes a module-level free function at the file bottom, grouped under a section divider; a helper that *reads instance state* stays a method directly beneath its caller. The placement itself signals — at a glance, before reading a line — which helpers carry state and which don't, and the free functions stay testable without constructing the object. (See [`anti-patterns.md`](anti-patterns.md) → **Methods That Don't Use `self`**.)
+
 **File length:** Cohesion matters more than line count. A 400-line file with one cohesive concept is better than 4 fragmented files. 500+ lines is a smell worth examining — probably mixed concerns — but not a rule.
 
 **`__all__` for public API.** Top-level modules define `__all__` to make the public surface explicit. Internal names stay out.
@@ -77,6 +79,7 @@ def _decide_priority(input: CreateTaskInput) -> Priority:
 - **Boolean prefixes preferred.** Use `is_`, `has_`, `can_`, `should_`, `was_`, `will_` when the bare word is ambiguous. `is_active`, `has_children`, `should_retry`. Exception: obvious adjectives that can only be boolean — `enabled`, `blocked`, `active`.
 - **No vague -ER suffixes.** `TaskManager` (manages how?) and `DataProcessor` (processes into what?) are banned. `ConfigLoader` and `EventHandler` are fine when precise.
 - **Name for the whole job — accept length for clarity.** If a function does more than its short name implies, name it for what it actually does, even if that's longer. A `close_connection` that first flushes the write buffer should be `flush_and_close_connection`; a function that saves a record *and* publishes an event is `save_and_publish_record`, not `save_record`. A name that omits a real step is a quiet lie — the reader trusts it and gets surprised. A few extra characters that make the name honest beat a short name that misleads. (This is *not* license to pad: name the steps that are actually there, no more.)
+- **Function names follow a grammar by role.** Pick the form that matches what the function *is*, so the reader knows what a call does before reading the body. A **predicate** reads as a question and returns `bool` — `is_eligible`, `has_pending_charges`, `already_registered`. A **pure derivation** (a value computed from its inputs, no side effects) reads `<result>_from_<source>` — `total_from_line_items`, `slug_from_title`. A **command** with a side effect is verb-first and names any secondary effect with `and` (see the bullet above) — `archive_and_notify`.
 - **No `utils`, `helpers`, `misc`, `common`.** These are junk drawers. Move functions to the concept they belong to.
 - **Domain language.** Names mirror the business domain (Ubiquitous Language). `TaskEngine`, `PipelineStage`, `TriggerEvent` — not `ItemProcessor`, `StepExecutor`, `IncomingData`.
 - **Variables are nouns; functions are verbs.** Variable names describe what the value *is*; function names describe what they *do*. `parsed_config` describes a process (the noun is "config"; "parsed" describes how it was produced). `settings` describes what it is. For variables, prefer the noun. Use the verb form on the function that produced it (`parse_config()`).
@@ -703,6 +706,14 @@ def schedule_task(input: CreateTaskInput, queue: PriorityQueue) -> ScheduledTask
     Raises:
         QueueFullError: When the queue is at capacity.
     """
+    ...
+```
+
+When a function can return a sentinel (`None`, an empty collection) or no-ops on a whole class of inputs, name that case in the docstring — the reader shouldn't have to read the body to learn when they get nothing back:
+
+```python
+def assignee_for(ticket: Ticket) -> User | None:
+    """Return the user a ticket is assigned to. Returns None when it's unassigned."""
     ...
 ```
 
