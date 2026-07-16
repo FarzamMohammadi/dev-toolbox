@@ -24,12 +24,53 @@ MMD_DIR.mkdir(parents=True, exist_ok=True)
 
 text = SRC.read_text()
 
+# 0. Sanitize the two mermaid-syntax mistakes that abort a whole render but are
+#    trivially auto-fixable, and only on sequence-diagram *message* lines
+#    (`A->>B: text`) — never on Notes or flowchart node/edge labels, where the
+#    same characters are legal:
+#      - `<br/>` is a hard parse error on a message line (it's only valid inside
+#        a `Note`). We join the line back together with a space.
+#      - `;` terminates a statement in mermaid, so it silently truncates a
+#        message mid-sentence. We swap it for a comma so the text survives.
+#    Both are cosmetic-only fixes to text that could not render otherwise; no
+#    word of the visible content is lost.
+_ARROW = re.compile(r"-{1,2}(>>?|[x)])")
+_MSG_KEYWORDS = (
+    "note", "participant", "actor", "loop", "alt", "opt", "else", "end",
+    "par", "and", "rect", "activate", "deactivate", "autonumber", "critical",
+    "break", "box", "link", "links",
+)
+_sanitized = 0
+
+def _sanitize_mermaid(block):
+    """Fix `<br/>` and `;` on sequence-diagram message lines only."""
+    global _sanitized
+    lines = block.split("\n")
+    first = next((ln.strip() for ln in lines if ln.strip()), "")
+    if not first.startswith("sequenceDiagram"):
+        return block  # only sequence messages carry these two hazards
+    out = []
+    for line in lines:
+        low = line.lstrip().lower()
+        is_msg = (
+            _ARROW.search(line) and ":" in line
+            and not low.startswith(_MSG_KEYWORDS)
+        )
+        if is_msg:
+            head, sep, msg = line.partition(":")
+            fixed = re.sub(r"\s*<br\s*/?>\s*", " ", msg).replace(";", ",")
+            if fixed != msg:
+                _sanitized += 1
+            line = head + sep + fixed
+        out.append(line)
+    return "\n".join(out)
+
 # 1. Pull every mermaid block out before Markdown conversion (Markdown would
 #    otherwise mangle it), leaving a unique token in its place.
 blocks = []
 def _grab(m):
     idx = len(blocks)
-    blocks.append(m.group(1))
+    blocks.append(_sanitize_mermaid(m.group(1)))
     return f"\n\nMERMAIDTOKEN{idx}ENDTOKEN\n\n"
 
 text = re.sub(r"```mermaid\n(.*?)```", _grab, text, flags=re.DOTALL)
@@ -60,4 +101,5 @@ toc = ('<ac:structured-macro ac:name="toc">'
 html = toc + html
 
 OUT_HTML.write_text(html)
-print(f"tables={html.count('<table>')} mermaid_blocks={len(blocks)} chars={len(html)}")
+print(f"tables={html.count('<table>')} mermaid_blocks={len(blocks)} "
+      f"mermaid_autofixes={_sanitized} chars={len(html)}")

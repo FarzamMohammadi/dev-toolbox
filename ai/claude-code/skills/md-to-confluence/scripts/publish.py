@@ -64,8 +64,29 @@ def api(method, path, data=None, headers=None, raw=False):
 
 storage = pathlib.Path(args.html).read_text()
 
-# 1. Create or update the page (body first, so the image macros exist before we
-#    attach the PNGs they point at).
+# 1. Render every mermaid diagram to PNG BEFORE the page is created or updated.
+#    Rendering is the only step that can fail on bad input, so doing it first
+#    means a broken diagram aborts with nothing published — no half-updated page
+#    left pointing at attachments that never got made.
+mmd_dir = pathlib.Path(args.mmd_dir)
+diagrams = sorted(mmd_dir.glob("diagram-*.mmd"))
+rendered = []  # (index, png_path), uploaded after the body is in place
+if diagrams:
+    pup = mmd_dir / "puppeteer.json"
+    pup.write_text('{"args":["--no-sandbox"]}')
+    for d in diagrams:
+        i = d.stem.split("-")[1]
+        png = mmd_dir / f"mermaid-{i}.png"
+        subprocess.run(
+            ["npx", "-y", "-p", "@mermaid-js/mermaid-cli", "mmdc",
+             "-i", str(d), "-o", str(png), "-b", "white", "-w", "1400",
+             "-s", "3", "-p", str(pup)],
+            check=True)
+        rendered.append((i, png))
+        print(f"rendered mermaid-{i}.png")
+
+# 2. Create or update the page (body carries the image macros; the PNGs they
+#    point at are uploaded in step 3, now that we know every one rendered).
 if args.update:
     cur = api("GET", f"/content/{args.update}?expand=version")
     pid = args.update
@@ -89,33 +110,21 @@ elif args.create:
 else:
     sys.exit("pass either --update PAGE_ID or --create TITLE --space KEY")
 
-# 2. Render + upload each mermaid diagram.
-mmd_dir = pathlib.Path(args.mmd_dir)
-diagrams = sorted(mmd_dir.glob("diagram-*.mmd"))
-if diagrams:
-    pup = mmd_dir / "puppeteer.json"
-    pup.write_text('{"args":["--no-sandbox"]}')
-    for d in diagrams:
-        i = d.stem.split("-")[1]
-        png = mmd_dir / f"mermaid-{i}.png"
-        subprocess.run(
-            ["npx", "-y", "-p", "@mermaid-js/mermaid-cli", "mmdc",
-             "-i", str(d), "-o", str(png), "-b", "white", "-w", "1400",
-             "-s", "3", "-p", str(pup)],
-            check=True)
-        boundary = "----confluenceboundary"
-        fname = f"mermaid-{i}.png"
-        multipart = b"".join([
-            f'--{boundary}\r\nContent-Disposition: form-data; name="file"; '
-            f'filename="{fname}"\r\nContent-Type: image/png\r\n\r\n'.encode(),
-            png.read_bytes(),
-            f"\r\n--{boundary}--\r\n".encode()])
-        # PUT (not POST) to child/attachment upserts by filename, so re-runs
-        # replace the image instead of stacking duplicates.
-        api("PUT", f"/content/{pid}/child/attachment", data=multipart, raw=True,
-            headers={"Content-Type": f"multipart/form-data; boundary={boundary}",
-                     "X-Atlassian-Token": "no-check"})
-        print(f"uploaded {fname}")
+# 3. Upload each pre-rendered diagram as an attachment.
+for i, png in rendered:
+    boundary = "----confluenceboundary"
+    fname = f"mermaid-{i}.png"
+    multipart = b"".join([
+        f'--{boundary}\r\nContent-Disposition: form-data; name="file"; '
+        f'filename="{fname}"\r\nContent-Type: image/png\r\n\r\n'.encode(),
+        png.read_bytes(),
+        f"\r\n--{boundary}--\r\n".encode()])
+    # PUT (not POST) to child/attachment upserts by filename, so re-runs
+    # replace the image instead of stacking duplicates.
+    api("PUT", f"/content/{pid}/child/attachment", data=multipart, raw=True,
+        headers={"Content-Type": f"multipart/form-data; boundary={boundary}",
+                 "X-Atlassian-Token": "no-check"})
+    print(f"uploaded {fname}")
 
 link = page.get("_links", {})
 print(f"DONE: {link.get('base','https://'+SITE+'/wiki')}{link.get('webui','')}")
