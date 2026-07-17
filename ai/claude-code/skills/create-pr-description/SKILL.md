@@ -107,8 +107,14 @@ backend/frontend/infra split sharing one ticket).
 
 ## Phase 2 — Compose
 
-Write the description the change earned. Lead with what a reviewer needs first. Draw from this menu
-only where it applies — these are candidates, not required sections:
+**The squash-commit title comes first, always.** PRs here land as a single squashed commit, so the
+description's first line doubles as that commit's title: `TICKET-123: <imperative, high-level summary
+of the whole branch>` (≤72 chars, prefixed with the ticket being worked). It must describe the branch
+as a whole — all changes go in together as one commit — not just the latest piece. Write it every
+time, even for a single small PR; the description body below it becomes the squash-commit body.
+
+After the title, write the description the change earned. Lead with what a reviewer needs first. Draw
+from this menu only where it applies — these are candidates, not required sections:
 
 - The problem or motivation (what prompted this)
 - For a bug: the **root cause** and the context behind it — why it happened, not just where
@@ -120,13 +126,16 @@ only where it applies — these are candidates, not required sections:
 - Related tickets and links
 
 **Multi-PR coordination.** When the work spans more than one PR (split by repo, by layer, or just by
-size), open with a short block at the very top so whoever lands on any one PR sees the whole effort
-and where to start. Hypothetical:
+size), write the squash-commit title for **every** PR in the set, and open each description (right
+under its own title) with a block listing all of them: a **role label** saying how each part relates
+(Backend / Frontend / Infra / Plugin…), then that PR's **squash-commit title**. The title text is
+what the author later wraps in the PR link — so no separate "link:" field, and never identify
+siblings by branch names. Mark the current one "(this PR)". Hypothetical:
 
 ```markdown
-**Part of a 2-PR change — start review here (backend).**
-- Backend (this PR): <link>
-- Frontend (retry UX + toast): <link>
+**Part of a 2-PR change — both land together.**
+- **Backend (this PR):** PAY-1234: Scope checkout idempotency keys to the session — stops the double charge
+- **Frontend:** PAY-1234: Add retry UX and failure toast to checkout — the client half
 - Ticket: PAY-1234
 ```
 
@@ -139,8 +148,12 @@ pads a section to look thorough. Brevity is a feature; it's what gets the PR act
 This shape emerged because the work was a bug split across two PRs. Yours will differ.
 
 ```markdown
-**Part of a 2-PR change — start review here (backend).**
-- Backend (this PR): <link>   ·   Frontend (retry UX): <link>   ·   Ticket: PAY-1234
+# PAY-1234: Scope checkout idempotency keys to the session
+
+**Part of a 2-PR change — both land together.**
+- **Backend (this PR):** PAY-1234: Scope checkout idempotency keys to the session — stops the double charge
+- **Frontend:** PAY-1234: Add retry UX and failure toast to checkout — the client half
+- Ticket: PAY-1234
 
 ## Issue
 Customers were occasionally charged twice when the checkout request timed out and the client retried.
