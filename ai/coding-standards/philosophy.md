@@ -81,6 +81,23 @@ Separate "what is the value" (repeatable, side-effect-free) from "announce the s
 
 ---
 
+## Built for Humans and Agents Together
+
+The paradigm has shifted: most of the work in a repository is now done by AI coding agents, often several at once, with a human directing and reviewing. Humans remain the first audience — a repo a person cannot follow is broken no matter how well an agent fares in it. But a repo that only a person can work in, because the context lives in someone's head or in a chat, is broken too. **Agent readiness** is the second audience, designed for on purpose wherever it costs little.
+
+What it means in practice:
+
+- **The repo explains itself.** One entry file for agents (`AGENTS.md`), a file that says where things stand right now, a map of what to read for which task. Decisions carry their why. Nothing load-bearing lives only in a conversation. A fresh agent — or a fresh human — orients from the repo alone and never asks for a recap.
+- **Work is handed over as a brief, not a chat.** A task for an agent names every document, rule, and definition of done it must satisfy, and carries no secret. If the brief needs a key pasted in, the brief is wrong.
+- **Isolation by one command.** Anything two agents would collide on — a database, a port, a cache, an environment file — has a single command that gives a checkout its own private copy, and one that takes it away. When a new shared thing appears, ask: what does a second agent on this collide with, and what one command removes it?
+- **Verification by one command.** One command is the definition of green — format, lint, types, boundaries, tests. An agent proves its work the same way a human does, and a supervisor never has to guess whether a report is true.
+- **Deliberate conventions are written down.** An agent applying standards must be able to tell a deliberate deviation from accidental cruft (the two-step rule). What is chosen on purpose is named where the agent will find it; what is not named is fair game to fix.
+- **Review happens in the code.** An agent's report is an input, never the verdict. Someone — a human or a supervising agent — reads the diff against the brief and runs the checks. Agents drift like any new colleague; the discipline that catches it is the same.
+
+The test: could two agents and a human work on this repo in the same hour, from the repo alone, without stepping on each other or asking anyone what the rules are? Where the answer is no, that is the next thing to fix — with judgment about cost, not as dogma.
+
+---
+
 ## Philosophical Foundations
 
 The mental models behind the standards. Internalize them — they guide the decisions the rules don't cover.
