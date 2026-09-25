@@ -44,6 +44,22 @@ This is slow on purpose. The output is code that reads cleanly to a new reader s
 
 ---
 
+## Review from the entry point down
+
+Line-by-line is necessary but not enough: whole classes of defects are visible only from above. So a review starts where a newcomer would, at the entry point, and follows the flow as the program runs it, one step at a time, asking of each step: what is this, why is it here, and does its name say both? Most structural findings come from this walk, not from reading files one by one: a constant living in the wrong module, an interface bypassed by a hardcoded name, a value doing two jobs, a setting checked in the wrong place.
+
+---
+
+## When no user is in the loop
+
+This guide assumes a user to decide with. A delegated agent (a builder, or a standards pass run by another agent) has none, and must not read that as permission to skim. The discipline is the same; only the deciding changes:
+
+- **Fix what the standards clearly settle.** A vague name, a misplaced constant, a silent default: change it.
+- **List what needs a decision** instead of deciding it: a change of behaviour, a deviation that looks deliberate, anything with a real tradeoff. Report it with the options and a recommendation.
+- **Report what you checked, not that you "applied the standards".** For each rule you reviewed against, name what you found and where (`file:line`), or say that you found nothing. A reviewer should be able to tell a pass that looked from one that did not.
+
+---
+
 ## Before touching code: ground in code
 
 Before recommending a refactor, **read what's there.** Not the docstring — the actual code. Then verify your claims with `grep`, `cat`, a one-liner repl, or a focused unit test.

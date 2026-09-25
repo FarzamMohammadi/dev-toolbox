@@ -125,7 +125,7 @@ def get_exchange_rate(currency: str, rates: dict[str, float]) -> float | None:
 # at the call site:
 rate = get_exchange_rate(order.currency, RATES)
 if rate is None:
-    logger.debug(f"No rate registered for {order.currency!r}")
+    logger.debug("No rate registered", extra={"currency": order.currency})
     quote.conversion_status = "unknown"
     quote.converted_total = 0
 ```
@@ -253,7 +253,7 @@ The default is evaluated once, at function definition. Mutating it leaks state a
 
 ### Defensive Programming Inside the Boundary
 
-Re-validating data five layers deep that was already validated at the boundary. If `parse_task_input` returned a `CreateTaskInput`, downstream code doesn't need to check `if input.title:` again — the model already proved it exists. Defensive checks inside the boundary are a sign the boundary doesn't trust itself. Fix the boundary instead.
+Re-validating data five layers deep that was already validated at the boundary. If `parse_task_input` returned a `CreateTaskInput`, downstream code doesn't need to check `if input.title:` again — the model already proved it exists. Defensive checks inside the boundary are a sign the boundary doesn't trust itself. Fix the boundary instead. The same shape at the other end: a branch whose comment says it cannot happen (`if value is None: return []  # validated earlier`) means the value is optional where it should be required; make it required where it is declared, and the branch goes.
 
 ### An Optional Argument That Skips a Check
 

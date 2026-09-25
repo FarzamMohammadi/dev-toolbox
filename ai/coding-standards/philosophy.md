@@ -12,6 +12,40 @@ Examples here are concrete (and lean on one language for legibility), but the pr
 
 ---
 
+## What Matters Most
+
+These files are long, and not every rule weighs the same. When time or attention is short, these come first, in this order; each one caught real defects that a skim of the rest missed.
+
+1. **A name says what the thing is and what it is for.** The reader has nothing else in front of them (below).
+2. **Nothing is silent.** No plausible default standing in for a missing fact, no branch that "can't happen", no empty result without its reason, no optional argument that skips a check. `anti-patterns.md` → Silent Staleness, Defensive Programming Inside the Boundary, An Optional Argument That Skips a Check.
+3. **Things live with what they belong to.** A component's constants, builder and settings sit in its own module; the entry point only wires them together (below).
+4. **Code to the contract you have.** Once an interface exists, nothing outside its implementation names the implementation (below).
+5. **A required value is required where it is declared.** Not optional in the schema and checked somewhere later.
+6. **The file reads top-down as a story.** Newspaper order, blank lines between concepts, and the main line of each function visible through its bookkeeping (`refactor-guide.md` → Separate the signal from the noise).
+7. **Comments carry only the why** (below).
+
+---
+
+## Names Carry Purpose
+
+A name is the reader's only context. It says what the thing is and what it is for, so a reader never has to find where it was built to know what it does. A mechanism especially: a semaphore capping runs is `concurrent_runs_limit`, not `runs`; the stack that closes everything is `shutdown_stack`, not `stack`. No cute, pronoun or fragment names that make sense only in the conversation that wrote them (`theirs()`, `telling`, `Talks`). And one name, one meaning: a value that stands for two roles (the operator who gets errors, and one of the users) is two values.
+
+The test: read the name cold, with nothing else on screen. Would you know what it holds or does?
+
+---
+
+## The Entry Point Is a Composition Root
+
+The entry point wires the process together and owns nothing specific. A component's constants, timeouts, builders and settings live with that component, so adding, changing or removing one touches one package, and the entry point reads as a table of contents: one line per step, a verb that says what each step is. The test: could you remove a component by deleting its package and one line in the entry point?
+
+---
+
+## Code to the Contract You Have
+
+Once an interface exists (a protocol, a base class, a plugin contract), everything outside its implementation reaches it through the interface: a list of registered entries, looked up by name, never a concrete class or constant scattered through the callers. When the same concrete name appears in many places around an interface that was meant to hide it, the interface is decorative, and the second implementation will cost a rewrite. The variation belongs in data: one entry per implementation, in one list, next to where the implementations are made.
+
+---
+
 ## Comments
 
 A comment earns its place only when it carries something the code **cannot**: the unspoken *why*, the context behind a decision, a constraint or edge case a reader would otherwise trip over. It never narrates the *what* — the code already says that.
@@ -69,7 +103,7 @@ Reading a value and deciding what to do when it's missing are **two jobs**. Keep
 - The **boundary** (a settings/config module) retrieves the raw value and surfaces *absence* — returns "not set," warns, flips a flag. It holds no defaults and no domain logic.
 - The **owner** of the concern applies the default and the rules. It knows what "missing" should mean *here*, what a blank value implies, what the fallback is.
 
-A config reader that also bakes in defaults braids together "where the value comes from" with "what we do without one" — two things that change for different reasons. Split them and each side stays obvious: the boundary is a thin retrieval surface; the policy lives where the concern is actually understood. This is `Parse, don't validate` applied to configuration — parse the environment at the edge, decide policy in the interior.
+A config reader that also bakes in defaults braids together "where the value comes from" with "what we do without one" — two things that change for different reasons. Split them and each side stays obvious: the boundary is a thin retrieval surface; the policy lives where the concern is actually understood. This is `Parse, don't validate` applied to configuration — parse the environment at the edge, decide policy in the interior. A value the program cannot run without is the exception: it is required at the boundary, in the schema that declares it, and its absence stops the program there, beside every other missing value, rather than surfacing as "not set" for someone downstream to check.
 
 ---
 
