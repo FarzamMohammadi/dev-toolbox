@@ -79,6 +79,7 @@ def _decide_priority(input: CreateTaskInput) -> Priority:
 - **Boolean prefixes preferred.** Use `is_`, `has_`, `can_`, `should_`, `was_`, `will_` when the bare word is ambiguous. `is_active`, `has_children`, `should_retry`. Exception: obvious adjectives that can only be boolean — `enabled`, `blocked`, `active`.
 - **No vague -ER suffixes.** `TaskManager` (manages how?) and `DataProcessor` (processes into what?) are banned. `ConfigLoader` and `EventHandler` are fine when precise.
 - **Name for the whole job — accept length for clarity.** If a function does more than its short name implies, name it for what it actually does, even if that's longer. A `close_connection` that first flushes the write buffer should be `flush_and_close_connection`; a function that saves a record *and* publishes an event is `save_and_publish_record`, not `save_record`. A name that omits a real step is a quiet lie — the reader trusts it and gets surprised. A few extra characters that make the name honest beat a short name that misleads. (This is *not* license to pad: name the steps that are actually there, no more.)
+- **A name says what the thing is and what it is for.** The type says what it is; the name adds its job. A mechanism especially: a semaphore capping runs is `concurrent_runs_limit`, not `runs`; one lock per seller is `one_run_per_seller_locks`; the stack that closes everything on exit is `shutdown_stack`. No cute or pronoun names that only make sense in context: `theirs()`, `telling`, `Talks` become `for_seller()`, `notify_seller_of_connection`, `Conversations`.
 - **Function names follow a grammar by role.** Pick the form that matches what the function *is*, so the reader knows what a call does before reading the body. A **predicate** reads as a question and returns `bool` — `is_eligible`, `has_pending_charges`, `already_registered`. A **pure derivation** (a value computed from its inputs, no side effects) reads `<result>_from_<source>` — `total_from_line_items`, `slug_from_title`. A **command** with a side effect is verb-first and names any secondary effect with `and` (see the bullet above) — `archive_and_notify`.
 - **No `utils`, `helpers`, `misc`, `common`.** These are junk drawers. Move functions to the concept they belong to.
 - **Domain language.** Names mirror the business domain (Ubiquitous Language). `TaskEngine`, `PipelineStage`, `TriggerEvent` — not `ItemProcessor`, `StepExecutor`, `IncomingData`.
@@ -647,6 +648,10 @@ A "concept" may include a class + its factory + its validators — as long as th
 ### When to Split
 
 Split when parts of a file change for different reasons (Common Closure Principle). Line count is a smell that triggers this check, not a rule in itself.
+
+### The Entry Point Is a Composition Root
+
+The entry point (`app.py`, `main.py`) wires the process together and owns nothing specific: it reads settings, builds each component in order, connects them, and starts them. A component's constants, builder, timeouts and settings live with that component — a vendor client's timeout in that vendor's package, a plugin's builder in the plugin — so adding, changing or removing one touches one package, and the entry point reads as a table of contents. The test: could you delete a plugin by deleting its package and one line in the entry point?
 
 ### Directory Structure
 

@@ -255,6 +255,18 @@ The default is evaluated once, at function definition. Mutating it leaks state a
 
 Re-validating data five layers deep that was already validated at the boundary. If `parse_task_input` returned a `CreateTaskInput`, downstream code doesn't need to check `if input.title:` again — the model already proved it exists. Defensive checks inside the boundary are a sign the boundary doesn't trust itself. Fix the boundary instead.
 
+### An Optional Argument That Skips a Check
+
+A safety check made optional — `known: Mapping | None = None`, where `None` means "don't check" — is skipped by the first caller that forgets it, silently. A check every caller owes is a required argument; a test that doesn't care passes a stand-in that accepts everything, which states that choice where it is made.
+
+```python
+# Bad — a new caller that omits `known` links any channel name, typos included
+def link_channel(seller_id: str, channel: str, *, known: Mapping[str, RefCheck] | None = None): ...
+
+# Good — every caller says which channels exist
+def link_channel(seller_id: str, channel: str, *, known: Mapping[str, RefCheck]): ...
+```
+
 ### Catching Exceptions for Expected Control Flow
 
 ```python
