@@ -34,9 +34,19 @@ The test: read the name cold, with nothing else on screen. Would you know what i
 
 ---
 
+## Cohesion: What Belongs Together Lives Together
+
+Everything about one concern lives in one package: its constants, timeouts, settings, defaults, errors, and the code that builds it. The package builds itself through one door, its own opener or factory, and a caller only decides *whether* to use it and calls that door. The caller never knows what is behind it, because nothing the caller does depends on it.
+
+The payoff is that a concern can be understood, changed, swapped or deleted in one place, and every file reads as one subject. The test: to understand or change X, do you open one package? If X's timeout sits in the entry point, its defaults in a shared config module and its builder in a helpers file, the answer is no, and the next change to X will miss one of them.
+
+This is information hiding (Parnas) applied to where code sits, not only to what an interface exposes. The composition root below is its most visible case.
+
+---
+
 ## The Entry Point Is a Composition Root
 
-The entry point wires the process together and owns nothing specific. A component's constants, timeouts, builders and settings live with that component, so adding, changing or removing one touches one package, and the entry point reads as a table of contents: one line per step, a verb that says what each step is. The test: could you remove a component by deleting its package and one line in the entry point?
+The entry point wires the process together and owns nothing specific. It picks which components run; each component builds itself. A component's constants, timeouts, builders and settings live with that component, so adding, changing or removing one touches one package, and the entry point reads as a table of contents: one line per step, a verb that says what each step is. The test: could you remove a component by deleting its package and one line in the entry point?
 
 ---
 

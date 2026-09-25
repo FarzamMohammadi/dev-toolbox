@@ -180,6 +180,8 @@ The opposite anti-pattern: leaving the comment as a promise the next person has 
 
 ## Where things live
 
+The rule under every subsection here: what belongs together lives together, and a package builds itself through one door (`philosophy.md` → Cohesion). When a constant, a builder or a default sits far from the thing it configures, move it home.
+
 ### Co-locate with the source of truth
 
 If a piece of data is *also declared* somewhere else, derive it from there. Don't make two declarations that can drift.
