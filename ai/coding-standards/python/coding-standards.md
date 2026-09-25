@@ -857,6 +857,7 @@ Define every value once. Derive everywhere else. A constant that appears in two 
 - **Schemas drive types.** Pydantic models are the runtime source of truth; types come from the model. Never declare a model and a `TypedDict` that mirror each other.
 - **Enums for fixed sets.** Use `enum.StrEnum` or `Literal[...]` for fixed sets of values. Never scatter magic strings.
 - **No duplicate constants.** If a value (a path, a magic number, a default) needs to appear in two modules, the second occurrence is an import — never a literal repeat.
+- **One route in.** A component receives each fact once. If it already holds the settings that carry a value, it reads the value there; a second parameter carrying the same value makes the reader ask which one wins, and the next change will split them.
 
 The test: when you change a value, do you have to remember every other place it lives? If yes, you have duplication. Centralize.
 

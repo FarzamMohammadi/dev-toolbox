@@ -40,6 +40,8 @@ Everything about one concern lives in one package: its constants, timeouts, sett
 
 The payoff is that a concern can be understood, changed, swapped or deleted in one place, and every file reads as one subject. The test: to understand or change X, do you open one package? If X's timeout sits in the entry point, its defaults in a shared config module and its builder in a helpers file, the answer is no, and the next change to X will miss one of them.
 
+Centralizing is the same idea from the other side: each fact comes from one place and reaches a component by one route. A value arriving from two places makes a reader stop and ask which one is real.
+
 This is information hiding (Parnas) applied to where code sits, not only to what an interface exposes. The composition root below is its most visible case.
 
 ---
