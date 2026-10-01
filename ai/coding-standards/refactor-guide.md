@@ -98,7 +98,7 @@ Then let the user pick. This isn't ceremony — it's how you stay aligned withou
 
 ## What earns its place in code
 
-The bar for every line, comment, and abstraction is the same: **does this earn its keep, or is it noise?**
+The bar for every line, comment, and abstraction is the same: **does this earn its keep, or is it noise?** It is the first rule (`philosophy.md`) at the scale of a line; ask it first of the feature, the plan and the design the lines belong to.
 
 ### Comments
 

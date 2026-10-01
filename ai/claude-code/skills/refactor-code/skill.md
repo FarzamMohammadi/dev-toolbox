@@ -23,6 +23,10 @@ Review staged changes: /refactor-code git diff --cached
 
 Philosophies are higher-priority guiding beliefs that inform all the principles below.
 
+### The Best Code Is No Code
+
+**First, of every changed file, function, check and test: does it need to exist?** What breaks without it, and is it already done elsewhere? Cut what nothing needs before refining what remains (`~/Documents/Repos/dev-toolbox/ai/coding-standards/philosophy.md` § The First Rule).
+
 ### Code as Communication
 
 **Code should communicate as effectively, clearly, and comprehensively as possible to decrease mental load and make the codebase intuitive to follow, understand, maintain, and modify.**

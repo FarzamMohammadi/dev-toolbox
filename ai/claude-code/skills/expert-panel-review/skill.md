@@ -305,6 +305,10 @@ SEVERITY levels:
 # The One Thing
 If the owner could act on only ONE finding from your review, which, and why?
 
+# What Can Go
+What in this need not exist at all (a feature, a component, a check, a test,
+a line), and what would break without it? Nothing, if it should go.
+
 # [PERSONA-SPECIFIC FINAL QUESTION from the panel section]
 
 ═══════════════════════════════════════════════════════════════════════════

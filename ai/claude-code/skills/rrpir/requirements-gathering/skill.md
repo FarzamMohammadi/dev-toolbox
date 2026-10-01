@@ -91,7 +91,7 @@ something twice is far better than catching it zero times.
 
 ### Phase 3: Intent Extraction
 
-The literal request is rarely the full picture. Dig into the **why**.
+The literal request is rarely the full picture. Dig into the **why**, and first into **whether it is needed at all** (`~/Documents/Repos/dev-toolbox/ai/coding-standards/philosophy.md` § The First Rule): what breaks without it, is it already done elsewhere, and what is the smallest thing that serves the intent? What is left out goes in Out of Scope, with why.
 
 Ask questions one at a time. Each question should have a clear reason for being asked.
 Use `AskUserQuestion` when there are clear options to choose from. Use open-ended questions
@@ -254,8 +254,8 @@ Write to: `.claude/temp/requirements-gathering/<ticket-or-name>.md`
 - [Specific deliverable 2]
 
 ### Out of Scope
-- [Explicitly excluded item 1]
-- [Explicitly excluded item 2]
+- [Explicitly excluded item 1] — [why]
+- [Explicitly excluded item 2] — [why]
 
 ## Requirements
 

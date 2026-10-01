@@ -14,6 +14,8 @@ Please read:
   ~/Documents/Repos/dev-toolbox/ai/coding-standards/python/anti-patterns.md
 ```
 
+**Before all of it, the first rule** at the top of `philosophy.md`: the best code is no code. Every idea, plan, component and line is asked whether it is needed before how to make it.
+
 The refactor guide is the **mode** — how to work collaboratively, when to push back, what earns its place. `philosophy.md` is the **values** — the language-agnostic principles to internalize (comments, idiom over transliteration, the philosophical foundations). The language files are the **patterns** — what good code looks like in that language. Without the guide, the standards become a mechanical checklist. With it, they become tools used with judgment.
 
 ## The Two-Step Rule

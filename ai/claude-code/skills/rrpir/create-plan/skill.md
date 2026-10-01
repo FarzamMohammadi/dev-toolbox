@@ -39,6 +39,8 @@ Surface anything you find. This is your diligence step.
 
 ## Phase 2: Design
 
+**The first rule before anything else** (`~/Documents/Repos/dev-toolbox/ai/coding-standards/philosophy.md` § The First Rule): every decision, component, task and test in the draft answers what breaks without it, its alternatives include doing less, and the Scope Boundary's Deferring list names what was left out and why.
+
 Synthesize all accumulated context into a complete plan draft. Design for robustness, quality,
 and correctness — not just the happy path. Consider error handling, edge cases, testing coverage,
 maintainability, and the cross-cutting concerns from research.

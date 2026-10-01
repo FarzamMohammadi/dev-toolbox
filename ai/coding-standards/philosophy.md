@@ -12,9 +12,30 @@ Examples here are concrete (and lean on one language for legibility), but the pr
 
 ---
 
+## The First Rule: The Best Code Is No Code
+
+Asked first, of everything: an idea, a feature, a plan, a component, a system, the architecture, a test, a line of code. It comes before every other principle here because it decides whether there is anything for them to apply to. Farzam, 2026-10-01: *"it's applicable to everything from ideas to plans to components, systems, architecture, all the way to code, lines of code."*
+
+Two questions, in this order, from the bottom up:
+
+1. **Is it needed?** What breaks today without it? Is it already done, or already enforced, somewhere else, so that this would be a second copy? If nothing breaks, it is not made: not the feature, the abstraction, the setting, the check, the test, the log line, the document or the step. Nothing is built to be needed later, and nothing is built to be optimized later.
+2. **Is this the best way to do it, for the long term?** Weigh the alternatives, doing less among them. Will it go stale? Will it still hold for the next user, the next case, the next contributor? What earns its place is made the general way, with craft and care, the first time, so it is never redone.
+
+Minimal in what exists, thorough in how it is made. The two halves are one rule: the less there is, the more care each piece gets, and the less any mind, a person's or an agent's, has to hold. Every extra piece is overhead carried forever: read, tested, maintained, explained.
+
+Where it is applied, so it is never skipped:
+
+- **Before work starts:** say what the work adds, what breaks without each piece, and what it leaves out.
+- **In every plan, brief and design:** name what was left out, and why.
+- **In every handoff to an agent:** hand it both questions for whatever the plan does not settle, and ask for what it left out.
+- **In every review:** read first for what can go, then for what is wrong.
+- **For tests:** a test pins a behaviour something breaks without, that reading the code cannot show, and that no other test already holds.
+
+---
+
 ## What Matters Most
 
-These files are long, and not every rule weighs the same. When time or attention is short, these come first, in this order; each one caught real defects that a skim of the rest missed.
+These files are long, and not every rule weighs the same. After the first rule above, when time or attention is short, these come first, in this order; each one caught real defects that a skim of the rest missed.
 
 1. **A name says what the thing is and what it is for.** The reader has nothing else in front of them (below).
 2. **Nothing is silent.** No plausible default standing in for a missing fact, no branch that "can't happen", no empty result without its reason, no optional argument that skips a check. `anti-patterns.md` → Silent Staleness, Defensive Programming Inside the Boundary, An Optional Argument That Skips a Check.
@@ -153,6 +174,7 @@ The mental models behind the standards. Internalize them — they guide the deci
 - **Simple over easy** (Hickey) — Easy means familiar. Simple means fewer entanglements. Choose simple — even when it requires learning something new. Avoid complecting (braiding together) separate concerns.
 - **Functional Core / Imperative Shell** (Bernhardt) — Decisions are pure functions. Effects are thin wrappers. This makes the hard parts trivially testable and the effectful parts trivially simple.
 - **Parse, don't validate** (King) — Transform unstructured input into typed, branded values at the boundary. Once parsed, the type system guarantees correctness — no runtime checks needed downstream.
+- **YAGNI** (Jeffries, Extreme Programming) — You aren't gonna need it: build what is needed now, never what might be. The first rule's first question, at the scale of a feature.
 - **Duplication over wrong abstraction** (Metz) — Three similar functions are better than one premature abstraction. Wait until the pattern is clear. The cost of the wrong abstraction compounds; duplication is cheap to fix later.
 - **Semantic compression** (Muratori) — Don't design abstractions upfront. Write the code, see the patterns emerge, then compress. Abstraction is the last step, not the first.
 - **Make the change easy, then make the easy change** (Beck) — Refactor first to make the feature trivial to add, then add it. Two small steps beat one complex step.

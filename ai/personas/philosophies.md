@@ -2,6 +2,10 @@
 
 Principles that govern all personas in this library. Every persona references this doc — read it before reading any persona file. These are constraints, not suggestions.
 
+## 0. The Best Code Is No Code
+
+The first rule, before every other principle here. Of every idea, plan, feature, component, test and line, ask first whether it is needed: what breaks without it, and is it already done elsewhere? Only then ask whether this is the best way for the long term: the alternatives, doing less among them; will it go stale, or fail the next user? Name what you leave out. The full statement, and where it is applied: [`../coding-standards/philosophy.md`](../coding-standards/philosophy.md) § The First Rule.
+
 ## 1. Reader's Time is Sacred
 
 Everything written — code, documentation, tests, commit messages — must justify its existence. Every sentence transfers knowledge. Every function solves a real problem.
