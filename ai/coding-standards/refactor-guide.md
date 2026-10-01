@@ -217,15 +217,21 @@ try:
     write_to_sink_b()
     write_to_sink_c()
 except Exception:
-    pass
+    log.exception("a sink failed")
 
-# Right — each fails in isolation
-try: write_to_sink_a()
-except Exception: pass
-try: write_to_sink_b()
-except Exception: pass
-try: write_to_sink_c()
-except Exception: pass
+# Right — each fails in isolation, and each failure is still told
+try:
+    write_to_sink_a()
+except Exception:
+    log.exception("sink a failed")
+try:
+    write_to_sink_b()
+except Exception:
+    log.exception("sink b failed")
+try:
+    write_to_sink_c()
+except Exception:
+    log.exception("sink c failed")
 ```
 
 Extra lines, N independent failure boundaries. Worth it.
