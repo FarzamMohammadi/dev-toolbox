@@ -34,7 +34,7 @@ You know this code — you built it. Use that knowledge. Don't scan; *think*.
 ### Hindsight
 
 1. **You have full context now.** Research, plan, implementation — use hindsight. What would you do differently if starting over?
-2. **Challenge the first solution.** The first thing that worked isn't always the best. Was there a simpler, clearer, or more robust way? And what can go: what here does nothing need, a feature, a check, a test, a line? (`~/Documents/Repos/dev-toolbox/ai/coding-standards/philosophy.md` § The First Rule)
+2. **Challenge the first solution.** The first thing that worked isn't always the best. Was there a simpler, clearer, or more robust way? And what can go: what here does nothing need, a feature, a check, a test, a line? (`~/Documents/Repos/dev-toolbox/ai/coding-standards/philosophy.md` § The Best Code Is No Code)
 
 ### Absence Over Presence
 

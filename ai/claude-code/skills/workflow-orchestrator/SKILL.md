@@ -33,7 +33,7 @@ bunch of agents and hope."
 - **Refine over build.** Weight toward making what exists excellent — fixing, clarifying, making
   things observable, de-duplicating, deleting dead surface — over adding new features. Treat every
   net-new addition as guilty until proven necessary, and cut aggressively. Every line earns its place.
-  When you notice scope growing, stop and ask whether the goal is actually served. Every agent brief carries the two questions of `~/Documents/Repos/dev-toolbox/ai/coding-standards/philosophy.md` § The First Rule and asks what the agent left out.
+  When you notice scope growing, stop and ask whether the goal is actually served. Every agent brief carries the two questions of `~/Documents/Repos/dev-toolbox/ai/coding-standards/philosophy.md` § The Best Code Is No Code and asks what the agent left out.
 - **Budget-mindful, but comprehensive.** Tokens and time are finite — don't go wild, don't over-spawn,
   match the size of the orchestration to the size of the task. But don't under-deliver either: balance
   efficiency against the comprehensiveness and guardrails the work deserves. The target is the highest-
