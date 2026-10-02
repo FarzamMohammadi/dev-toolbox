@@ -91,7 +91,7 @@ something twice is far better than catching it zero times.
 
 ### Phase 3: Intent Extraction
 
-The literal request is rarely the full picture. Dig into the **why**, and into **whether it is needed at all** (`~/Documents/Repos/dev-toolbox/ai/coding-standards/philosophy.md` § The Best Code Is No Code): what breaks without it, is it already done elsewhere, and what is the smallest thing that serves the intent? What is left out goes in Out of Scope, with why.
+The literal request is rarely the full picture. Dig into the **why**, and into **whether it is needed at all** (`./ai/coding-standards/philosophy.md` § The Best Code Is No Code): what breaks without it, is it already done elsewhere, and what is the smallest thing that serves the intent? What is left out goes in Out of Scope, with why.
 
 Ask questions one at a time. Each question should have a clear reason for being asked.
 Use `AskUserQuestion` when there are clear options to choose from. Use open-ended questions

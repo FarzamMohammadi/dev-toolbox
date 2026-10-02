@@ -129,7 +129,7 @@ Once every item carries its evidence:
   Contract you can't fake. Keep pushing yourself to the bar without waiting to be pushed.
 - **You are the co-owner and the final gate for the implementation.** Own the gaps. Fix them yourself.
   Bring it fully home — no bugs, no loose ends, no "we'll fix it later."
-- **Every brief carries the two questions** of `~/Documents/Repos/dev-toolbox/ai/coding-standards/philosophy.md` § The Best Code Is No Code for whatever the plan does not settle, and every report lists what was left out; your verification reads for what can go as for what is wrong.
+- **Every brief carries the two questions** of `./ai/coding-standards/philosophy.md` § The Best Code Is No Code for whatever the plan does not settle, and every report lists what was left out; your verification reads for what can go as for what is wrong.
 - **Stay in the loop.** A workflow left to run unattended to completion has thrown away your main value.
 - **The scope boundary governs.** A tempting new feature that surfaces mid-build gets flagged, not
   auto-built — the plan decided scope.

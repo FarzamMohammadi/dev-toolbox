@@ -138,7 +138,7 @@ Present a testing checklist:
 ## Principles
 
 - **Green before anything else.** All automated checks must pass before moving to analysis.
-- **Read for what can go, as for what is wrong** (`~/Documents/Repos/dev-toolbox/ai/coding-standards/philosophy.md` § The Best Code Is No Code): a feature, check, test or line nothing needs is cut, and so is a test that repeats one already held.
+- **Read for what can go, as for what is wrong** (`./ai/coding-standards/philosophy.md` § The Best Code Is No Code): a feature, check, test or line nothing needs is cut, and so is a test that repeats one already held.
 - **Fix what you find.** Don't just report issues — fix them and commit.
 - **Coverage is about behavior, not lines.** A test that exercises the happy path and 3 edge cases beats 100% line coverage with no assertions.
 - **The user does manual testing.** You do everything else.

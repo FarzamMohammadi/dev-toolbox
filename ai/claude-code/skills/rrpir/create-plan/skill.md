@@ -39,7 +39,7 @@ Surface anything you find. This is your diligence step.
 
 ## Phase 2: Design
 
-**The best code is no code** (`~/Documents/Repos/dev-toolbox/ai/coding-standards/philosophy.md` § The Best Code Is No Code): every decision, component, task and test in the draft answers what breaks without it, its alternatives include doing less, and the Scope Boundary's Deferring list names what was left out and why.
+**The best code is no code** (`./ai/coding-standards/philosophy.md` § The Best Code Is No Code): every decision, component, task and test in the draft answers what breaks without it, its alternatives include doing less, and the Scope Boundary's Deferring list names what was left out and why.
 
 Synthesize all accumulated context into a complete plan draft. Design for robustness, quality,
 and correctness — not just the happy path. Consider error handling, edge cases, testing coverage,

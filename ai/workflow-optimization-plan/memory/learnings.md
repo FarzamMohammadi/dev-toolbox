@@ -38,7 +38,7 @@
 ## Project Knowledge
 
 ### Directory Structure
-- Project root: `/Users/farzammohammadi/Documents/Repos/dev-toolbox/`
+- Project root: `./`
 - AI directory: `ai/prompt-engineering/`
 - Existing prompts: `prompts/LeetCode Tutor/` (v1-v4)
 
