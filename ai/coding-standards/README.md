@@ -7,11 +7,11 @@ Centralized coding standards and refactoring approach, referenced from any repos
 Every session, start by pointing the agent at the refactor guide **first**, then the language standards:
 
 ```
-Please read:
-  ~/Documents/Repos/dev-toolbox/ai/coding-standards/refactor-guide.md
-  ~/Documents/Repos/dev-toolbox/ai/coding-standards/philosophy.md
-  ~/Documents/Repos/dev-toolbox/ai/coding-standards/python/coding-standards.md
-  ~/Documents/Repos/dev-toolbox/ai/coding-standards/python/anti-patterns.md
+Please read, in this folder:
+  refactor-guide.md
+  philosophy.md
+  python/coding-standards.md
+  python/anti-patterns.md
 ```
 
 The refactor guide is the **mode** — how to work collaboratively, when to push back, what earns its place. `philosophy.md` is the **values** — the language-agnostic principles to internalize (the best code is no code, comments, idiom over transliteration, the philosophical foundations). The language files are the **patterns** — what good code looks like in that language. Without the guide, the standards become a mechanical checklist. With it, they become tools used with judgment.
